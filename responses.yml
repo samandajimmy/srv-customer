@@ -1,0 +1,51 @@
+# Common Error Response
+
+E_RES_1:
+  success: false
+  message: resource not found
+  metadata:
+    http_status: 400
+
+E_RES_2:
+  success: false
+  message: invalid resource version to update
+  metadata:
+    http_status: 400
+
+E_RES_3:
+  success: false
+  message: failed to update resource
+  metadata:
+    http_status: 400
+
+E_RES_4:
+  success: false
+  message: user does not belongs to resource
+  metadata:
+    http_status: 403
+
+# Auth Error Response
+
+E_AUTH_1:
+  success: false
+  message: invalid credentials
+  metadata:
+    http_status: 400
+
+E_AUTH_2:
+  success: false
+  message: user is suspended
+  metadata:
+    http_status: 401
+
+E_AUTH_3:
+  success: false
+  message: token has expired
+  metadata:
+    http_status: 401
+
+E_AUTH_4:
+  success: false
+  message: old and new password must be different
+  metadata:
+    http_status: 400

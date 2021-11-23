@@ -1,0 +1,46 @@
+stages:
+  - build
+  - deploy
+
+variables:
+  DOCKER_AUTH_CONFIG: '{"auths": {"artifactory.pegadaian.co.id:8084": {"auth": "$DOCKER_AU_CONFIG"},"artifactory.pegadaian.co.id:5443": {"auth": "$DOCKER_AU_CONFIG"}}}'
+  IMAGE_URL: artifactory.pegadaian.co.id:5443/$CI_PROJECT_PATH:$CI_COMMIT_REF_SLUG
+  OPENSHIFT_REGION: sby
+  OPENSHIFT_OC_URL: https://api.ocp-$OPENSHIFT_REGION.pegadaian.co.id:6443
+
+.store_commit_hash: &store_commit_hash
+  before_script:
+    - touch latest_commit_hash
+    - echo $CI_COMMIT_SHA > latest_commit_hash
+    - echo $CI_COMMIT_TIMESTAMP >> latest_commit_hash
+
+build:
+  stage: build
+  image: artifactory.pegadaian.co.id:8084/docker:latest
+  services:
+    - name: artifactory.pegadaian.co.id:8084/docker:dind
+      command: [ "--insecure-registry=artifactory.pegadaian.co.id:8084" ]
+  <<: *store_commit_hash
+  script:
+    # Copy secret files
+    - cp ${ARTIFACTORY_SSL_CERT} ${CI_PROJECT_DIR}/ssl_certificate.crt
+    - cp ${FIREBASE_CRED} ${CI_PROJECT_DIR}/firebase-secret.json
+    # Compile and Build Image
+    - docker login -u $NEXUS_DOCKER_USER -p $NEXUS_DOCKER_PASS artifactory.pegadaian.co.id:8084
+    - docker build -t ${IMAGE_URL} --build-arg ARG_PORT=${PORT} --progress plain -f ${CI_PROJECT_DIR}/deployments/customer-svc/Dockerfile .
+    # Push image
+    - echo "  > Push image to Container Registry..."
+    - docker login -u $NEXUS_DOCKER_USER -p $NEXUS_DOCKER_PASS artifactory.pegadaian.co.id:5443
+    - docker push $IMAGE_URL
+    - echo "  > Done..."
+  only:
+    - master
+
+deploy_dev:
+  image: artifactory.pegadaian.co.id:8084/tj/openshift-client:latest
+  stage: deploy
+  script:
+    - while true; do result=0; oc login -u $OC_USER -p $OC_PASS --server=$OPENSHIFT_OC_URL --insecure-skip-tls-verify || result=$?; tj=$((tj+1)); if [ $result -eq 0 ]; then break; elif [ $tj -gt 5 ]; then exit 1; fi; echo "retry $tj";done;
+    - oc rollout latest dc/srv-customer
+  only:
+    - master
