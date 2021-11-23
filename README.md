@@ -55,36 +55,24 @@ make serve
 
 |                      | Key                        | Description                                 | Required                                          | Value                                                                                      |
 | -------------------- | -------------------------- | ------------------------------------------- | ------------------------------------------------- |:------------------------------------------------------------------------------------------ |
-| **
-Common**           | `DEBUG`                    | Debug Mode                                  |                                                   | Boolean. Default: `false`                                                                  | 
-| **API - Server**     | `PORT`                     | Server listen port                          | **
-✓**                                             | `1024-65535`                                                                               |
+| **Common**           | `DEBUG`                    | Debug Mode                                  |                                                   | Boolean. Default: `false`                                                                  | 
+| **API - Server**     | `PORT`                     | Server listen port                          | **✓**                                             | `1024-65535`                                                                               |
 |                      | `SERVER_HOSTNAME`          | Resolved hostname                           |                                                   | String, Default: `localhost`                                                               |
 |                      | `SERVER_BASE_PATH`         | Resolved base path                          |                                                   | String, Default: `/`                                                                       |
 |                      | `SERVER_LISTEN_SECURE`     | Listen in secure mode for base url resolver |                                                   | Boolean, Default: `false`                                                                  |
-|                      | `SERVER_TRUST_PROXY`       | Show debug responses                        | **
-✓** (Required for Deployment via Reverse Proxy) | String Array of IP Address, separated by comma. Default: `[]`. Set to `["*"]` to allow all |
+|                      | `SERVER_TRUST_PROXY`       | Show debug responses                        | **✓** (Required for Deployment via Reverse Proxy) | String Array of IP Address, separated by comma. Default: `[]`. Set to `["*"]` to allow all |
 |                      | `SERVER_HTTP_BASE_URL`     | Override value for resolved HTTP Base URL   |                                                   | URL                                                                                        |
 |                      |                            |                                             |                                                   |                                                                                            |
-|  **API - Client**    | `CLIENT_ID`                |  Client credential for Web App              | **
-✓**                                             | String                                                                                     |
-|                      | `CLIENT_SECRET`            |  Client credential for Web App              | **
-✓**                                             | String                                                                                     |
-|                      | `CORS_ENABLED`             |  Allowed CORS Origin                        | **
-✓**                                             | Comma-separated URL. Use value `'*'` to allow all origin                                   |
+|  **API - Client**    | `CLIENT_ID`                |  Client credential for Web App              | **✓**                                             | String                                                                                     |
+|                      | `CLIENT_SECRET`            |  Client credential for Web App              | **✓**                                             | String                                                                                     |
+|                      | `CORS_ENABLED`             |  Allowed CORS Origin                        | **✓**                                             | Comma-separated URL. Use value `'*'` to allow all origin                                   |
 |                      |                            |                                             |                                                   |                                                                                            |
-| **Data Sources**     | `DB_DRIVER`                | Database driver                             | **
-✓**                                             | `postgres`                                                                                 |
-|                      | `DB_HOST`                  | Postgres server host                        | **
-✓**                                             | String                                                                                     |
-|                      | `DB_PORT`                  | Postgres server port                        | **
-✓**                                             | `1024-65535`                                                                               |
-|                      | `DB_USER`                  | Postgres server username                    | **
-✓**                                             | String                                                                                     |
-|                      | `DB_PASS`                  | Postgres server password                    | **
-✓**                                             | String                                                                                     |
-|                      | `DB_NAME`                  | Postgres server database                    | **
-✓**                                             | String                                                                                     |
+| **Data Sources**     | `DB_DRIVER`                | Database driver                             | **✓**                                             | `postgres`                                                                                 |
+|                      | `DB_HOST`                  | Postgres server host                        | **✓**                                             | String                                                                                     |
+|                      | `DB_PORT`                  | Postgres server port                        | **✓**                                             | `1024-65535`                                                                               |
+|                      | `DB_USER`                  | Postgres server username                    | **✓**                                             | String                                                                                     |
+|                      | `DB_PASS`                  | Postgres server password                    | **✓**                                             | String                                                                                     |
+|                      | `DB_NAME`                  | Postgres server database                    | **✓**                                             | String                                                                                     |
 
 ## Contributors
 
