@@ -7,7 +7,7 @@ import (
 type Modifier struct {
 	ID       string                `json:"-"`
 	Role     constant.ModifierRole `json:"role"`
-	FullName string                `json:"full_name"`
+	FullName string                `json:"fullName"`
 }
 
 type ItemMetadataResponse struct {

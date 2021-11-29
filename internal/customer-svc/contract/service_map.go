@@ -10,5 +10,6 @@ type ServiceInitializer interface {
 }
 
 type ServiceMap struct {
-	Auth AuthService
+	Auth     AuthService
+	Customer CustomerService
 }

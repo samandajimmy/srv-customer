@@ -30,7 +30,6 @@ func (a *DataSourceMap) Init(config contract.DataSourcesConfig) error {
 
 func NewDataSourceMap() DataSourceMap {
 	return DataSourceMap{
-		// TODO: Replace init db by init => new(nsql.DB),
-		Postgres: nil,
+		Postgres: new(nsql.DB),
 	}
 }

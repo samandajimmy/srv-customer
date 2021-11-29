@@ -49,3 +49,9 @@ E_AUTH_4:
   message: old and new password must be different
   metadata:
     http_status: 400
+
+E_AUTH_5:
+  success: false
+  message: phone number has been used
+  metadata:
+    http_status: 400

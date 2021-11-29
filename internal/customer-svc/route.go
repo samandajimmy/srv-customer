@@ -8,4 +8,7 @@ import (
 func setUpRoute(router *nhttp.Router, handlers *HandlerMap) {
 	// Common
 	router.Handle(http.MethodGet, "/", router.HandleFunc(handlers.Common.GetAPIStatus))
+
+	// Customer
+	router.Handle(http.MethodPost, "/auth/register", router.HandleFunc(handlers.Customer.PostCreate))
 }

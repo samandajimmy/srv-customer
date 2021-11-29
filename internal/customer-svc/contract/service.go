@@ -7,3 +7,7 @@ import (
 type AuthService interface {
 	ValidateClient(payload dto.ClientCredential) error
 }
+
+type CustomerService interface {
+	Register(payload dto.RegisterNewCustomer) (*dto.NewRegisterResponse, error)
+}

@@ -1,7 +1,7 @@
 -- Sample Migration Customer
 CREATE TABLE public."Customer"
 (
-    "id"             bigint       NOT NULL,
+    "id"  SERIAL PRIMARY KEY,
     "xid"            varchar(64)  NOT NULL,
     "metadata"       JSON         NULL,
     "createdAt"      timestamp without time zone NOT NULL,
@@ -19,13 +19,22 @@ CREATE TABLE public."Customer"
     "cif"            varchar(16)  NULL,
     "sid"            varchar(16)  NULL,
     "referralCode"   varchar(64)  NULL,
-    "status"         smallint     NOT NULL,
-    PRIMARY KEY ("id")
+    "status"         smallint     NOT NULL
+    
+);
+
+CREATE TABLE public."VerificationOTP"(
+    "id"  SERIAL PRIMARY KEY,
+    "createdAt"      timestamp without time zone NOT NULL,
+    "registrationId" varchar      NOT NULL,
+    "phone"          varchar(16)  NOT NULL
+    
+
 );
 
 CREATE TABLE public."Address"
 (
-    "id"             bigint       NOT NULL,
+    "id"  SERIAL PRIMARY KEY,
     "xid"            varchar(64)  NOT NULL,
     "metadata"       JSON         NULL,
     "createdAt"      timestamp without time zone NOT NULL,
@@ -41,8 +50,8 @@ CREATE TABLE public."Address"
     "districtId"     bigint       NOT NULL,
     "districtName"   varchar(255) NOT NULL,
     "subDistrictId"  bigint       NOT NULL,
-    "subDistrictName" varchar(255) NOT NULL,
-    PRIMARY KEY ("id")
+    "subDistrictName" varchar(255) NOT NULL
+    
 );
 
 
@@ -63,8 +72,7 @@ CREATE TABLE public."Verification"
     "dukcapilVerifiedStatus"          smallint      NOT NULL,
     "dukcapilVerifiedAt"              timestamp without time zone NOT NULL,
     "financialTransactionStatus"      smallint     NOT NULL,
-    "financialTransactionActivatedAt" timestamp without time zone NOT NULL,
-    PRIMARY KEY ("id")
+    "financialTransactionActivatedAt" timestamp without time zone NOT NULL
 );
 
 CREATE TABLE public."FinancialData"
@@ -82,8 +90,7 @@ CREATE TABLE public."FinancialData"
     "goldSavingStatus"                smallint      NOT NULL,
     "goldCardApplicationNumber"       varchar(255) NOT NULL,
     "goldCardAccountNumber"           varchar(255) NOT NULL,
-    "balance"                         bigint       NOT NULL,
-    PRIMARY KEY ("id")
+    "balance"                         bigint       NOT NULL
 );
 
 CREATE TABLE public."AccessSession"
@@ -98,8 +105,7 @@ CREATE TABLE public."AccessSession"
     "customerId"                      bigint       NOT NULL,
     "expiredAt"                       timestamp without time zone NOT NULL,
     "notificationToken"               TEXT         NOT NULL,
-    "notificationProvider"            smallint     NOT NULL,
-    PRIMARY KEY ("id")
+    "notificationProvider"            smallint     NOT NULL
 );
 
 CREATE TABLE public."Credential"
@@ -126,6 +132,5 @@ CREATE TABLE public."Credential"
     "blockedAt"                       timestamp without time zone NOT NULL,
     "blockedUntilAt"                  timestamp without time zone NOT NULL,
     "biometricLogin"                  smallint      NOT NULL,
-    "biometricDeviceId"               bigint       NOT NULL,
-    PRIMARY KEY ("id")
+    "biometricDeviceId"               bigint       NOT NULL
 );

@@ -7,12 +7,16 @@ import (
 )
 
 type HandlerMap struct {
-	Common *handler.Common
+	Common   *handler.Common
+	Auth     *handler.Auth
+	Customer *handler.Customer
 }
 
 func initHandler(app *API) *HandlerMap {
 
 	return &HandlerMap{
-		Common: handler.NewCommon(time.Now(), app.Manifest.AppVersion, app.Manifest.GetStringMetadata(constant.BuildHashKey)),
+		Common:   handler.NewCommon(time.Now(), app.Manifest.AppVersion, app.Manifest.GetStringMetadata(constant.BuildHashKey)),
+		Auth:     handler.NewAuth(app.PdsApp.Services.Auth),
+		Customer: handler.NewCustomer(app.PdsApp.Services.Customer),
 	}
 }
