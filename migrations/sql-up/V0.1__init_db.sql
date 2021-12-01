@@ -20,7 +20,7 @@ CREATE TABLE public."Customer"
     "sid"            varchar(16)  NULL,
     "referralCode"   varchar(64)  NULL,
     "status"         smallint     NOT NULL
-    
+
 );
 
 CREATE TABLE public."VerificationOTP"(
@@ -28,7 +28,7 @@ CREATE TABLE public."VerificationOTP"(
     "createdAt"      timestamp without time zone NOT NULL,
     "registrationId" varchar      NOT NULL,
     "phone"          varchar(16)  NOT NULL
-    
+
 
 );
 
@@ -51,7 +51,7 @@ CREATE TABLE public."Address"
     "districtName"   varchar(255) NOT NULL,
     "subDistrictId"  bigint       NOT NULL,
     "subDistrictName" varchar(255) NOT NULL
-    
+
 );
 
 
@@ -133,4 +133,16 @@ CREATE TABLE public."Credential"
     "blockedUntilAt"                  timestamp without time zone NOT NULL,
     "biometricLogin"                  smallint      NOT NULL,
     "biometricDeviceId"               bigint       NOT NULL
+);
+
+-- TODO: ADD FOREIGN KEY each customerId field --
+CREATE TABLE public."OTP"
+(
+    "id"                              BIGSERIAL PRIMARY KEY,
+    "updatedAt"                       timestamp without time zone     NOT NULL,
+    "customerId"                      BIGINT                          NOT NULL,
+    "content"                         varchar(6)                      NULL,
+    "type"                            VARCHAR(32)                     NULL,
+    "data"                            VARCHAR(128)                    NULL,
+    "status"                          VARCHAR(16)                     NULL
 );
