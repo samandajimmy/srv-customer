@@ -12,6 +12,7 @@ import (
 
 type Customer struct {
 	customerRepo contract.CustomerRepository
+	otpService   contract.OTPService
 	response     *ncore.ResponseMap
 }
 
@@ -21,6 +22,7 @@ func (c *Customer) HasInitialized() bool {
 
 func (c *Customer) Init(app *contract.PdsApp) error {
 	c.customerRepo = app.Repositories.Customer
+	c.otpService = app.Services.OTP
 	c.response = app.Responses
 	return nil
 }
@@ -78,5 +80,28 @@ func (c *Customer) Register(payload dto.RegisterNewCustomer) (*dto.NewRegisterRe
 	return &dto.NewRegisterResponse{
 		Token:  customerXID,
 		ReffId: userId,
+	}, nil
+}
+
+func (c *Customer) RegisterStepOne(payload dto.RegisterStepOne) (*dto.RegisterStepOneResponse, error) {
+
+	// TODO Validate Phone Number If Exist
+
+	// TODO Validate Email If Exist
+
+	// Set request
+	request := dto.SendOTPRequest{
+		PhoneNumber: payload.PhoneNumber,
+		RequestType: "register",
+	}
+
+	// Send OTP To Phone Number
+	_, err := c.otpService.SendOTP(request)
+	if err != nil {
+		return nil, ncore.TraceError(err)
+	}
+
+	return &dto.RegisterStepOneResponse{
+		Message: "Kami telah mengirimkan kode OTP ke nomer hp anda.",
 	}, nil
 }
