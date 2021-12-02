@@ -35,6 +35,22 @@ type RegisterStepOneResponse struct {
 	Action string `json:"action"`
 }
 
+type RegisterStepTwo struct {
+	PhoneNumber string `json:"no_hp"`
+	OTP         string `json:"otp"`
+}
+
+type RegisterStepTwoResponse struct {
+	RegisterId string `json:"register_id"`
+}
+
+func (d RegisterStepTwo) Validate() error {
+	return validation.ValidateStruct(&d,
+		validation.Field(&d.OTP, validation.Required, is.Digit),
+		validation.Field(&d.PhoneNumber, validation.Required, is.Digit),
+	)
+}
+
 func (d RegisterStepOne) Validate() error {
 	return validation.ValidateStruct(&d,
 		validation.Field(&d.Name, validation.Length(1, 50)),

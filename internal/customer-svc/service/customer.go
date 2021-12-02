@@ -1,6 +1,9 @@
 package service
 
 import (
+	"strings"
+	"time"
+
 	"github.com/rs/xid"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer-svc/contract"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer-svc/convert"
@@ -8,13 +11,13 @@ import (
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer-svc/model"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nclient"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/ncore"
-	"strings"
 )
 
 type Customer struct {
-	customerRepo contract.CustomerRepository
-	otpService   contract.OTPService
-	response     *ncore.ResponseMap
+	customerRepo        contract.CustomerRepository
+	verificationOTPRepo contract.VerificationOTPRepository
+	otpService          contract.OTPService
+	response            *ncore.ResponseMap
 }
 
 func (c *Customer) HasInitialized() bool {
@@ -23,6 +26,7 @@ func (c *Customer) HasInitialized() bool {
 
 func (c *Customer) Init(app *contract.PdsApp) error {
 	c.customerRepo = app.Repositories.Customer
+	c.verificationOTPRepo = app.Repositories.VerificationOTP
 	c.otpService = app.Services.OTP
 	c.response = app.Responses
 	return nil
@@ -106,6 +110,49 @@ func (c *Customer) RegisterStepOne(payload dto.RegisterStepOne) (*dto.RegisterSt
 	data, err := nclient.GetResponseData(resp)
 
 	return &dto.RegisterStepOneResponse{
-		Action: data,
+		Action: data.Message,
+	}, nil
+}
+
+func (c *Customer) RegisterStepTwo(payload dto.RegisterStepTwo) (*dto.RegisterStepTwoResponse, error) {
+	// Set request
+	request := dto.VerifyOTPRequest{
+		PhoneNumber: payload.PhoneNumber,
+		Token:       payload.OTP,
+		RequestType: "register",
+	}
+
+	// Verify OTP To Phone Number
+	resp, err := c.otpService.VerifyOTP(request)
+	if err != nil {
+		return nil, ncore.TraceError(err)
+	}
+
+	// Extract response from server
+	data, err := nclient.GetResponseData(resp)
+
+	// wrong otp handle
+	if data.ResponseCode != "00" {
+		log.Errorf("Wrong OTP. Phone Number : %s", payload.PhoneNumber)
+		return nil, c.response.GetError("E_OTP_1")
+	}
+
+	registrationId := xid.New().String()
+	// Check OTP Wrong
+	insert := &model.VerificationOTP{
+		CreatedAt:      time.Now(),
+		Phone:          payload.PhoneNumber,
+		RegistrationId: registrationId,
+	}
+
+	log.Fatalf("insert ", insert)
+	_, err = c.verificationOTPRepo.Insert(insert)
+	if err != nil {
+		log.Errorf("Error when persist verificationOTP. Phone Number: %s", payload.PhoneNumber)
+		return nil, ncore.TraceError(err)
+	}
+
+	return &dto.RegisterStepTwoResponse{
+		RegisterId: registrationId,
 	}, nil
 }

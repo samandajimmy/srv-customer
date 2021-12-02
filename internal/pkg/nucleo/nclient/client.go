@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/ncore"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nlogger"
 )
@@ -19,7 +20,8 @@ type Nclient struct {
 }
 
 type ResponseSwitching struct {
-	Message string `json:"data"`
+	ResponseCode string `json:"responseCode"`
+	Message      string `json:"data"`
 }
 
 var log = nlogger.Get()
@@ -80,15 +82,15 @@ func GetResponseString(response *http.Response) string {
 	return fmt.Sprintf(string(body))
 }
 
-func GetResponseData(response *http.Response) (string, error) {
+func GetResponseData(response *http.Response) (*ResponseSwitching, error) {
 	defer response.Body.Close()
 	var Response *ResponseSwitching
 	err := json.NewDecoder(response.Body).Decode(&Response)
 	if err != nil {
 		log.Errorf("Error while reading the response bytes:", err)
-		return Response.Message, err
+		return Response, err
 	}
-	return Response.Message, nil
+	return Response, nil
 }
 
 func getBodyRequest(header map[string]string, body map[string]string) *bytes.Buffer {

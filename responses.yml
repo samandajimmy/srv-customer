@@ -55,3 +55,9 @@ E_AUTH_5:
   message: phone number has been used
   metadata:
     http_status: 400
+
+E_OTP_1:
+  success: false
+  message: incorrect otp
+  metadata:
+    http_status: 400

@@ -9,3 +9,9 @@ type SendOTPRequest struct {
 	PhoneNumber string
 	RequestType string
 }
+
+type VerifyOTPRequest struct {
+	PhoneNumber string
+	RequestType string
+	Token       string
+}

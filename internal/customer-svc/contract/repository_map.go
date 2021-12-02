@@ -1,5 +1,6 @@
 package contract
 
 type RepositoryMap struct {
-	Customer CustomerRepository
+	Customer        CustomerRepository
+	VerificationOTP VerificationOTPRepository
 }

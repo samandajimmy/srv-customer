@@ -2,9 +2,10 @@ package customer_svc
 
 import (
 	"fmt"
-	_ "github.com/lib/pq"
 	"net/http"
 	"path"
+
+	_ "github.com/lib/pq"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer-svc/contract"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer-svc/repository"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer-svc/service"
@@ -26,7 +27,8 @@ func NewAPI(core *ncore.Core, config contract.Config) API {
 			Core:   core,
 			Config: config,
 			Repositories: contract.RepositoryMap{
-				Customer: new(repository.Customer),
+				Customer:        new(repository.Customer),
+				VerificationOTP: new(repository.VerificationOTP),
 			},
 			Services: contract.ServiceMap{
 				Auth:     new(service.Auth),

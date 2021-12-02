@@ -1,9 +1,10 @@
 package customer_svc
 
 import (
+	"time"
+
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer-svc/constant"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer-svc/handler"
-	"time"
 )
 
 type HandlerMap struct {

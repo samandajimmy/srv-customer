@@ -1,9 +1,10 @@
 package contract
 
 import (
-	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"net/http"
 	"os"
+
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nhttp"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nsql"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nval"
@@ -74,12 +75,12 @@ func (c *Config) LoadFromEnv() {
 
 	// Load PDS CORE API Config
 	c.CorePDS = CorePDSConfig{
-		CORE_API_URL:          nval.ParseStringFallback(os.Getenv("CORE_API_URL"), ""),
-		CORE_OAUTH_USERNAME:   nval.ParseStringFallback(os.Getenv("CORE_OAUTH_USERNAME"), ""),
-		CORE_OAUTH_PASSWORD:   nval.ParseStringFallback(os.Getenv("CORE_OAUTH_PASSWORD"), ""),
-		CORE_OAUTH_GRANT_TYPE: nval.ParseStringFallback(os.Getenv("CORE_OAUTH_GRANT_TYPE"), ""),
-		CORE_AUTHORIZATION:    nval.ParseStringFallback(os.Getenv("CORE_AUTHORIZATION"), ""),
-		CORE_CLIENT_ID:        nval.ParseStringFallback(os.Getenv("CORE_CLIENT_ID"), ""),
+		CoreApiUrl:         nval.ParseStringFallback(os.Getenv("CORE_API_URL"), ""),
+		CoreOauthUsername:  nval.ParseStringFallback(os.Getenv("CORE_OAUTH_USERNAME"), ""),
+		CoreOauthPassword:  nval.ParseStringFallback(os.Getenv("CORE_OAUTH_PASSWORD"), ""),
+		CoreOauthGrantType: nval.ParseStringFallback(os.Getenv("CORE_OAUTH_GRANT_TYPE"), ""),
+		CoreAuthorization:  nval.ParseStringFallback(os.Getenv("CORE_AUTHORIZATION"), ""),
+		CoreClientId:       nval.ParseStringFallback(os.Getenv("CORE_CLIENT_ID"), ""),
 	}
 }
 
@@ -129,21 +130,21 @@ func (c SMTPConfig) Validate() error {
 }
 
 type CorePDSConfig struct {
-	CORE_API_URL          string
-	CORE_OAUTH_USERNAME   string
-	CORE_OAUTH_PASSWORD   string
-	CORE_OAUTH_GRANT_TYPE string
-	CORE_AUTHORIZATION    string
-	CORE_CLIENT_ID        string
+	CoreApiUrl         string
+	CoreOauthUsername  string
+	CoreOauthPassword  string
+	CoreOauthGrantType string
+	CoreAuthorization  string
+	CoreClientId       string
 }
 
 func (c CorePDSConfig) Validate() error {
 	return validation.ValidateStruct(&c,
-		validation.Field(&c.CORE_API_URL, validation.Required),
-		validation.Field(&c.CORE_OAUTH_USERNAME, validation.Required),
-		validation.Field(&c.CORE_OAUTH_PASSWORD, validation.Required),
-		validation.Field(&c.CORE_OAUTH_GRANT_TYPE, validation.Required),
-		validation.Field(&c.CORE_AUTHORIZATION, validation.Required),
-		validation.Field(&c.CORE_CLIENT_ID, validation.Required),
+		validation.Field(&c.CoreApiUrl, validation.Required),
+		validation.Field(&c.CoreOauthUsername, validation.Required),
+		validation.Field(&c.CoreOauthPassword, validation.Required),
+		validation.Field(&c.CoreOauthGrantType, validation.Required),
+		validation.Field(&c.CoreAuthorization, validation.Required),
+		validation.Field(&c.CoreClientId, validation.Required),
 	)
 }

@@ -22,9 +22,9 @@ func (c *OTP) HasInitialized() bool {
 func (c *OTP) Init(app *contract.PdsApp) error {
 	c.pdsAPI = &app.Config.CorePDS
 	c.client = nclient.NewNucleoClient(
-		c.pdsAPI.CORE_OAUTH_USERNAME,
-		c.pdsAPI.CORE_CLIENT_ID,
-		c.pdsAPI.CORE_API_URL,
+		c.pdsAPI.CoreOauthUsername,
+		c.pdsAPI.CoreClientId,
+		c.pdsAPI.CoreApiUrl,
 	)
 	c.response = app.Responses
 	return nil
@@ -39,14 +39,14 @@ func (c *OTP) GetToken() (string, error) {
 
 	// Set payload
 	reqBody := map[string]string{
-		"username":   c.pdsAPI.CORE_OAUTH_USERNAME,
-		"password":   c.pdsAPI.CORE_OAUTH_PASSWORD,
-		"grant_type": c.pdsAPI.CORE_OAUTH_GRANT_TYPE,
+		"username":   c.pdsAPI.CoreOauthUsername,
+		"password":   c.pdsAPI.CoreOauthPassword,
+		"grant_type": c.pdsAPI.CoreOauthGrantType,
 	}
 
 	// Set header
 	reqHeader := map[string]string{
-		"Authorization": "Basic " + c.pdsAPI.CORE_AUTHORIZATION,
+		"Authorization": "Basic " + c.pdsAPI.CoreAuthorization,
 		"Accept":        "application/json",
 		"Content-Type":  "application/x-www-form-urlencoded",
 	}
@@ -86,7 +86,7 @@ func (c *OTP) SendOTP(payload dto.SendOTPRequest) (*http.Response, error) {
 	// Set payload
 	reqBody := map[string]string{
 		"channelId":   "6017",
-		"clientId":    c.pdsAPI.CORE_OAUTH_USERNAME,
+		"clientId":    c.pdsAPI.CoreClientId,
 		"noHp":        payload.PhoneNumber,
 		"requestType": payload.RequestType,
 	}
@@ -102,6 +102,44 @@ func (c *OTP) SendOTP(payload dto.SendOTPRequest) (*http.Response, error) {
 	resp, err := c.client.PostData("/otp/send", reqBody, reqHeader)
 	if err != nil {
 		log.Errorf("Error when send otp to phone number")
+		return resp, ncore.TraceError(err)
+	}
+
+	// Set result
+	result = resp
+
+	return result, nil
+}
+
+func (c *OTP) VerifyOTP(payload dto.VerifyOTPRequest) (*http.Response, error) {
+	var result *http.Response
+
+	token, err := c.GetToken()
+	if err != nil {
+		log.Errorf("Error when trying to get Access Token. err: %s", err)
+		return result, ncore.TraceError(err)
+	}
+
+	// Set payload
+	reqBody := map[string]string{
+		"channelId":   "6017",
+		"clientId":    c.pdsAPI.CoreClientId,
+		"noHp":        payload.PhoneNumber,
+		"requestType": payload.RequestType,
+		"token":       payload.Token,
+	}
+
+	// Set header
+	reqHeader := map[string]string{
+		"Authorization": "Bearer " + token,
+		"Accept":        "application/json",
+		"Content-Type":  "application/json",
+	}
+
+	// Send OTP Rest Switching
+	resp, err := c.client.PostData("/otp/check", reqBody, reqHeader)
+	if err != nil {
+		log.Errorf("Error when verify otp request")
 		return resp, ncore.TraceError(err)
 	}
 
