@@ -6,6 +6,7 @@ import (
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer-svc/convert"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer-svc/dto"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer-svc/model"
+	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nclient"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/ncore"
 	"strings"
 )
@@ -96,12 +97,15 @@ func (c *Customer) RegisterStepOne(payload dto.RegisterStepOne) (*dto.RegisterSt
 	}
 
 	// Send OTP To Phone Number
-	_, err := c.otpService.SendOTP(request)
+	resp, err := c.otpService.SendOTP(request)
 	if err != nil {
 		return nil, ncore.TraceError(err)
 	}
 
+	// Extract response from server
+	data, err := nclient.GetResponseData(resp)
+
 	return &dto.RegisterStepOneResponse{
-		Message: "Kami telah mengirimkan kode OTP ke nomer hp anda.",
+		Action: data,
 	}, nil
 }

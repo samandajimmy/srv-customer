@@ -104,7 +104,6 @@ func (c *OTP) SendOTP(payload dto.SendOTPRequest) (*http.Response, error) {
 		log.Errorf("Error when send otp to phone number")
 		return resp, ncore.TraceError(err)
 	}
-	defer resp.Body.Close()
 
 	// Set result
 	result = resp

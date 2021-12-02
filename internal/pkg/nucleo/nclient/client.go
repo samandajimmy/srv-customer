@@ -2,6 +2,7 @@ package nclient
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -17,6 +18,10 @@ type Nclient struct {
 	BaseUrl   string
 }
 
+type ResponseSwitching struct {
+	Message string `json:"data"`
+}
+
 var log = nlogger.Get()
 
 func NewNucleoClient(channelId string, clientId string, baseUrl string) *Nclient {
@@ -30,7 +35,10 @@ func NewNucleoClient(channelId string, clientId string, baseUrl string) *Nclient
 
 func (c *Nclient) PostData(endpoint string, body map[string]string, header map[string]string) (*http.Response, error) {
 	var result *http.Response
-	var payload = setBodyRequest(body)
+	var payload *bytes.Buffer
+
+	// Get body request
+	payload = getBodyRequest(header, body)
 
 	// Make request http
 	endPoint := c.BaseUrl + endpoint
@@ -43,9 +51,7 @@ func (c *Nclient) PostData(endpoint string, body map[string]string, header map[s
 	// Set header
 	request = setHeaderRequest(request, header)
 	log.Debugf("Request header: %s", request.Header)
-	fmt.Println(request.Header)
 	log.Debugf("Request body: %s", request.Body)
-	fmt.Println(request.Body)
 
 	// Do request http with client
 	resp, err := c.Client.Do(request)
@@ -54,13 +60,8 @@ func (c *Nclient) PostData(endpoint string, body map[string]string, header map[s
 		return result, ncore.TraceError(err)
 	}
 
-	if resp.StatusCode != 200 {
-		body, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			log.Errorf("Error while reading the response bytes:", err)
-		}
-		log.Debugf(string([]byte(body)))
-		fmt.Println(string([]byte(body)))
+	if resp.StatusCode != http.StatusOK {
+		fmt.Println(GetResponseString(resp))
 	}
 
 	// Set result
@@ -69,14 +70,57 @@ func (c *Nclient) PostData(endpoint string, body map[string]string, header map[s
 	return result, nil
 }
 
-func setBodyRequest(data map[string]string) *bytes.Buffer {
-	// Set param for body request
+func GetResponseString(response *http.Response) string {
+	body, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		log.Errorf("Error while reading the response bytes:", err)
+		return ""
+	}
+	log.Debugf(string(body))
+	return fmt.Sprintf(string(body))
+}
+
+func GetResponseData(response *http.Response) (string, error) {
+	defer response.Body.Close()
+	var Response *ResponseSwitching
+	err := json.NewDecoder(response.Body).Decode(&Response)
+	if err != nil {
+		log.Errorf("Error while reading the response bytes:", err)
+		return Response.Message, err
+	}
+	return Response.Message, nil
+}
+
+func getBodyRequest(header map[string]string, body map[string]string) *bytes.Buffer {
+	var payload *bytes.Buffer
+	switch header["Content-Type"] {
+	case "application/json":
+		payload = setBodyApplicationJSON(body)
+		break
+	case "application/x-www-form-urlencoded":
+		payload = setBodyUrlEncoded(body)
+		break
+	default:
+		payload = setBodyApplicationJSON(body)
+		break
+	}
+	return payload
+}
+
+func setBodyUrlEncoded(data map[string]string) *bytes.Buffer {
 	var param = url.Values{}
 	for key, value := range data {
 		param.Set(key, value)
 	}
 
 	return bytes.NewBufferString(param.Encode())
+}
+
+func setBodyApplicationJSON(data map[string]string) *bytes.Buffer {
+	// Set param for body request
+	jsonValue, _ := json.Marshal(data)
+
+	return bytes.NewBuffer(jsonValue)
 }
 
 func setHeaderRequest(request *http.Request, data map[string]string) *http.Request {

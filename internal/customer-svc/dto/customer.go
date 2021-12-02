@@ -32,7 +32,7 @@ type RegisterStepOne struct {
 }
 
 type RegisterStepOneResponse struct {
-	Message string `json:"message"`
+	Action string `json:"action"`
 }
 
 func (d RegisterStepOne) Validate() error {
