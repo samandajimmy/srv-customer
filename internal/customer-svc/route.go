@@ -14,6 +14,8 @@ func setUpRoute(router *nhttp.Router, handlers *HandlerMap) {
 	router.Handle(http.MethodPost, "/auth/register", router.HandleFunc(handlers.Customer.PostCreate))
 	// Register Step-1
 	router.Handle(http.MethodPost, "/register/step-1", router.HandleFunc(handlers.Customer.SendOTP))
+	// Register Resend OTP
+	router.Handle(http.MethodPost, "/register/resend-otp", router.HandleFunc(handlers.Customer.ResendOTP))
 	// Register Step-2
 	router.Handle(http.MethodPost, "/register/step-2", router.HandleFunc(handlers.Customer.VerifyOTP))
 }

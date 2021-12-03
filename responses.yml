@@ -79,3 +79,9 @@ E_OTP_1:
   message: incorrect otp
   metadata:
     http_status: 400
+
+E_OTP_2:
+  success: false
+  message: resend otp failed
+  metadata:
+    http_status: 400

@@ -88,7 +88,7 @@ func (h *Customer) SendOTP(rx *nhttp.Request) (*nhttp.Response, error) {
 	// Call service
 	resp, err := h.customerService.RegisterStepOne(payload)
 	if err != nil {
-		log.Errorf("Error when proccessing service. err: %v", err)
+		log.Errorf("Error when processing service. err: %v", err)
 		return nil, err
 	}
 
@@ -113,6 +113,32 @@ func (h *Customer) VerifyOTP(rx *nhttp.Request) (*nhttp.Response, error) {
 
 	// Call service
 	resp, err := h.customerService.RegisterStepTwo(payload)
+	if err != nil {
+		log.Errorf("Error when processing service. err: %v", err)
+		return nil, err
+	}
+
+	return nhttp.Success().SetData(resp), nil
+}
+
+func (h *Customer) ResendOTP(rx *nhttp.Request) (*nhttp.Response, error) {
+	// Get Payload
+	var payload dto.RegisterResendOTP
+	err := rx.ParseJSONBody(&payload)
+	if err != nil {
+		log.Errorf("Error when parse json body. err: %v", err)
+		return nil, nhttp.BadRequestError.Wrap(err)
+	}
+
+	// Validate payload
+	err = payload.Validate()
+	if err != nil {
+		log.Errorf("Bad request. err: %v", err)
+		return nil, nhttp.BadRequestError.Wrap(err)
+	}
+
+	// Call service
+	resp, err := h.customerService.RegisterResendOTP(payload)
 	if err != nil {
 		log.Errorf("Error when processing service. err: %v", err)
 		return nil, err

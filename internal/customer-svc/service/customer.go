@@ -145,7 +145,6 @@ func (c *Customer) RegisterStepTwo(payload dto.RegisterStepTwo) (*dto.RegisterSt
 		RegistrationId: registrationId,
 	}
 
-	log.Fatalf("insert ", insert)
 	_, err = c.verificationOTPRepo.Insert(insert)
 	if err != nil {
 		log.Errorf("Error when persist verificationOTP. Phone Number: %s", payload.PhoneNumber)
@@ -154,5 +153,32 @@ func (c *Customer) RegisterStepTwo(payload dto.RegisterStepTwo) (*dto.RegisterSt
 
 	return &dto.RegisterStepTwoResponse{
 		RegisterId: registrationId,
+	}, nil
+}
+
+func (c *Customer) RegisterResendOTP(payload dto.RegisterResendOTP) (*dto.RegisterResendOTPResponse, error) {
+	// Set request
+	request := dto.SendOTPRequest{
+		PhoneNumber: payload.PhoneNumber,
+		RequestType: "register",
+	}
+
+	// Send OTP To Phone Number
+	resp, err := c.otpService.SendOTP(request)
+	if err != nil {
+		return nil, ncore.TraceError(err)
+	}
+
+	// Extract response from server
+	data, err := nclient.GetResponseData(resp)
+
+	// wrong otp handle
+	if data.ResponseCode != "00" {
+		log.Errorf("Wrong OTP. Phone Number : %s", payload.PhoneNumber)
+		return nil, c.response.GetError("E_OTP_2")
+	}
+
+	return &dto.RegisterResendOTPResponse{
+		Action: data.Message,
 	}, nil
 }
