@@ -9,4 +9,7 @@ type VerificationOTPRepository interface {
 type CustomerRepository interface {
 	Insert(row *model.Customer) (int64, error)
 	FindByPhone(phone string) *model.Customer
+	FindByEmailOrPhone(phone string) *model.CustomerAuthentication
+	BlockAccount(phone string) error
+	UnBlockAccount(phone string) error
 }

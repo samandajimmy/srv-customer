@@ -32,7 +32,62 @@ func (c *Customer) Init(app *contract.PdsApp) error {
 	return nil
 }
 
-func (c *Customer) Register(payload dto.RegisterNewCustomer) (*dto.NewRegisterResponse, error) {
+func (c *Customer) Login(payload dto.LoginRequest) (*dto.CustomerVO, error) {
+
+	// check user exists
+	customer := c.customerRepo.FindByEmailOrPhone(payload.Email)
+	if customer == nil {
+		return nil, c.response.GetError("E_AUTH_8")
+	}
+
+	// counter wrong password count
+	customer.WrongPasswordCount += 1
+
+	if customer.WrongPasswordCount == 2 {
+		return nil, c.response.GetError("E_AUTH_6")
+	} else if customer.WrongPasswordCount == 4 {
+		return nil, c.response.GetError("E_AUTH_7")
+	}
+
+	// TODO Check account is first login or not
+
+	// TODO Store audit login
+
+	// TODO: update user_model -> try_login_date = now()
+
+	// if password doesn't match
+	// 	cek setBlockedUser function
+	//    if blocked_to_date > now()
+	//    	return err_account_locked message
+
+	if customer.Password != payload.Password {
+		//
+	}
+
+	// if password is matched
+	//    update user_model
+	//   		set blocked_date = null
+	//        set blocked_to_date = null
+	//        wrong_password_count = 0
+
+	// check user account is blocked or not
+
+	// set token authentication
+
+	// get user data
+
+	// get tabungan emas service
+
+	// check is force update password
+
+	// return response user and token
+
+	return nil, nil
+}
+
+func (c *Customer) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCustomerResponse, error) {
+
+	// find registerID
 
 	// Get data user
 	customer := c.customerRepo.FindByPhone(payload.PhoneNumber)
@@ -67,7 +122,7 @@ func (c *Customer) Register(payload dto.RegisterNewCustomer) (*dto.NewRegisterRe
 		Metadata:       []byte("{}"),
 		ItemMetadata:   model.NewItemMetadata(convert.ModifierDTOToModel(dto.Modifier{ID: "", Role: "", FullName: ""})),
 	}
-	userId, err := c.customerRepo.Insert(insert)
+	_, err := c.customerRepo.Insert(insert)
 	if err != nil {
 		log.Errorf("Error when persist customer : %s", payload.Name)
 		return nil, ncore.TraceError(err)
@@ -82,9 +137,8 @@ func (c *Customer) Register(payload dto.RegisterNewCustomer) (*dto.NewRegisterRe
 	// If send otp is success
 	// TODO: Update customer data
 
-	return &dto.NewRegisterResponse{
-		Token:  customerXID,
-		ReffId: userId,
+	return &dto.RegisterNewCustomerResponse{
+		Token: customerXID,
 	}, nil
 }
 
@@ -181,4 +235,9 @@ func (c *Customer) RegisterResendOTP(payload dto.RegisterResendOTP) (*dto.Regist
 	return &dto.RegisterResendOTPResponse{
 		Action: data.Message,
 	}, nil
+}
+
+func (c *Customer) RegisterSubmit(payload dto.RegisterResendOTP) (*dto.RegisterResendOTPResponse, error) {
+
+	return nil, nil
 }

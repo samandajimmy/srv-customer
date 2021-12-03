@@ -33,3 +33,17 @@ func (a *Customer) FindByPhone(phone string) *model.Customer {
 	_ = a.stmt.FindByPhone.Get(&row, phone)
 	return &row
 }
+
+func (a *Customer) FindByEmailOrPhone(phone string) *model.CustomerAuthentication {
+	var row model.CustomerAuthentication
+	_ = a.stmt.FindByEmailOrPhone.Get(&row, phone)
+	return &row
+}
+
+func (a *Customer) BlockAccount(phone string) error {
+	return nil
+}
+
+func (a *Customer) UnBlockAccount(phone string) error {
+	return nil
+}
