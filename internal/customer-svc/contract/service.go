@@ -22,3 +22,8 @@ type OTPService interface {
 	SendOTP(payload dto.SendOTPRequest) (*http.Response, error)
 	VerifyOTP(payload dto.VerifyOTPRequest) (*http.Response, error)
 }
+
+type CacheService interface {
+	Get(key string) (string, error)
+	SetThenGet(key string, value string, expire int64) (string, error)
+}

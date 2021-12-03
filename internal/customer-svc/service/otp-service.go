@@ -2,7 +2,9 @@ package service
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer-svc/constant"
 
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer-svc/contract"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer-svc/dto"
@@ -11,9 +13,11 @@ import (
 )
 
 type OTP struct {
-	client   *nclient.Nclient
-	pdsAPI   *contract.CorePDSConfig
-	response *ncore.ResponseMap
+	client       *nclient.Nclient
+	pdsAPI       *contract.CorePDSConfig
+	cacheService contract.CacheService
+	cacheKey     string
+	response     *ncore.ResponseMap
 }
 
 func (c *OTP) HasInitialized() bool {
@@ -27,13 +31,23 @@ func (c *OTP) Init(app *contract.PdsApp) error {
 		c.pdsAPI.CoreClientId,
 		c.pdsAPI.CoreApiUrl,
 	)
+	c.cacheService = app.Services.Cache
+	c.cacheKey = fmt.Sprintf("%s:%s", constant.PREFIX, "token_switching")
 	c.response = app.Responses
 	return nil
 }
 
 func (c *OTP) GetToken() (string, error) {
 
-	// TODO: Get token is exist on redis
+	// Get token if is exist on redis
+	token, err := c.cacheService.Get(c.cacheKey)
+	if err != nil {
+		return "", err
+	}
+
+	if token != "" {
+		return token, nil
+	}
 
 	// Initialise result
 	var result string
@@ -60,8 +74,6 @@ func (c *OTP) GetToken() (string, error) {
 	}
 	defer resp.Body.Close()
 
-	// TODO: Store token to redis
-
 	// Decode response body from server.
 	var data dto.TokenResponse
 	err = json.NewDecoder(resp.Body).Decode(&data)
@@ -70,7 +82,11 @@ func (c *OTP) GetToken() (string, error) {
 		return result, err
 	}
 
-	result = data.AccessToken
+	// Store token to redis
+	result, err = c.cacheService.SetThenGet(c.cacheKey, data.AccessToken, data.ExpiresIn)
+	if err != nil {
+		return "", err
+	}
 
 	return result, nil
 }

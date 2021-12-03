@@ -16,3 +16,7 @@ type AssetType = int8
 const (
 	ThumbnailAsset = AssetType(iota + 1)
 )
+
+const (
+	PREFIX = "MSCUSTOMER"
+)

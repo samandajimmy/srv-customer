@@ -13,4 +13,5 @@ type ServiceMap struct {
 	Auth     AuthService
 	Customer CustomerService
 	OTP      OTPService
+	Cache    CacheService
 }

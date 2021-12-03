@@ -17,31 +17,31 @@ type Customer struct {
 	customerService contract.CustomerService
 }
 
-func (h *Customer) PostLogin(rx *nhttp.Request) (*nhttp.Response, error) {
-	// Get Payload
-	var payload dto.LoginRequest
-	err := rx.ParseJSONBody(&payload)
-	if err != nil {
-		log.Errorf("Error when parse json body. err: %v", err)
-		return nil, nhttp.BadRequestError.Wrap(err)
-	}
-
-	// Validate payload
-	err = payload.Validate()
-	if err != nil {
-		log.Errorf("Bad request. err: %v", err)
-		return nil, nhttp.BadRequestError.Wrap(err)
-	}
-
-	// Call service
-	resp, err := h.customerService.Login(payload)
-	if err != nil {
-		log.Errorf("Error when processing service. err: %v", err)
-		return nil, err
-	}
-
-	return nhttp.Success().SetData(resp), nil
-}
+//func (h *Customer) PostLogin(rx *nhttp.Request) (*nhttp.Response, error) {
+//	// Get Payload
+//	var payload dto.LoginRequest
+//	err := rx.ParseJSONBody(&payload)
+//	if err != nil {
+//		log.Errorf("Error when parse json body. err: %v", err)
+//		return nil, nhttp.BadRequestError.Wrap(err)
+//	}
+//
+//	// Validate payload
+//	err = payload.Validate()
+//	if err != nil {
+//		log.Errorf("Bad request. err: %v", err)
+//		return nil, nhttp.BadRequestError.Wrap(err)
+//	}
+//
+//	// Call service
+//	resp, err := h.customerService.Login(payload)
+//	if err != nil {
+//		log.Errorf("Error when processing service. err: %v", err)
+//		return nil, err
+//	}
+//
+//	return nhttp.Success().SetData(resp), nil
+//}
 
 func (h *Customer) PostCreate(rx *nhttp.Request) (*nhttp.Response, error) {
 	// Get Payload

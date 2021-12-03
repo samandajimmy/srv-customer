@@ -17,6 +17,7 @@ type Config struct {
 	CORS        nhttp.CORSConfig
 	SMTP        SMTPConfig
 	CorePDS     CorePDSConfig
+	Redis       RedisConfig
 }
 
 func (c *Config) LoadFromEnv() {
@@ -82,6 +83,15 @@ func (c *Config) LoadFromEnv() {
 		CoreAuthorization:  nval.ParseStringFallback(os.Getenv("CORE_AUTHORIZATION"), ""),
 		CoreClientId:       nval.ParseStringFallback(os.Getenv("CORE_CLIENT_ID"), ""),
 	}
+
+	// Load Redis Config
+	c.Redis = RedisConfig{
+		RedisScheme: nval.ParseStringFallback(os.Getenv("REDIS_SCHEME"), ""),
+		RedisHost:   nval.ParseStringFallback(os.Getenv("REDIS_HOST"), ""),
+		RedisPort:   nval.ParseStringFallback(os.Getenv("REDIS_PORT"), ""),
+		RedisPass:   nval.ParseStringFallback(os.Getenv("REDIS_PASS"), ""),
+		RedisExpiry: nval.ParseInt64Fallback(os.Getenv("REDIS_EXPIRY"), 0),
+	}
 }
 
 func (c Config) Validate() error {
@@ -146,5 +156,21 @@ func (c CorePDSConfig) Validate() error {
 		validation.Field(&c.CoreOauthGrantType, validation.Required),
 		validation.Field(&c.CoreAuthorization, validation.Required),
 		validation.Field(&c.CoreClientId, validation.Required),
+	)
+}
+
+type RedisConfig struct {
+	RedisScheme string
+	RedisHost   string
+	RedisPort   string
+	RedisPass   string
+	RedisExpiry int64
+}
+
+func (c RedisConfig) Validate() error {
+	return validation.ValidateStruct(&c,
+		validation.Field(&c.RedisScheme, validation.Required),
+		validation.Field(&c.RedisHost, validation.Required),
+		validation.Field(&c.RedisPort, validation.Required),
 	)
 }
