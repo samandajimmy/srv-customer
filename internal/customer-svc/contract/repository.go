@@ -13,3 +13,7 @@ type CustomerRepository interface {
 	BlockAccount(phone string) error
 	UnBlockAccount(phone string) error
 }
+
+type OTPRepository interface {
+	Insert(row *model.OTP) (int64, error)
+}

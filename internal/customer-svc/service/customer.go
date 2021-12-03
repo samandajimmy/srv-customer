@@ -16,6 +16,7 @@ import (
 type Customer struct {
 	customerRepo        contract.CustomerRepository
 	verificationOTPRepo contract.VerificationOTPRepository
+	OTPRepo             contract.OTPRepository
 	otpService          contract.OTPService
 	response            *ncore.ResponseMap
 }
@@ -27,6 +28,7 @@ func (c *Customer) HasInitialized() bool {
 func (c *Customer) Init(app *contract.PdsApp) error {
 	c.customerRepo = app.Repositories.Customer
 	c.verificationOTPRepo = app.Repositories.VerificationOTP
+	c.OTPRepo = app.Repositories.OTP
 	c.otpService = app.Services.OTP
 	c.response = app.Responses
 	return nil
