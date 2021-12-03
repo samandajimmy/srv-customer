@@ -1,6 +1,9 @@
 package model
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"time"
+)
 
 type Customer struct {
 	CustomerXID    string          `db:"xid"`
@@ -18,4 +21,15 @@ type Customer struct {
 	Status         int64           `db:"status"`
 	Metadata       json.RawMessage `db:"metadata"`
 	ItemMetadata
+}
+
+type CustomerAuthentication struct {
+	FullName           string          `db:"fullName"`
+	Phone              string          `db:"phone"`
+	Email              string          `db:"email"`
+	BlockedAt          time.Time       `db:"blockedAt"`
+	BlockedUntilAt     time.Time       `db:"blockedUntilAt"`
+	Metadata           json.RawMessage `db:"metadata"`
+	WrongPasswordCount int64           `db:"wrongPasswordCount"`
+	Password           string          `db:"password"`
 }

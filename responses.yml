@@ -56,6 +56,24 @@ E_AUTH_5:
   metadata:
     http_status: 400
 
+E_AUTH_6:
+  success: false
+  message: Masukan nomor handphone dan password yang sesuai. 1 kesempatan lagi sebelum akun terkunci selama 1 jam.
+  metadata:
+    http_status: 400
+
+E_AUTH_7:
+  success: false
+  message: Masukan nomor handphone dan password yang sesuai. 1 kesempatan lagi sebelum akun terkunci selama 24 jam.
+  metadata:
+    http_status: 400
+
+E_AUTH_8:
+  success: false
+  message: Masukan email dan password yang sesuai. Pastikan email telah diverifikasi
+  metadata:
+    http_status: 400
+
 E_OTP_1:
   success: false
   message: incorrect otp
