@@ -30,6 +30,7 @@ func NewAPI(core *ncore.Core, config contract.Config) API {
 				Customer:        new(repository.Customer),
 				VerificationOTP: new(repository.VerificationOTP),
 				OTP:             new(repository.OTP),
+				Credential:      new(repository.Credential),
 			},
 			Services: contract.ServiceMap{
 				Auth:     new(service.Auth),

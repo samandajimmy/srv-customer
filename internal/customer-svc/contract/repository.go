@@ -17,3 +17,7 @@ type CustomerRepository interface {
 type OTPRepository interface {
 	Insert(row *model.OTP) (int64, error)
 }
+
+type CredentialRepository interface {
+	Insert(row *model.Credential) (int64, error)
+}

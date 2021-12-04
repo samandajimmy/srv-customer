@@ -4,4 +4,5 @@ type RepositoryMap struct {
 	Customer        CustomerRepository
 	VerificationOTP VerificationOTPRepository
 	OTP             OTPRepository
+	Credential      CredentialRepository
 }
