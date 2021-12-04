@@ -18,6 +18,7 @@ type Customer struct {
 	verificationOTPRepo contract.VerificationOTPRepository
 	OTPRepo             contract.OTPRepository
 	CredentialRepo      contract.CredentialRepository
+	AccessSessionRepo   contract.AccessSessionRepository
 	otpService          contract.OTPService
 	response            *ncore.ResponseMap
 }
@@ -31,6 +32,7 @@ func (c *Customer) Init(app *contract.PdsApp) error {
 	c.verificationOTPRepo = app.Repositories.VerificationOTP
 	c.OTPRepo = app.Repositories.OTP
 	c.CredentialRepo = app.Repositories.Credential
+	c.AccessSessionRepo = app.Repositories.AccessSession
 	c.otpService = app.Services.OTP
 	c.response = app.Responses
 	return nil
