@@ -85,3 +85,9 @@ E_OTP_2:
   message: resend otp failed
   metadata:
     http_status: 400
+
+E_REG_1:
+  success: false
+  message: registration failed
+  metadata:
+    http_status: 400

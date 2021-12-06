@@ -1,11 +1,16 @@
 package model
 
-import "time"
+import (
+	"encoding/json"
+	"time"
+)
 
 type AccessSession struct {
-	CustomerId           int64     `db:"customerId"`
-	ExpiredAt            time.Time `db:"expiredAt"`
-	NotificationToken    string    `db:"notificationToken"`
-	NotificationProvider int64     `db:"notificationProvider"`
+	Xid                  string          `db:"xid"`
+	CustomerId           int64           `db:"customerId"`
+	ExpiredAt            time.Time       `db:"expiredAt"`
+	NotificationToken    string          `db:"notificationToken"`
+	NotificationProvider int64           `db:"notificationProvider"`
+	Metadata             json.RawMessage `db:"metadata"`
 	ItemMetadata
 }

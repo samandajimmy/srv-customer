@@ -12,7 +12,7 @@ type AccessSession struct {
 	stmt *statement.AccessSessionStatement
 }
 
-func (c *AccessSession) HasInitialized() bool {
+func (a *AccessSession) HasInitialized() bool {
 	return true
 }
 
@@ -22,11 +22,15 @@ func (a *AccessSession) Init(dataSources DataSourceMap, _ contract.RepositoryMap
 	return nil
 }
 
-func (a *AccessSession) Insert(row *model.AccessSession) (int64, error) {
-	var lastInsertId int64
-	err := a.stmt.Insert.QueryRow(&row).Scan(&lastInsertId)
+func (a *AccessSession) Insert(row *model.AccessSession) error {
+	_, err := a.stmt.Insert.Exec(row)
+	return err
+}
+
+func (a *AccessSession) Update(row *model.AccessSession) error {
+	result, err := a.stmt.Update.Exec(row)
 	if err != nil {
-		return 0, err
+		return err
 	}
-	return lastInsertId, nil
+	return nsql.IsUpdated(result)
 }
