@@ -94,15 +94,25 @@ func (c *Customer) Login(payload dto.LoginRequest) (*dto.CustomerVO, error) {
 }
 
 func (c *Customer) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCustomerResponse, error) {
-	// find registerID
-	registerOTP, err := c.verificationOTPRepo.FindByRegistrationId(payload.RegistrationId)
+	// validate exist
+	customer, err := c.customerRepo.FindByEmail(payload.Email)
 	if err != nil {
-		log.Errorf("Registration ID not found : %s", payload.RegistrationId)
+		log.Errorf("error while retrieve by email: %s", payload.Email)
+		return nil, c.response.GetError("E_REG_1")
+	}
+	if customer != nil {
+		log.Debugf("Email already registered: %s", payload.RegistrationId)
+		return nil, c.response.GetError("E_REG_2")
+	}
+	// find registerID
+	registerOTP, err := c.verificationOTPRepo.FindByRegistrationIdAndPhone(payload.RegistrationId, payload.PhoneNumber)
+	if err != nil {
+		log.Errorf("Registration ID not found: %s", payload.RegistrationId)
 		return nil, c.response.GetError("E_REG_1")
 	}
 
 	// Get data user
-	customer, _ := c.customerRepo.FindByPhone(payload.PhoneNumber)
+	customer, _ = c.customerRepo.FindByPhone(payload.PhoneNumber)
 
 	var customerXID string
 	var customerId int64

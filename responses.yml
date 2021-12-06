@@ -91,3 +91,9 @@ E_REG_1:
   message: registration failed
   metadata:
     http_status: 400
+
+E_REG_2:
+  success: false
+  message: email already registered
+  metadata:
+    http_status: 400

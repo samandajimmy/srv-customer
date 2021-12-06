@@ -16,8 +16,8 @@ func NewVerificationOTPStatement(db *nsql.DB) *VerificationOTPStatement {
 	columns := `"createdAt", "registrationId", "phone"`
 	namedColumns := `:createdAt,:registrationId,:phone`
 	return &VerificationOTPStatement{
-		Insert:               db.PrepareNamedFmt("INSERT INTO \"%s\"(%s) VALUES (%s) RETURNING id", verificationOTPTable, columns, namedColumns),
-		FindByRegistrationId: db.PrepareFmt(`SELECT "registrationId" FROM "%s" WHERE "registrationId" = $1`, verificationOTPTable),
-		Delete:               db.PrepareFmt("DELETE FROM \"%s\" WHERE \"registrationId\" = $1 AND \"phone\" = $2", verificationOTPTable),
+		Insert:               db.PrepareNamedFmt(`INSERT INTO "%s" (%s) VALUES (%s) RETURNING id`, verificationOTPTable, columns, namedColumns),
+		FindByRegistrationId: db.PrepareFmt(`SELECT "registrationId" FROM "%s" WHERE "registrationId" = $1 AND phone = $2`, verificationOTPTable),
+		Delete:               db.PrepareFmt(`DELETE FROM "%s" WHERE "registrationId" = $1 AND "phone" = $2`, verificationOTPTable),
 	}
 }
