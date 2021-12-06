@@ -21,6 +21,7 @@ func (c *Cache) Init(app *contract.PdsApp) error {
 		redisConfig.RedisScheme,
 		redisConfig.RedisHost,
 		redisConfig.RedisPort,
+		redisConfig.RedisPass,
 	)
 	c.response = app.Responses
 	return nil

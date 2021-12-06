@@ -2,6 +2,7 @@ package nredis
 
 import (
 	"fmt"
+
 	"github.com/gomodule/redigo/redis"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/ncore"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nlogger"
@@ -14,9 +15,9 @@ type Redis struct {
 	redis redis.Conn
 }
 
-func NewNucleoRedis(network string, host string, port string) *Redis {
+func NewNucleoRedis(network string, host string, port string, password string) *Redis {
 	// Init new pool redis
-	pool, err := DialClient(network, host, port)
+	pool, err := DialClient(network, host, port, password)
 	if err != nil {
 		log.Errorf("Connecting to redis client is failed err: %s", err)
 		return nil
@@ -31,7 +32,7 @@ func NewNucleoRedis(network string, host string, port string) *Redis {
 	}
 }
 
-func DialClient(network string, host string, port string) (*redis.Pool, error) {
+func DialClient(network string, host string, port string, password string) (*redis.Pool, error) {
 
 	address := fmt.Sprintf("%s:%s", host, port)
 
@@ -39,7 +40,7 @@ func DialClient(network string, host string, port string) (*redis.Pool, error) {
 		MaxIdle:   50,
 		MaxActive: 10000,
 		Dial: func() (redis.Conn, error) {
-			conn, err := redis.Dial(network, address)
+			conn, err := redis.Dial(network, address, redis.DialPassword(password))
 			if err != nil {
 				return nil, ncore.TraceError(err)
 			}

@@ -86,9 +86,9 @@ func (c *Config) LoadFromEnv() {
 
 	// Load Redis Config
 	c.Redis = RedisConfig{
-		RedisScheme: nval.ParseStringFallback(os.Getenv("REDIS_SCHEME"), ""),
-		RedisHost:   nval.ParseStringFallback(os.Getenv("REDIS_HOST"), ""),
-		RedisPort:   nval.ParseStringFallback(os.Getenv("REDIS_PORT"), ""),
+		RedisScheme: nval.ParseStringFallback(os.Getenv("REDIS_SCHEME"), "tcp"),
+		RedisHost:   nval.ParseStringFallback(os.Getenv("REDIS_HOST"), "localhost"),
+		RedisPort:   nval.ParseStringFallback(os.Getenv("REDIS_PORT"), "6379"),
 		RedisPass:   nval.ParseStringFallback(os.Getenv("REDIS_PASS"), ""),
 		RedisExpiry: nval.ParseInt64Fallback(os.Getenv("REDIS_EXPIRY"), 0),
 	}
