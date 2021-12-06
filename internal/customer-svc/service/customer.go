@@ -128,7 +128,7 @@ func (c *Customer) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCu
 		customerId = customer.Id
 	} else {
 		// create new one
-		customerXID := strings.ToUpper(xid.New().String())
+		customerXID = strings.ToUpper(xid.New().String())
 		metaData := model.NewItemMetadata(
 			convert.ModifierDTOToModel(
 				dto.Modifier{ID: "", Role: "", FullName: ""},
@@ -138,8 +138,8 @@ func (c *Customer) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCu
 			CustomerXID:    customerXID,
 			FullName:       payload.Name,
 			Phone:          payload.PhoneNumber,
-			Status:         0,
 			Email:          payload.Email,
+			Status:         0,
 			IdentityType:   0,
 			IdentityNumber: "",
 			UserRefId:      0,
@@ -158,6 +158,7 @@ func (c *Customer) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCu
 		}
 		customerId = lastInsertId
 		customer = insertCustomer
+		customerXID = customer.CustomerXID
 	}
 
 	customer.Status = 1
