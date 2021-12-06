@@ -57,21 +57,22 @@ CREATE TABLE public."Address"
 
 CREATE TABLE public."Verification"
 (
-    "id"                              BIGSERIAL PRIMARY KEY NOT NULL,
-    "xid"                             varchar(64)  NOT NULL,
-    "metadata"                        JSON         NULL,
+    "id"                              BIGSERIAL PRIMARY KEY       NOT NULL,
+    "xid"                             varchar(64)                 NOT NULL,
+    "metadata"                        JSON                        NULL,
     "createdAt"                       timestamp without time zone NOT NULL,
     "updatedAt"                       timestamp without time zone NOT NULL,
-    "modifiedBy"                      JSON         NOT NULL,
-    "version"                         bigint       NOT NULL DEFAULT 1,
-    "customerId"                      bigint       NOT NULL,
-    "kycVerifiedStatus"               smallint      NOT NULL,
+    "modifiedBy"                      JSON                        NOT NULL,
+    "version"                         bigint                      NOT NULL DEFAULT 1,
+    "customerId"                      bigint                      NOT NULL,
+    "kycVerifiedStatus"               smallint                    NOT NULL,
     "kycVerifiedAt"                   timestamp without time zone NOT NULL,
-    "emailVerifiedStatus"             smallint      NOT NULL,
+    "emailVerificationToken"              VARCHAR(128),
+    "emailVerifiedStatus"             smallint                    NOT NULL,
     "emailVerifiedAt"                 timestamp without time zone NOT NULL,
-    "dukcapilVerifiedStatus"          smallint      NOT NULL,
+    "dukcapilVerifiedStatus"          smallint                    NOT NULL,
     "dukcapilVerifiedAt"              timestamp without time zone NOT NULL,
-    "financialTransactionStatus"      smallint     NOT NULL,
+    "financialTransactionStatus"      smallint                    NOT NULL,
     "financialTransactionActivatedAt" timestamp without time zone NOT NULL
 );
 
@@ -119,20 +120,20 @@ CREATE TABLE public."Credential"
     "version"                         bigint       NOT NULL DEFAULT 1,
     "customerId"                      bigint       NOT NULL,
     "password"                        varchar(60)  NOT NULL,
-    "nextPasswordResetAt"             timestamp without time zone NOT NULL,
+    "nextPasswordResetAt"             timestamp without time zone,
     "pin"                             varchar(32)  NOT NULL,
     "pinCif"                          varchar(200) NOT NULL,
-    "pinUpdatedAt"                    timestamp without time zone NOT NULL,
-    "pinLastAccessAt"                 timestamp without time zone NOT NULL,
+    "pinUpdatedAt"                    timestamp without time zone,
+    "pinLastAccessAt"                 timestamp without time zone,
     "pinCounter"                      smallint      NOT NULL,
     "pinBlockedStatus"                smallint      NOT NULL,
     "isLocked"                        smallint      NOT NULL,
     "loginFailCount"                  smallint      NOT NULL,
     "wrongPasswordCount"              smallint      NOT NULL,
-    "blockedAt"                       timestamp without time zone NOT NULL,
-    "blockedUntilAt"                  timestamp without time zone NOT NULL,
+    "blockedAt"                       timestamp without time zone,
+    "blockedUntilAt"                  timestamp without time zone,
     "biometricLogin"                  smallint      NOT NULL,
-    "biometricDeviceId"               bigint       NOT NULL
+    "biometricDeviceId"               varchar(64)   NOT NULL
 );
 
 -- TODO: ADD FOREIGN KEY each customerId field --
