@@ -12,7 +12,7 @@ type OTP struct {
 	stmt *statement.OTPStatement
 }
 
-func (c *OTP) HasInitialized() bool {
+func (a *OTP) HasInitialized() bool {
 	return true
 }
 
@@ -22,11 +22,7 @@ func (a *OTP) Init(dataSources DataSourceMap, _ contract.RepositoryMap) error {
 	return nil
 }
 
-func (a *OTP) Insert(row *model.OTP) (int64, error) {
-	var lastInsertId int64
-	err := a.stmt.Insert.QueryRow(&row).Scan(&lastInsertId)
-	if err != nil {
-		return 0, err
-	}
-	return lastInsertId, nil
+func (a *OTP) Insert(row *model.OTP) error {
+	_, err := a.stmt.Insert.Exec(row)
+	return err
 }

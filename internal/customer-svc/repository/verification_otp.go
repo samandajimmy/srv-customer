@@ -26,8 +26,24 @@ func (a *VerificationOTP) Insert(row *model.VerificationOTP) (int64, error) {
 	var lastInsertId int64
 	err := a.stmt.Insert.QueryRow(&row).Scan(&lastInsertId)
 	if err != nil {
-		log.Fatalf("ERR INSERT %v", err)
 		return 0, err
 	}
 	return lastInsertId, nil
+}
+
+func (a *VerificationOTP) FindByRegistrationId(id string) (*model.VerificationOTP, error) {
+	var row model.VerificationOTP
+	err := a.stmt.FindByRegistrationId.Get(&row, id)
+	if err != nil {
+		return nil, err
+	}
+	return &row, nil
+}
+
+func (a *VerificationOTP) Delete(id string, phone string) error {
+	_, err := a.stmt.Delete.Exec(id, phone)
+	if err != nil {
+		return err
+	}
+	return nil
 }

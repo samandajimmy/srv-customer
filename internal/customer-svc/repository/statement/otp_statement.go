@@ -11,10 +11,10 @@ type OTPStatement struct {
 
 func NewOTPStatement(db *nsql.DB) *OTPStatement {
 	tableName := "OTP"
-	columns := `updatedAt,customerId,content,type,data,status`
+	columns := `"updatedAt","customerId","content","type","data","status"`
 	namedColumns := `:updatedAt, :customerId, :content, :type, :data, :status`
 
 	return &OTPStatement{
-		Insert: db.PrepareNamedFmt("INSERT INTO %s(%s) VALUES (%s)", tableName, columns, namedColumns),
+		Insert: db.PrepareNamedFmt(`INSERT INTO "%s" (%s) VALUES (%s)`, tableName, columns, namedColumns),
 	}
 }

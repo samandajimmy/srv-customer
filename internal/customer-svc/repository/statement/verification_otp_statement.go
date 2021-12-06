@@ -6,14 +6,18 @@ import (
 )
 
 type VerificationOTPStatement struct {
-	Insert *sqlx.NamedStmt
+	Insert               *sqlx.NamedStmt
+	FindByRegistrationId *sqlx.Stmt
+	Delete               *sqlx.Stmt
 }
 
 func NewVerificationOTPStatement(db *nsql.DB) *VerificationOTPStatement {
-	customerTable := "VerificationOTP"
-	columns := "\"createdAt\", \"registrationId\", \"phone\""
-	namedColumns := ":createdAt,:registrationId,:phone"
+	verificationOTPTable := `VerificationOTP`
+	columns := `"createdAt", "registrationId", "phone"`
+	namedColumns := `:createdAt,:registrationId,:phone`
 	return &VerificationOTPStatement{
-		Insert: db.PrepareNamedFmt("INSERT INTO \"%s\"(%s) VALUES (%s) RETURNING id", customerTable, columns, namedColumns),
+		Insert:               db.PrepareNamedFmt("INSERT INTO \"%s\"(%s) VALUES (%s) RETURNING id", verificationOTPTable, columns, namedColumns),
+		FindByRegistrationId: db.PrepareFmt(`SELECT "registrationId" FROM "%s" WHERE "registrationId" = $1`, verificationOTPTable),
+		Delete:               db.PrepareFmt("DELETE FROM \"%s\" WHERE \"registrationId\" = $1 AND \"phone\" = $2", verificationOTPTable),
 	}
 }

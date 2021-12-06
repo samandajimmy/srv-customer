@@ -12,7 +12,7 @@ type Customer struct {
 	stmt *statement.CustomerStatement
 }
 
-func (c *Customer) HasInitialized() bool {
+func (a *Customer) HasInitialized() bool {
 	return true
 }
 
@@ -28,10 +28,13 @@ func (a *Customer) Insert(row *model.Customer) (int64, error) {
 	return lastInsertId, err
 }
 
-func (a *Customer) FindByPhone(phone string) *model.Customer {
+func (a *Customer) FindByPhone(phone string) (*model.Customer, error) {
 	var row model.Customer
-	_ = a.stmt.FindByPhone.Get(&row, phone)
-	return &row
+	err := a.stmt.FindByPhone.Get(&row, phone)
+	if err != nil {
+		return nil, nil
+	}
+	return &row, nil
 }
 
 func (a *Customer) FindByEmailOrPhone(phone string) *model.CustomerAuthentication {
@@ -40,10 +43,20 @@ func (a *Customer) FindByEmailOrPhone(phone string) *model.CustomerAuthenticatio
 	return &row
 }
 
+func (a *Customer) UpdateByPhone(row *model.Customer) error {
+	result, err := a.stmt.UpdateByPhone.Exec(row)
+	if err != nil {
+		return err
+	}
+	return nsql.IsUpdated(result)
+}
+
 func (a *Customer) BlockAccount(phone string) error {
+	//TODO QUERY
 	return nil
 }
 
 func (a *Customer) UnBlockAccount(phone string) error {
+	//TODO QUERY
 	return nil
 }
