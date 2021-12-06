@@ -12,6 +12,8 @@ type RegisterNewCustomer struct {
 	Password       string `json:"password"`
 	FcmToken       string `json:"fcm_token"`
 	RegistrationId string `json:"register_id"`
+	Agen           string `json:"agen"`
+	Version        string `json:"version"`
 }
 
 func (d RegisterNewCustomer) Validate() error {
@@ -26,8 +28,12 @@ func (d RegisterNewCustomer) Validate() error {
 }
 
 type RegisterNewCustomerResponse struct {
-	User  CustomerVO `json:"user"`
-	Token string     `json:"token"`
+	// TODO parse old User response
+	//User        CustomerVO `json:"user"`
+	//Token       string     `json:"token"`
+	Name        string `json:"nama"`
+	Email       string `json:"email"`
+	PhoneNumber string `json:"no_hp"`
 }
 
 type NewRegisterResponse struct {

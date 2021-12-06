@@ -43,7 +43,7 @@ type Customer struct {
 //	return nhttp.Success().SetData(resp), nil
 //}
 
-func (h *Customer) PostCreate(rx *nhttp.Request) (*nhttp.Response, error) {
+func (h *Customer) PostRegister(rx *nhttp.Request) (*nhttp.Response, error) {
 	// Get Payload
 	var payload dto.RegisterNewCustomer
 	err := rx.ParseJSONBody(&payload)

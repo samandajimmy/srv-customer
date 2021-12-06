@@ -1,6 +1,8 @@
 package service
 
 import (
+	"crypto/md5"
+	"fmt"
 	"strings"
 	"time"
 
@@ -92,59 +94,143 @@ func (c *Customer) Login(payload dto.LoginRequest) (*dto.CustomerVO, error) {
 }
 
 func (c *Customer) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCustomerResponse, error) {
-
 	// find registerID
+	registerOTP, err := c.verificationOTPRepo.FindByRegistrationId(payload.RegistrationId)
+	if err != nil {
+		log.Errorf("Registration ID not found : %s", payload.RegistrationId)
+		return nil, c.response.GetError("E_REG_1")
+	}
 
 	// Get data user
-	customer := c.customerRepo.FindByPhone(payload.PhoneNumber)
+	customer, _ := c.customerRepo.FindByPhone(payload.PhoneNumber)
 
-	// Check if user is active
-	if customer.Status == 1 {
-		log.Errorf("Phone has been used. Phone Number : %s", payload.PhoneNumber)
-		return nil, c.response.GetError("E_AUTH_5")
+	var customerXID string
+	var customerId int64
+	// update name if customer exists
+	if customer != nil {
+		customer.FullName = payload.Name
+		customer.Email = payload.Email
+		err := c.customerRepo.UpdateByPhone(customer)
+		if err != nil {
+			return nil, c.response.GetError("E_AUTH_5")
+		}
+		customerXID = customer.CustomerXID
+		customerId = customer.Id
+	} else {
+		// create new one
+		customerXID := strings.ToUpper(xid.New().String())
+		metaData := model.NewItemMetadata(
+			convert.ModifierDTOToModel(
+				dto.Modifier{ID: "", Role: "", FullName: ""},
+			),
+		)
+		insertCustomer := &model.Customer{
+			CustomerXID:    customerXID,
+			FullName:       payload.Name,
+			Phone:          payload.PhoneNumber,
+			Status:         0,
+			Email:          payload.Email,
+			IdentityType:   0,
+			IdentityNumber: "",
+			UserRefId:      0,
+			Photos:         []byte("{}"),
+			Profile:        []byte("{}"),
+			Cif:            "",
+			Sid:            "",
+			ReferralCode:   "",
+			Metadata:       []byte("{}"),
+			ItemMetadata:   metaData,
+		}
+		lastInsertId, err := c.customerRepo.Insert(insertCustomer)
+		if err != nil {
+			log.Errorf("Error when persist customer : %s", payload.Name)
+			return nil, ncore.TraceError(err)
+		}
+		customerId = lastInsertId
+		customer = insertCustomer
 	}
 
-	// If user exist and inactive
-	if customer.Phone != "" && customer.Status == 0 {
-		// TODO: update fullname on customer
-	}
-
-	// Register customer
-	customerXID := strings.ToUpper(xid.New().String())
-	insert := &model.Customer{
-		CustomerXID:    customerXID,
-		FullName:       payload.Name,
-		Phone:          payload.PhoneNumber,
-		Status:         0,
-		Email:          "",
-		IdentityType:   0,
-		IdentityNumber: "",
-		UserRefId:      0,
-		Photos:         []byte("{}"),
-		Profile:        []byte("{}"),
-		Cif:            "",
-		Sid:            "",
-		ReferralCode:   "",
-		Metadata:       []byte("{}"),
-		ItemMetadata:   model.NewItemMetadata(convert.ModifierDTOToModel(dto.Modifier{ID: "", Role: "", FullName: ""})),
-	}
-	_, err := c.customerRepo.Insert(insert)
+	customer.Status = 1
+	err = c.customerRepo.UpdateByPhone(customer)
 	if err != nil {
-		log.Errorf("Error when persist customer : %s", payload.Name)
+		log.Errorf("Error when update customer : %s", payload.Name)
+		return nil, c.response.GetError("E_REG_1")
+	}
+
+	// create credential
+	credentialInsert := &model.Credential{
+		Xid:                 customerXID,
+		CustomerId:          customerId,
+		Password:            fmt.Sprintf("%x", md5.Sum([]byte(payload.Password))),
+		NextPasswordResetAt: nil,
+		Pin:                 "",
+		PinCif:              "",
+		PinUpdatedAt:        nil,
+		PinLastAccessAt:     nil,
+		PinCounter:          0,
+		PinBlockedStatus:    0,
+		IsLocked:            0,
+		LoginFailCount:      0,
+		WrongPasswordCount:  0,
+		BlockedAt:           nil,
+		BlockedUntilAt:      nil,
+		BiometricLogin:      0,
+		BiometricDeviceId:   "",
+		Metadata:            []byte("{}"),
+		ItemMetadata:        model.NewItemMetadata(convert.ModifierDTOToModel(dto.Modifier{ID: "", Role: "", FullName: ""})),
+	}
+	err = c.CredentialRepo.InsertOrUpdate(credentialInsert)
+	if err != nil {
+		log.Errorf("Error when persist customer credential : %s", payload.Name)
+		return nil, c.response.GetError("E_REG_1")
+	}
+
+	// insert OTP
+	insertOTP := &model.OTP{
+		CustomerId: customerId,
+		Content:    "",
+		Type:       "registrasi_user",
+		Data:       "",
+		Status:     "",
+		UpdatedAt:  time.Now(),
+	}
+	err = c.OTPRepo.Insert(insertOTP)
+	if err != nil {
+		log.Errorf("Error when persist OTP. Err: %s", err)
 		return nil, ncore.TraceError(err)
 	}
 
-	// Save Code OTP and userId to VerficationOTP
-	// TODO: Save Code OTP and userId to VerificationOTP
+	// insert session
+	insertAccessSession := &model.AccessSession{
+		Xid:                  customerXID,
+		CustomerId:           customerId,
+		ExpiredAt:            time.Now().Add(1 * time.Hour),
+		NotificationToken:    payload.FcmToken,
+		NotificationProvider: 1,
+		Metadata:             []byte("{}"),
+		ItemMetadata:         model.NewItemMetadata(convert.ModifierDTOToModel(dto.Modifier{ID: "", Role: "", FullName: ""})),
+	}
+	err = c.AccessSessionRepo.Insert(insertAccessSession)
+	if err != nil {
+		log.Errorf("Error when persist access session: %s. Err: %s", payload.Name, err)
+		return nil, c.response.GetError("E_REG_1")
+	}
 
-	// Send OTP
-	// TODO: Send OTP to coreService via client http
+	// TODO email_verification_token
 
-	// If send otp is success
-	// TODO: Update customer data
+	// TODO call login service
+
+	// Delete OTP RegistrationId
+	err = c.verificationOTPRepo.Delete(registerOTP.RegistrationId, customer.Phone)
+	if err != nil {
+		log.Debugf("Error when remove by registration id : %s, phone : %s", registerOTP.RegistrationId, customer.Phone)
+		return nil, c.response.GetError("E_REG_1")
+	}
 
 	return &dto.RegisterNewCustomerResponse{
-		Token: customerXID,
+		Name:        customer.FullName,
+		Email:       customer.Email,
+		PhoneNumber: customer.Phone,
 	}, nil
 }
 
@@ -241,9 +327,4 @@ func (c *Customer) RegisterResendOTP(payload dto.RegisterResendOTP) (*dto.Regist
 	return &dto.RegisterResendOTPResponse{
 		Action: data.Message,
 	}, nil
-}
-
-func (c *Customer) RegisterSubmit(payload dto.RegisterResendOTP) (*dto.RegisterResendOTPResponse, error) {
-
-	return nil, nil
 }
