@@ -1,7 +1,7 @@
 -- Sample Migration Customer
 CREATE TABLE public."Customer"
 (
-    "id"  SERIAL PRIMARY KEY,
+    "id"             BIGSERIAL PRIMARY KEY NOT NULL,
     "xid"            varchar(64)  NOT NULL,
     "metadata"       JSON         NULL,
     "createdAt"      timestamp without time zone NOT NULL,
@@ -10,7 +10,7 @@ CREATE TABLE public."Customer"
     "version"        bigint       NOT NULL DEFAULT 1,
     "fullName"       varchar(255) NOT NULL,
     "phone"          varchar(16)  NOT NULL,
-    "email"          varchar(16)  NOT NULL,
+    "email"          varchar(64)  NOT NULL,
     "identityType"   SMALLINT     NULL,
     "identityNumber" varchar(64)  NULL,
     "userRefId"      bigint       NULL,
@@ -24,7 +24,7 @@ CREATE TABLE public."Customer"
 );
 
 CREATE TABLE public."VerificationOTP"(
-    "id"  SERIAL PRIMARY KEY,
+    "id"             BIGSERIAL PRIMARY KEY NOT NULL,
     "createdAt"      timestamp without time zone NOT NULL,
     "registrationId" varchar      NOT NULL,
     "phone"          varchar(16)  NOT NULL
@@ -34,7 +34,7 @@ CREATE TABLE public."VerificationOTP"(
 
 CREATE TABLE public."Address"
 (
-    "id"  SERIAL PRIMARY KEY,
+    "id"             BIGSERIAL PRIMARY KEY NOT NULL,
     "xid"            varchar(64)  NOT NULL,
     "metadata"       JSON         NULL,
     "createdAt"      timestamp without time zone NOT NULL,
@@ -57,7 +57,7 @@ CREATE TABLE public."Address"
 
 CREATE TABLE public."Verification"
 (
-    "id"                              bigint       NOT NULL,
+    "id"                              BIGSERIAL PRIMARY KEY NOT NULL,
     "xid"                             varchar(64)  NOT NULL,
     "metadata"                        JSON         NULL,
     "createdAt"                       timestamp without time zone NOT NULL,
@@ -77,7 +77,7 @@ CREATE TABLE public."Verification"
 
 CREATE TABLE public."FinancialData"
 (
-    "id"                              bigint       NOT NULL,
+    "id"                              BIGSERIAL PRIMARY KEY NOT NULL,
     "xid"                             varchar(64)  NOT NULL,
     "metadata"                        JSON         NULL,
     "createdAt"                       timestamp without time zone NOT NULL,
@@ -95,7 +95,7 @@ CREATE TABLE public."FinancialData"
 
 CREATE TABLE public."AccessSession"
 (
-    "id"                              bigint       NOT NULL,
+    "id"                              BIGSERIAL PRIMARY KEY NOT NULL,
     "xid"                             varchar(64)  NOT NULL,
     "metadata"                        JSON         NULL,
     "createdAt"                       timestamp without time zone NOT NULL,
@@ -110,7 +110,7 @@ CREATE TABLE public."AccessSession"
 
 CREATE TABLE public."Credential"
 (
-    "id"                              bigint       NOT NULL,
+    "id"                              BIGSERIAL PRIMARY KEY NOT NULL,
     "xid"                             varchar(64)  NOT NULL,
     "metadata"                        JSON         NULL,
     "createdAt"                       timestamp without time zone NOT NULL,
@@ -138,7 +138,7 @@ CREATE TABLE public."Credential"
 -- TODO: ADD FOREIGN KEY each customerId field --
 CREATE TABLE public."OTP"
 (
-    "id"                              BIGSERIAL PRIMARY KEY,
+    "id"                              BIGSERIAL PRIMARY KEY           NOT NULL,
     "updatedAt"                       timestamp without time zone     NOT NULL,
     "customerId"                      BIGINT                          NOT NULL,
     "content"                         varchar(6)                      NULL,
