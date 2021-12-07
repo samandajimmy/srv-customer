@@ -261,7 +261,7 @@ func (c *Customer) RegisterStepOne(payload dto.RegisterStepOne) (*dto.RegisterSt
 	// validate phone
 	phoneExist, err := c.customerRepo.FindByPhone(payload.PhoneNumber)
 	if err != nil {
-		log.Errorf("error while retrieve by phone: %s", payload.Email)
+		log.Errorf("error while retrieve by phone: %s", payload.PhoneNumber)
 		return nil, c.response.GetError("E_REG_1")
 	}
 	if phoneExist != nil {
@@ -303,6 +303,16 @@ func (c *Customer) RegisterStepTwo(payload dto.RegisterStepTwo) (*dto.RegisterSt
 		PhoneNumber: payload.PhoneNumber,
 		Token:       payload.OTP,
 		RequestType: "register",
+	}
+	// validate phone
+	phoneExist, err := c.customerRepo.FindByPhone(payload.PhoneNumber)
+	if err != nil {
+		log.Errorf("error while retrieve by phone: %s", payload.PhoneNumber)
+		return nil, c.response.GetError("E_REG_1")
+	}
+	if phoneExist != nil {
+		log.Debugf("Phone already registered")
+		return nil, c.response.GetError("E_REG_3")
 	}
 
 	// Verify OTP To Phone Number
