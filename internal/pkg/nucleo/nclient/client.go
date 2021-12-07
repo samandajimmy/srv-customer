@@ -21,6 +21,7 @@ type Nclient struct {
 
 type ResponseSwitching struct {
 	ResponseCode string `json:"responseCode"`
+	ResponseDesc string `json:"responseDesc"`
 	Message      string `json:"data"`
 }
 

@@ -284,8 +284,16 @@ func (c *Customer) RegisterStepOne(payload dto.RegisterStepOne) (*dto.RegisterSt
 	// Extract response from server
 	data, err := nclient.GetResponseData(resp)
 
+	if data.ResponseCode == "15" {
+		return nil, c.response.GetError("E_OTP_3")
+	}
+
+	if data.Message != "" {
+		log.Errorf("Debug: RegisterStepOne OTP CODE %s", data.Message)
+	}
+
 	return &dto.RegisterStepOneResponse{
-		Action: data.Message,
+		Action: data.ResponseDesc,
 	}, nil
 }
 

@@ -83,7 +83,7 @@ func (d RegisterResendOTP) Validate() error {
 
 func (d RegisterStepOne) Validate() error {
 	return validation.ValidateStruct(&d,
-		validation.Field(&d.Name, validation.Length(1, 50)),
+		validation.Field(&d.Name, validation.Required, validation.Length(1, 50)),
 		validation.Field(&d.Email, validation.Required, is.Email),
 		validation.Field(&d.PhoneNumber, validation.Required, is.Digit),
 	)
