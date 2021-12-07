@@ -247,9 +247,27 @@ func (c *Customer) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCu
 
 func (c *Customer) RegisterStepOne(payload dto.RegisterStepOne) (*dto.RegisterStepOneResponse, error) {
 
-	// TODO Validate Phone Number If Exist
+	// validate email
+	emailExist, err := c.customerRepo.FindByEmail(payload.Email)
+	if err != nil {
+		log.Errorf("error while retrieve by email: %s", payload.Email)
+		return nil, c.response.GetError("E_REG_1")
+	}
+	if emailExist != nil {
+		log.Debugf("Email already registered")
+		return nil, c.response.GetError("E_REG_2")
+	}
 
-	// TODO Validate Email If Exist
+	// validate phone
+	phoneExist, err := c.customerRepo.FindByPhone(payload.PhoneNumber)
+	if err != nil {
+		log.Errorf("error while retrieve by phone: %s", payload.Email)
+		return nil, c.response.GetError("E_REG_1")
+	}
+	if phoneExist != nil {
+		log.Debugf("Phone already registered")
+		return nil, c.response.GetError("E_REG_3")
+	}
 
 	// Set request
 	request := dto.SendOTPRequest{

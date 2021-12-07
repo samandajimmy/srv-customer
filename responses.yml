@@ -97,3 +97,9 @@ E_REG_2:
   message: email already registered
   metadata:
     http_status: 400
+
+E_REG_3:
+  success: false
+  message: phone already registered
+  metadata:
+    http_status: 400
