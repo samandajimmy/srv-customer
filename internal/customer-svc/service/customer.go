@@ -355,13 +355,15 @@ func (c *Customer) RegisterResendOTP(payload dto.RegisterResendOTP) (*dto.Regist
 	// Extract response from server
 	data, err := nclient.GetResponseData(resp)
 
-	// wrong otp handle
-	if data.ResponseCode != "00" {
-		log.Errorf("Wrong OTP. Phone Number : %s", payload.PhoneNumber)
-		return nil, c.response.GetError("E_OTP_2")
+	if data.ResponseCode == "15" {
+		return nil, c.response.GetError("E_OTP_3")
+	}
+
+	if data.Message != "" {
+		log.Errorf("Debug: RegisterResendOTP OTP CODE %s", data.Message)
 	}
 
 	return &dto.RegisterResendOTPResponse{
-		Action: data.Message,
+		Action: data.ResponseDesc,
 	}, nil
 }
