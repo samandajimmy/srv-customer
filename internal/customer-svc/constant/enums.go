@@ -32,3 +32,16 @@ const (
 	CHANNEL_MOBILE  = "6017"
 	CHANNEL_WEB     = "6014"
 )
+
+const (
+	WARN_2X_WRONG_PASSWORD = 2
+	WARN_4X_WRONG_PASSWORD = 4
+	MIN_WRONG_PASSWORD     = 3
+	MAX_WRONG_PASSWORD     = 5
+)
+
+const (
+	WIB  = "Asia/Jakarta"
+	WITA = "Asia/Makassar"
+	WIT  = "Asia/Jayapura"
+)

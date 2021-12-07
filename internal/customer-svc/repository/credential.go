@@ -42,6 +42,11 @@ func (a *Credential) DeleteByID(id string) error {
 	return ncore.TraceError(err)
 }
 
+func (a *Credential) UpdateByCustomerID(row *model.Credential) error {
+	_, err := a.stmt.Update.Exec(row)
+	return ncore.TraceError(err)
+}
+
 func (a *Credential) InsertOrUpdate(row *model.Credential) error {
 	// find by customer id
 	credential, err := a.FindByCustomerId(row.CustomerId)

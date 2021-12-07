@@ -1,6 +1,7 @@
 package model
 
 import (
+	"database/sql"
 	"encoding/json"
 	"time"
 )
@@ -19,8 +20,8 @@ type Credential struct {
 	IsLocked            int64           `db:"isLocked"`
 	LoginFailCount      int64           `db:"loginFailCount"`
 	WrongPasswordCount  int64           `db:"wrongPasswordCount"`
-	BlockedAt           *time.Time      `db:"blockedAt"`
-	BlockedUntilAt      *time.Time      `db:"blockedUntilAt"`
+	BlockedAt           sql.NullTime    `db:"blockedAt"`
+	BlockedUntilAt      sql.NullTime    `db:"blockedUntilAt"`
 	BiometricLogin      int64           `db:"biometricLogin"`
 	BiometricDeviceId   string          `db:"biometricDeviceId"`
 	Metadata            json.RawMessage `db:"metadata"`

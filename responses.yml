@@ -67,12 +67,17 @@ E_AUTH_7:
   message: Masukan nomor handphone dan password yang sesuai. 1 kesempatan lagi sebelum akun terkunci selama 24 jam.
   metadata:
     http_status: 400
-
 E_AUTH_8:
   success: false
   message: Masukan email dan password yang sesuai. Pastikan email telah diverifikasi
   metadata:
     http_status: 400
+
+E_AUTH_9:
+  success: false
+  message: Akun dikunci hingga %s WIB karena gagal login %s kali. Hubungi call center jika ini bukan kamu.
+  metadata:
+    http_status: 200
 
 E_OTP_1:
   success: false

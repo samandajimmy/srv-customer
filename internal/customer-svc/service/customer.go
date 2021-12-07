@@ -3,10 +3,12 @@ package service
 import (
 	"crypto/md5"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer-svc/constant"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nlogger"
+	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/ntime"
 	"strings"
 	"time"
 
@@ -23,8 +25,8 @@ type Customer struct {
 	customerRepo        contract.CustomerRepository
 	verificationOTPRepo contract.VerificationOTPRepository
 	OTPRepo             contract.OTPRepository
-	CredentialRepo      contract.CredentialRepository
-	AccessSessionRepo   contract.AccessSessionRepository
+	credentialRepo      contract.CredentialRepository
+	accessSessionRepo   contract.AccessSessionRepository
 	auditLoginRepo      contract.AuditLoginRepository
 	otpService          contract.OTPService
 	response            *ncore.ResponseMap
@@ -38,8 +40,8 @@ func (c *Customer) Init(app *contract.PdsApp) error {
 	c.customerRepo = app.Repositories.Customer
 	c.verificationOTPRepo = app.Repositories.VerificationOTP
 	c.OTPRepo = app.Repositories.OTP
-	c.CredentialRepo = app.Repositories.Credential
-	c.AccessSessionRepo = app.Repositories.AccessSession
+	c.credentialRepo = app.Repositories.Credential
+	c.accessSessionRepo = app.Repositories.AccessSession
 	c.otpService = app.Services.OTP
 	c.auditLoginRepo = app.Repositories.AuditLogin
 	c.response = app.Responses
@@ -49,6 +51,7 @@ func (c *Customer) Init(app *contract.PdsApp) error {
 func (c *Customer) Login(payload dto.LoginRequest) (*dto.CustomerVO, error) {
 
 	// Check if user exists
+	t := time.Now()
 	customer, err := c.customerRepo.FindByEmailOrPhone(payload.Email)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -59,16 +62,30 @@ func (c *Customer) Login(payload dto.LoginRequest) (*dto.CustomerVO, error) {
 		return nil, ncore.TraceError(err)
 	}
 
-	// Get Auth
+	// Get credential customer
+	credential, err := c.credentialRepo.FindByCustomerId(customer.Id)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			log.Error("failed to retrieve credential not found", nlogger.Error(err))
+			return nil, c.response.GetError("E_AUTH_8")
+		}
+		log.Errorf("failed to retrieve credential. error: %v", err)
+		return nil, ncore.TraceError(err)
+	}
 
-	// counter wrong password count
-	//customer.WrongPasswordCount += 1
-	//
-	//if customer.WrongPasswordCount == 2 {
-	//	return nil, c.response.GetError("E_AUTH_6")
-	//} else if customer.WrongPasswordCount == 4 {
-	//	return nil, c.response.GetError("E_AUTH_7")
-	//}
+	// Check if account isn't blocked
+	blockedUntil := ntime.ChangeTimezone(credential.BlockedUntilAt.Time, constant.WIB)
+	now := ntime.ChangeTimezone(t, constant.WIB)
+	if credential.BlockedUntilAt.Valid != false && blockedUntil.After(now) {
+		return nil, c.response.GetError("E_AUTH_9")
+	}
+
+	// Counter wrong password count
+	passwordRequest := fmt.Sprintf("%x", md5.Sum([]byte(payload.Password)))
+	if credential.Password != passwordRequest {
+		err := c.HandleWrongPassword(credential)
+		return nil, err
+	}
 
 	// Check account is first login or not
 	countAuditLog, err := c.auditLoginRepo.CountLogin(customer.Id)
@@ -83,8 +100,7 @@ func (c *Customer) Login(payload dto.LoginRequest) (*dto.CustomerVO, error) {
 	}
 
 	// Prepare to insert audit login
-	t := time.Now()
-	auditLog := model.AuditLogin{
+	auditLogin := model.AuditLogin{
 		CustomerId:   customer.Id,
 		ChannelId:    GetChannelByAgen(payload.Agen),
 		DeviceId:     payload.DeviceId,
@@ -106,8 +122,8 @@ func (c *Customer) Login(payload dto.LoginRequest) (*dto.CustomerVO, error) {
 		),
 	}
 
-	// Persist audit loging
-	err = c.auditLoginRepo.Insert(&auditLog)
+	// Persist audit login
+	err = c.auditLoginRepo.Insert(&auditLogin)
 	if err != nil {
 		log.Errorf("Error when insert audit login error: %v", err)
 		return nil, c.response.GetError("E_AUTH_1")
@@ -187,6 +203,100 @@ func (c *Customer) Login(payload dto.LoginRequest) (*dto.CustomerVO, error) {
 		IsFirstLogin:              isFirstLogin,
 		IsForceUpdatePassword:     false,
 	}, nil
+}
+
+func (c *Customer) HandleWrongPassword(credential *model.Credential) error {
+	var code string
+	t := time.Now()
+
+	// Unmarshalling metadata credential to get tryLoginAt
+	var Metadata dto.MetadataCredential
+	err := json.Unmarshal(credential.Metadata, &Metadata)
+	if err != nil {
+		log.Errorf("Cannot unmarshaling metadata credential. err: %v", err)
+		return ncore.TraceError(err)
+	}
+	// Parse time from metadata string to time
+	tryLoginAt, _ := time.Parse(time.RFC3339, Metadata.TryLoginAt)
+	now := ntime.ChangeTimezone(t, constant.WIB)
+
+	// If user is not trying to login after 1 day, set wrongPassword to 0
+	if now.After(tryLoginAt.Add(time.Hour * time.Duration(24))) {
+		credential.BlockedAt = sql.NullTime{}
+		credential.BlockedUntilAt = sql.NullTime{}
+		credential.WrongPasswordCount = 0
+	}
+
+	// If now is after than blockedUntilAt set wrong password to 0 and unblock account
+	blockedUntil := ntime.ChangeTimezone(credential.BlockedUntilAt.Time, constant.WIB)
+	if credential.WrongPasswordCount == constant.MAX_WRONG_PASSWORD && now.After(blockedUntil) {
+		credential.BlockedAt = sql.NullTime{}
+		credential.BlockedUntilAt = sql.NullTime{}
+		credential.WrongPasswordCount = 0
+	}
+
+	wrongCount := credential.WrongPasswordCount + 1
+
+	switch wrongCount {
+	case constant.WARN_2X_WRONG_PASSWORD:
+		code = "E_AUTH_6"
+		credential.WrongPasswordCount = wrongCount
+	case constant.WARN_4X_WRONG_PASSWORD:
+		code = "E_AUTH_7"
+		credential.WrongPasswordCount = wrongCount
+	case constant.MIN_WRONG_PASSWORD:
+		code = "E_AUTH_9"
+		// Set block account
+		hour := 1 // Block for 1 hours
+		duration := time.Hour * time.Duration(hour)
+		credential.BlockedAt = sql.NullTime{
+			Time:  t,
+			Valid: true,
+		}
+		credential.BlockedUntilAt = sql.NullTime{
+			Time:  t.Add(duration),
+			Valid: true,
+		}
+		credential.WrongPasswordCount = wrongCount
+		// TODO sendNotificationBlockedLoginOneHour
+		break
+	case constant.MAX_WRONG_PASSWORD:
+		code = "E_AUTH_9"
+		// Set block account
+		hour := 24 // Block for 24 hours
+		duration := time.Hour * time.Duration(hour)
+		credential.BlockedAt = sql.NullTime{
+			Time:  t,
+			Valid: true,
+		}
+		credential.BlockedUntilAt = sql.NullTime{
+			Time:  t.Add(duration),
+			Valid: true,
+		}
+		credential.WrongPasswordCount = wrongCount
+		// TODO sendNotificationBlockedLoginOneDay
+		break
+	default:
+		code = "E_AUTH_8"
+		credential.WrongPasswordCount = wrongCount
+		break
+	}
+
+	// Set trying login at to metadata
+	var Format dto.MetadataCredential
+	Format.TryLoginAt = t.Format(time.RFC3339)
+	Format.PinCreatedAt = Metadata.PinCreatedAt
+	Format.PinBlockedAt = Metadata.PinBlockedAt
+	MetadataCredential, _ := json.Marshal(&Format)
+	credential.Metadata = MetadataCredential
+
+	err = c.credentialRepo.UpdateByCustomerID(credential)
+	if err != nil {
+		log.Errorf("Error when update credential when password is invalid.")
+		return ncore.TraceError(err)
+	}
+
+	return c.response.GetError(code)
 }
 
 func GetChannelByAgen(agen string) string {
@@ -284,9 +394,17 @@ func (c *Customer) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCu
 		return nil, c.response.GetError("E_REG_1")
 	}
 
+	// set metadata credential
+	var Format dto.MetadataCredential
+	Format.TryLoginAt = ""
+	Format.PinCreatedAt = ""
+	Format.PinBlockedAt = ""
+	Metadata, _ := json.Marshal(&Format)
+
 	// create credential
+	credentialXID := strings.ToUpper(xid.New().String())
 	credentialInsert := &model.Credential{
-		Xid:                 customerXID,
+		Xid:                 credentialXID,
 		CustomerId:          customerId,
 		Password:            fmt.Sprintf("%x", md5.Sum([]byte(payload.Password))),
 		NextPasswordResetAt: nil,
@@ -299,14 +417,14 @@ func (c *Customer) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCu
 		IsLocked:            0,
 		LoginFailCount:      0,
 		WrongPasswordCount:  0,
-		BlockedAt:           nil,
-		BlockedUntilAt:      nil,
+		BlockedAt:           sql.NullTime{},
+		BlockedUntilAt:      sql.NullTime{},
 		BiometricLogin:      0,
 		BiometricDeviceId:   "",
-		Metadata:            []byte("{}"),
+		Metadata:            Metadata,
 		ItemMetadata:        model.NewItemMetadata(convert.ModifierDTOToModel(dto.Modifier{ID: "", Role: "", FullName: ""})),
 	}
-	err = c.CredentialRepo.InsertOrUpdate(credentialInsert)
+	err = c.credentialRepo.InsertOrUpdate(credentialInsert)
 	if err != nil {
 		log.Errorf("Error when persist customer credential : %s", payload.Name)
 		return nil, c.response.GetError("E_REG_1")
@@ -337,7 +455,7 @@ func (c *Customer) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCu
 		Metadata:             []byte("{}"),
 		ItemMetadata:         model.NewItemMetadata(convert.ModifierDTOToModel(dto.Modifier{ID: "", Role: "", FullName: ""})),
 	}
-	err = c.AccessSessionRepo.Insert(insertAccessSession)
+	err = c.accessSessionRepo.Insert(insertAccessSession)
 	if err != nil {
 		log.Errorf("Error when persist access session: %s. Err: %s", payload.Name, err)
 		return nil, c.response.GetError("E_REG_1")

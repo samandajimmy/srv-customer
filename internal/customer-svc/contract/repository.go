@@ -31,6 +31,7 @@ type CredentialRepository interface {
 	FindByCustomerId(customerId int64) (*model.Credential, error)
 	Insert(row *model.Credential) error
 	InsertOrUpdate(row *model.Credential) error
+	UpdateByCustomerID(row *model.Credential) error
 	DeleteByID(id string) error
 }
 

@@ -19,7 +19,7 @@ func NewCustomerStatement(db *nsql.DB) *CustomerStatement {
 	namedColumns := `:xid,:metadata,:createdAt,:updatedAt,:modifiedBy,:version,:fullName,:phone,:email,:identityType,:identityNumber,:userRefId,:photos,:profile,:cif,:sid,:referralCode,:status`
 	updateColumns := `"xid" = :xid, "metadata" = :metadata, "createdAt" = :createdAt, "updatedAt" = :updatedAt, "modifiedBy" = :modifiedBy, "version" = :version, "fullName" = :fullName, "phone" = :phone, "email" = :email, "identityType" = :identityType, "identityNumber" = :identityNumber, "userRefId" = :userRefId, "photos" = :photos, "profile" = :profile, "cif" = :cif, "sid" = :sid, "referralCode" = :referralCode, "status" = :status`
 
-	columnsWithId := columns + "id"
+	columnsWithId := `"id",` + columns
 
 	return &CustomerStatement{
 		Insert:      db.PrepareNamedFmt(`INSERT INTO "%s" (%s) VALUES (%s) RETURNING id`, tableName, columns, namedColumns),
