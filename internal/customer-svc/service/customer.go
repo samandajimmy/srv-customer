@@ -330,14 +330,13 @@ func (c *Customer) RegisterStepTwo(payload dto.RegisterStepTwo) (*dto.RegisterSt
 		return nil, c.response.GetError("E_OTP_1")
 	}
 
+	// insert verification otp
 	registrationId := xid.New().String()
-	// Check OTP Wrong
 	insert := &model.VerificationOTP{
 		CreatedAt:      time.Now(),
 		Phone:          payload.PhoneNumber,
 		RegistrationId: registrationId,
 	}
-
 	_, err = c.verificationOTPRepo.Insert(insert)
 	if err != nil {
 		log.Errorf("Error when persist verificationOTP. Phone Number: %s", payload.PhoneNumber)
