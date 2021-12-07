@@ -100,12 +100,12 @@ E_REG_1:
 
 E_REG_2:
   success: false
-  message: email already registered
+  message: Email sudah terdaftar
   metadata:
     http_status: 400
 
 E_REG_3:
   success: false
-  message: phone already registered
+  message: No Handphone sudah terdaftar
   metadata:
     http_status: 400
