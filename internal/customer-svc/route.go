@@ -10,6 +10,9 @@ func setUpRoute(router *nhttp.Router, handlers *HandlerMap) {
 	// Common
 	router.Handle(http.MethodGet, "/", router.HandleFunc(handlers.Common.GetAPIStatus))
 
+	// Login
+	router.Handle(http.MethodPost, "/auth/login", router.HandleFunc(handlers.Customer.PostLogin))
+
 	// Register Step-1
 	router.Handle(http.MethodPost, "/register/step-1", router.HandleFunc(handlers.Customer.SendOTP))
 	// Register Resend OTP

@@ -2,7 +2,11 @@ package service
 
 import (
 	"crypto/md5"
+	"database/sql"
+	"errors"
 	"fmt"
+	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer-svc/constant"
+	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nlogger"
 	"strings"
 	"time"
 
@@ -21,6 +25,7 @@ type Customer struct {
 	OTPRepo             contract.OTPRepository
 	CredentialRepo      contract.CredentialRepository
 	AccessSessionRepo   contract.AccessSessionRepository
+	auditLoginRepo      contract.AuditLoginRepository
 	otpService          contract.OTPService
 	response            *ncore.ResponseMap
 }
@@ -36,49 +41,95 @@ func (c *Customer) Init(app *contract.PdsApp) error {
 	c.CredentialRepo = app.Repositories.Credential
 	c.AccessSessionRepo = app.Repositories.AccessSession
 	c.otpService = app.Services.OTP
+	c.auditLoginRepo = app.Repositories.AuditLogin
 	c.response = app.Responses
 	return nil
 }
 
 func (c *Customer) Login(payload dto.LoginRequest) (*dto.CustomerVO, error) {
 
-	// check user exists
-	customer := c.customerRepo.FindByEmailOrPhone(payload.Email)
-	if customer == nil {
-		return nil, c.response.GetError("E_AUTH_8")
+	// Check if user exists
+	customer, err := c.customerRepo.FindByEmailOrPhone(payload.Email)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			log.Error("failed to retrieve customer not found", nlogger.Error(err))
+			return nil, c.response.GetError("E_RES_1")
+		}
+		log.Errorf("failed to retrieve customer. error: %v", err)
+		return nil, ncore.TraceError(err)
 	}
+
+	// Get Auth
 
 	// counter wrong password count
-	customer.WrongPasswordCount += 1
+	//customer.WrongPasswordCount += 1
+	//
+	//if customer.WrongPasswordCount == 2 {
+	//	return nil, c.response.GetError("E_AUTH_6")
+	//} else if customer.WrongPasswordCount == 4 {
+	//	return nil, c.response.GetError("E_AUTH_7")
+	//}
 
-	if customer.WrongPasswordCount == 2 {
-		return nil, c.response.GetError("E_AUTH_6")
-	} else if customer.WrongPasswordCount == 4 {
-		return nil, c.response.GetError("E_AUTH_7")
+	// Check account is first login or not
+	countAuditLog, err := c.auditLoginRepo.CountLogin(customer.Id)
+	if err != nil {
+		return nil, c.response.GetError("E_AUTH_1")
 	}
 
-	// TODO Check account is first login or not
+	// Set is first login is true or false.
+	var isFirstLogin = true
+	if countAuditLog > 0 {
+		isFirstLogin = false
+	}
 
-	// TODO Store audit login
+	// Prepare to insert audit login
+	t := time.Now()
+	auditLog := model.AuditLogin{
+		CustomerId:   customer.Id,
+		ChannelId:    GetChannelByAgen(payload.Agen),
+		DeviceId:     payload.DeviceId,
+		IP:           payload.IP,
+		Latitude:     payload.Latitude,
+		Longitude:    payload.Longitude,
+		Timestamp:    t.Format(time.RFC3339),
+		Timezone:     payload.Timezone,
+		Brand:        payload.Brand,
+		OsVersion:    payload.OsVersion,
+		Browser:      payload.Browser,
+		UseBiometric: payload.UseBiometric,
+		Status:       1,
+		Metadata:     []byte("{}"),
+		ItemMetadata: model.NewItemMetadata(
+			convert.ModifierDTOToModel(
+				dto.Modifier{ID: "", Role: "", FullName: ""},
+			),
+		),
+	}
+
+	// Persist audit loging
+	err = c.auditLoginRepo.Insert(&auditLog)
+	if err != nil {
+		log.Errorf("Error when insert audit login error: %v", err)
+		return nil, c.response.GetError("E_AUTH_1")
+	}
 
 	// TODO: update user_model -> try_login_date = now()
 
+	// check user account is blocked or not
 	// if password doesn't match
 	// 	cek setBlockedUser function
 	//    if blocked_to_date > now()
 	//    	return err_account_locked message
 
-	if customer.Password != payload.Password {
-		//
-	}
+	//if customer.Password != payload.Password {
+	//	//
+	//}
 
 	// if password is matched
 	//    update user_model
 	//   		set blocked_date = null
 	//        set blocked_to_date = null
 	//        wrong_password_count = 0
-
-	// check user account is blocked or not
 
 	// set token authentication
 
@@ -90,7 +141,72 @@ func (c *Customer) Login(payload dto.LoginRequest) (*dto.CustomerVO, error) {
 
 	// return response user and token
 
-	return nil, nil
+	return &dto.CustomerVO{
+		ID:                        "1",
+		Cif:                       "Cif",
+		IsKYC:                     "1",
+		Nama:                      customer.FullName,
+		NamaIbu:                   "Nama ibu",
+		NoKTP:                     "No ktp",
+		Email:                     "Email",
+		JenisKelamin:              "L",
+		TempatLahir:               "Jakarta",
+		TglLahir:                  "",
+		Alamat:                    "alamat",
+		IDProvinsi:                "idProvinsi",
+		IDKabupaten:               "idKabupaten",
+		IDKecamatan:               "idKecamatan",
+		IDKelurahan:               "idKelurahan",
+		Kelurahan:                 "Kelurahan",
+		Provinsi:                  "provinsi",
+		Kabupaten:                 "Kabupaten",
+		Kecamatan:                 "Kecamantan",
+		KodePos:                   "Kodepos",
+		NoHP:                      customer.Phone,
+		Avatar:                    "avatar",
+		FotoKTP:                   "",
+		IsEmailVerified:           "1",
+		Kewarganegaraan:           "",
+		JenisIdentitas:            "",
+		NoIdentitas:               "",
+		TglExpiredIdentitas:       "",
+		NoNPWP:                    "npwp",
+		NoSid:                     "",
+		FotoSid:                   "",
+		StatusKawin:               "2",
+		Norek:                     "norek",
+		Saldo:                     "saldo",
+		AktifasiTransFinansial:    "transfinansial",
+		IsDukcapilVerified:        "ok",
+		IsOpenTe:                  "ok",
+		ReferralCode:              "referal",
+		GoldCardApplicationNumber: "",
+		GoldCardAccountNumber:     "",
+		KodeCabang:                "",
+		TabunganEmas:              false,
+		IsFirstLogin:              isFirstLogin,
+		IsForceUpdatePassword:     false,
+	}, nil
+}
+
+func GetChannelByAgen(agen string) string {
+
+	// Generalize agen
+	agen = strings.ToLower(agen)
+
+	if agen == constant.AGEN_ANDROID {
+		return constant.CHANNEL_ANDROID
+	}
+
+	if agen == constant.AGEN_MOBILE {
+		return constant.CHANNEL_MOBILE
+	}
+
+	if agen == constant.AGEN_WEB {
+		return constant.CHANNEL_WEB
+	}
+
+	return ""
 }
 
 func (c *Customer) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCustomerResponse, error) {

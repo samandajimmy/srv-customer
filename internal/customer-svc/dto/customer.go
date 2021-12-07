@@ -135,13 +135,23 @@ type CustomerVO struct {
 	TabunganEmas              bool        `json:"tabunganEmas"`
 	IsFirstLogin              bool        `json:"isFirstLogin"`
 	IsForceUpdatePassword     bool        `json:"isForceUpdatePassword"`
+	JwtToken                  string      `json:"token"`
 }
 
 type LoginRequest struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
-	Agen     string `json:"agen"`
-	Version  string `json:"version"`
+	Email        string `json:"email"`
+	Password     string `json:"password"`
+	Agen         string `json:"agen"`
+	Version      string `json:"version"`
+	DeviceId     string `json:"device_id"`
+	IP           string `json:"ip"`
+	Latitude     string `json:"latitude"`
+	Longitude    string `json:"longitude"`
+	Timezone     string `json:"timezone"`
+	Brand        string `json:"brand"`
+	OsVersion    string `json:"os_version"`
+	Browser      string `json:"browser"`
+	UseBiometric int64  `json:"use_biometric"`
 }
 
 func (d LoginRequest) Validate() error {

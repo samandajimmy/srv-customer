@@ -6,4 +6,5 @@ type RepositoryMap struct {
 	OTP             OTPRepository
 	Credential      CredentialRepository
 	AccessSession   AccessSessionRepository
+	AuditLogin      AuditLoginRepository
 }

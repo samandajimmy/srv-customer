@@ -13,9 +13,14 @@ type CustomerRepository interface {
 	UpdateByPhone(row *model.Customer) error
 	FindByPhone(phone string) (*model.Customer, error)
 	FindByEmail(email string) (*model.Customer, error)
-	FindByEmailOrPhone(phone string) *model.CustomerAuthentication
+	FindByEmailOrPhone(email string) (*model.Customer, error)
 	BlockAccount(phone string) error
 	UnBlockAccount(phone string) error
+}
+
+type AuditLoginRepository interface {
+	Insert(row *model.AuditLogin) error
+	CountLogin(customerId int64) (int64, error)
 }
 
 type OTPRepository interface {

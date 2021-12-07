@@ -25,6 +25,7 @@ type Customer struct {
 }
 
 type CustomerAuthentication struct {
+	CustomerId         int64           `db:"customerId"`
 	FullName           string          `db:"fullName"`
 	Phone              string          `db:"phone"`
 	Email              string          `db:"email"`

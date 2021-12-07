@@ -20,3 +20,15 @@ const (
 const (
 	PREFIX = "MSCUSTOMER"
 )
+
+const (
+	AGEN_ANDROID = "android"
+	AGEN_MOBILE  = "mobile"
+	AGEN_WEB     = "web"
+)
+
+const (
+	CHANNEL_ANDROID = "6017"
+	CHANNEL_MOBILE  = "6017"
+	CHANNEL_WEB     = "6014"
+)

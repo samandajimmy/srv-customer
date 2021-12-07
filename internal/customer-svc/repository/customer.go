@@ -37,19 +37,19 @@ func (a *Customer) FindByPhone(phone string) (*model.Customer, error) {
 	return &row, nil
 }
 
-func (a *Customer) FindByEmail(phone string) (*model.Customer, error) {
+func (a *Customer) FindByEmail(email string) (*model.Customer, error) {
 	var row model.Customer
-	err := a.stmt.FindByEmail.Get(&row, phone)
+	err := a.stmt.FindByEmail.Get(&row, email)
 	if err != nil {
 		return nil, nil
 	}
 	return &row, nil
 }
 
-func (a *Customer) FindByEmailOrPhone(phone string) *model.CustomerAuthentication {
-	var row model.CustomerAuthentication
-	_ = a.stmt.FindByEmailOrPhone.Get(&row, phone)
-	return &row
+func (a *Customer) FindByEmailOrPhone(email string) (*model.Customer, error) {
+	var row model.Customer
+	err := a.stmt.FindByEmailOrPhone.Get(&row, email)
+	return &row, err
 }
 
 func (a *Customer) UpdateByPhone(row *model.Customer) error {
