@@ -6,9 +6,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/lestrrat-go/jwx/jwa"
+	"github.com/lestrrat-go/jwx/jwt"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer-svc/constant"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nlogger"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/ntime"
+	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nval"
 	"strings"
 	"time"
 
@@ -29,6 +32,8 @@ type Customer struct {
 	accessSessionRepo   contract.AccessSessionRepository
 	auditLoginRepo      contract.AuditLoginRepository
 	otpService          contract.OTPService
+	cacheService        contract.CacheService
+	clientConfig        contract.ClientConfig
 	response            *ncore.ResponseMap
 }
 
@@ -42,13 +47,15 @@ func (c *Customer) Init(app *contract.PdsApp) error {
 	c.OTPRepo = app.Repositories.OTP
 	c.credentialRepo = app.Repositories.Credential
 	c.accessSessionRepo = app.Repositories.AccessSession
-	c.otpService = app.Services.OTP
 	c.auditLoginRepo = app.Repositories.AuditLogin
+	c.otpService = app.Services.OTP
+	c.cacheService = app.Services.Cache
+	c.clientConfig = app.Config.Client
 	c.response = app.Responses
 	return nil
 }
 
-func (c *Customer) Login(payload dto.LoginRequest) (*dto.CustomerVO, error) {
+func (c *Customer) Login(payload dto.LoginRequest) (*dto.LoginResponse, error) {
 
 	// Check if user exists
 	t := time.Now()
@@ -129,80 +136,115 @@ func (c *Customer) Login(payload dto.LoginRequest) (*dto.CustomerVO, error) {
 		return nil, c.response.GetError("E_AUTH_1")
 	}
 
-	// TODO: update user_model -> try_login_date = now()
-
-	// check user account is blocked or not
-	// if password doesn't match
-	// 	cek setBlockedUser function
-	//    if blocked_to_date > now()
-	//    	return err_account_locked message
-
-	//if customer.Password != payload.Password {
-	//	//
-	//}
-
-	// if password is matched
-	//    update user_model
-	//   		set blocked_date = null
-	//        set blocked_to_date = null
-	//        wrong_password_count = 0
-
-	// set token authentication
+	// Get token from cache
+	var token string
+	cacheTokenKey := fmt.Sprintf("%v:%v:%v", constant.PREFIX, "token_jwt", customer.Id)
+	token, _ = c.cacheService.Get(cacheTokenKey)
+	if token == "" {
+		// Generate token authentication
+		token, err = c.SetTokenAuthentication(customer, payload.Agen, payload.Version, cacheTokenKey)
+		if err != nil {
+			log.Errorf("Failed to generate token jwt: %v", err)
+			return nil, ncore.TraceError(err)
+		}
+	}
 
 	// get user data
 
-	// get tabungan emas service
+	// TODO get tabungan emas service
 
-	// check is force update password
+	// TODO check is force update password
 
-	// return response user and token
-
-	return &dto.CustomerVO{
-		ID:                        "1",
-		Cif:                       "Cif",
-		IsKYC:                     "1",
-		Nama:                      customer.FullName,
-		NamaIbu:                   "Nama ibu",
-		NoKTP:                     "No ktp",
-		Email:                     "Email",
-		JenisKelamin:              "L",
-		TempatLahir:               "Jakarta",
-		TglLahir:                  "",
-		Alamat:                    "alamat",
-		IDProvinsi:                "idProvinsi",
-		IDKabupaten:               "idKabupaten",
-		IDKecamatan:               "idKecamatan",
-		IDKelurahan:               "idKelurahan",
-		Kelurahan:                 "Kelurahan",
-		Provinsi:                  "provinsi",
-		Kabupaten:                 "Kabupaten",
-		Kecamatan:                 "Kecamantan",
-		KodePos:                   "Kodepos",
-		NoHP:                      customer.Phone,
-		Avatar:                    "avatar",
-		FotoKTP:                   "",
-		IsEmailVerified:           "1",
-		Kewarganegaraan:           "",
-		JenisIdentitas:            "",
-		NoIdentitas:               "",
-		TglExpiredIdentitas:       "",
-		NoNPWP:                    "npwp",
-		NoSid:                     "",
-		FotoSid:                   "",
-		StatusKawin:               "2",
-		Norek:                     "norek",
-		Saldo:                     "saldo",
-		AktifasiTransFinansial:    "transfinansial",
-		IsDukcapilVerified:        "ok",
-		IsOpenTe:                  "ok",
-		ReferralCode:              "referal",
-		GoldCardApplicationNumber: "",
-		GoldCardAccountNumber:     "",
-		KodeCabang:                "",
-		TabunganEmas:              false,
-		IsFirstLogin:              isFirstLogin,
-		IsForceUpdatePassword:     false,
+	return &dto.LoginResponse{
+		Customer: &dto.CustomerVO{
+			ID:                        nval.ParseStringFallback(customer.Id, ""),
+			Cif:                       customer.Cif,
+			IsKYC:                     "1",
+			Nama:                      customer.FullName,
+			NamaIbu:                   "",
+			NoKTP:                     "No ktp",
+			Email:                     customer.Email,
+			JenisKelamin:              "L",
+			TempatLahir:               "Jakarta",
+			TglLahir:                  "",
+			Alamat:                    "alamat",
+			IDProvinsi:                "idProvinsi",
+			IDKabupaten:               "idKabupaten",
+			IDKecamatan:               "idKecamatan",
+			IDKelurahan:               "idKelurahan",
+			Kelurahan:                 "Kelurahan",
+			Provinsi:                  "provinsi",
+			Kabupaten:                 "Kabupaten",
+			Kecamatan:                 "Kecamantan",
+			KodePos:                   "Kodepos",
+			NoHP:                      customer.Phone,
+			Avatar:                    "avatar",
+			FotoKTP:                   "",
+			IsEmailVerified:           "1",
+			Kewarganegaraan:           "",
+			JenisIdentitas:            "",
+			NoIdentitas:               "",
+			TglExpiredIdentitas:       "",
+			NoNPWP:                    "npwp",
+			NoSid:                     "",
+			FotoSid:                   "",
+			StatusKawin:               "2",
+			Norek:                     "norek",
+			Saldo:                     "saldo",
+			AktifasiTransFinansial:    "transfinansial",
+			IsDukcapilVerified:        "ok",
+			IsOpenTe:                  "ok",
+			ReferralCode:              "referal",
+			GoldCardApplicationNumber: "",
+			GoldCardAccountNumber:     "",
+			KodeCabang:                "",
+			TabunganEmas:              false,
+			IsFirstLogin:              isFirstLogin,
+			IsForceUpdatePassword:     false,
+		},
+		JwtToken: token,
 	}, nil
+}
+
+func (c *Customer) SetTokenAuthentication(customer *model.Customer, agen string, version string, cacheTokenKey string) (string, error) {
+
+	// Generate access token
+	accessToken := nval.Bin2Hex(nval.RandStringBytes(78))
+	channelId := GetChannelByAgen(agen)
+	now := time.Now()
+
+	// Generate JWT
+	token, err := jwt.NewBuilder().
+		Claim("id", customer.Id).
+		Claim("email", customer.Email).
+		Claim("nama", customer.FullName).
+		Claim("no_hp", customer.Phone).
+		Claim("access_token", accessToken).
+		Claim("agen", agen).
+		Claim("channelId", channelId).
+		Claim("version", version).
+		IssuedAt(now).
+		Expiration(now.Add(time.Second * time.Duration(c.clientConfig.JWTExpired))).
+		Issuer("https://www.pegadaian.co.id").
+		Build()
+	if err != nil {
+		return "", err
+	}
+
+	// Sign token
+	signed, err := jwt.Sign(token, jwa.HS256, []byte(c.clientConfig.JWTKey))
+	if err != nil {
+		return "", err
+	}
+	tokenString := string(signed)
+
+	// Set token to cache
+	cacheToken, err := c.cacheService.SetThenGet(cacheTokenKey, tokenString, c.clientConfig.JWTExpired)
+	if err != nil {
+		return "", err
+	}
+
+	return cacheToken, nil
 }
 
 func (c *Customer) HandleWrongPassword(credential *model.Credential) error {
@@ -222,8 +264,6 @@ func (c *Customer) HandleWrongPassword(credential *model.Credential) error {
 
 	// If user is not trying to login after 1 day, set wrongPassword to 0
 	if now.After(tryLoginAt.Add(time.Hour * time.Duration(24))) {
-		credential.BlockedAt = sql.NullTime{}
-		credential.BlockedUntilAt = sql.NullTime{}
 		credential.WrongPasswordCount = 0
 	}
 

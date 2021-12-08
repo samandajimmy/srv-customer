@@ -89,6 +89,11 @@ func (d RegisterStepOne) Validate() error {
 	)
 }
 
+type LoginResponse struct {
+	Customer *CustomerVO `json:"user"`
+	JwtToken string      `json:"token"`
+}
+
 type CustomerVO struct {
 	ID                        string      `json:"id"`
 	Cif                       string      `json:"cif"`

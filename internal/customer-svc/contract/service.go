@@ -11,7 +11,7 @@ type AuthService interface {
 }
 
 type CustomerService interface {
-	Login(payload dto.LoginRequest) (*dto.CustomerVO, error)
+	Login(payload dto.LoginRequest) (*dto.LoginResponse, error)
 	Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCustomerResponse, error)
 	RegisterStepOne(payload dto.RegisterStepOne) (*dto.RegisterStepOneResponse, error)
 	RegisterResendOTP(payload dto.RegisterResendOTP) (*dto.RegisterResendOTPResponse, error)

@@ -39,6 +39,8 @@ func (c *Config) LoadFromEnv() {
 	// Set config client
 	c.Client.ClientID = nval.ParseStringFallback(os.Getenv("CLIENT_ID"), "")
 	c.Client.ClientSecret = nval.ParseStringFallback(os.Getenv("CLIENT_SECRET"), "")
+	c.Client.JWTExpired = nval.ParseInt64Fallback(os.Getenv("JWT_EXP"), 3600)
+	c.Client.JWTKey = nval.ParseStringFallback(os.Getenv("JWT_KEY"), nval.RandStringBytes(78))
 
 	// Set config data resource
 	c.DataSources.Postgres = nsql.Config{
@@ -114,6 +116,8 @@ func (c DataSourcesConfig) Validate() error {
 type ClientConfig struct {
 	ClientID     string
 	ClientSecret string
+	JWTExpired   int64
+	JWTKey       string
 }
 
 func (c ClientConfig) Validate() error {
