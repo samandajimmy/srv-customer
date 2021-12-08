@@ -50,6 +50,17 @@ func BadRequest(data interface{}) *Response {
 	}
 }
 
+func UnprocessableEntity(data interface{}) *Response {
+	return &Response{
+		Success:      true,
+		Code:         UnprocessableEntityError.Code,
+		Message:      UnprocessableEntityError.Message,
+		Data:         data,
+		Header:       make(map[string]string),
+		responseFlag: EndRequest,
+	}
+}
+
 func Continue() *Response {
 	return &Response{
 		responseFlag: ContinueRequest,

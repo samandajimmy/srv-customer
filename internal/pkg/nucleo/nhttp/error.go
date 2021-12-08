@@ -2,13 +2,14 @@ package nhttp
 
 import "repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/ncore"
 
+// Standard error response codes
 const (
-	// Standard error response codes
-	BadRequestErrorCode       = "400"
-	UnauthorizedErrorCode     = "401"
-	ForbiddenErrorCode        = "403"
-	NotFoundErrorCode         = "404"
-	MethodNotAllowedErrorCode = "405"
+	BadRequestErrorCode          = "400"
+	UnauthorizedErrorCode        = "401"
+	ForbiddenErrorCode           = "403"
+	NotFoundErrorCode            = "404"
+	MethodNotAllowedErrorCode    = "405"
+	UnprocessableEntityErrorCode = "422"
 )
 
 type errorDataResponse struct {
@@ -27,6 +28,15 @@ var BadRequestError = &ncore.Response{
 	Message: "Bad Request",
 	Metadata: map[string]interface{}{
 		HttpStatusRespKey: 400,
+	},
+}
+
+var UnprocessableEntityError = &ncore.Response{
+	Success: false,
+	Code:    UnprocessableEntityErrorCode,
+	Message: "Unprocessable Entity",
+	Metadata: map[string]interface{}{
+		HttpStatusRespKey: 422,
 	},
 }
 
