@@ -167,3 +167,20 @@ func (d LoginRequest) Validate() error {
 		validation.Field(&d.Version, validation.Required),
 	)
 }
+
+type CustomerProfileVO struct {
+	MaidenName         string `json:"maidenName"`
+	Gender             string `json:"gender"`
+	Nationality        string `json:"nationality"`
+	DateOfBirth        string `json:"dateOfBirth"`
+	PlaceOfBirth       string `json:"placeOfBirth"`
+	IdentityPhotoFile  string `json:"identityPhotoFile"`
+	MarriageStatus     string `json:"marriageStatus"`
+	NPWPNumber         string `json:"npwpNumber"`
+	NPWPPhotoFile      string `json:"npwpPhotoFile"`
+	NPWPUpdatedAt      string `json:"npwpUpdatedAt"`
+	ProfileUpdatedAt   string `json:"profileUpdatedAt"`
+	CifLinkUpdatedAt   string `json:"cifLinkUpdatedAt"`
+	CifUnlinkUpdatedAt string `json:"cifUnlinkUpdatedAt"`
+	SidPhotoFile       string `json:"sidPhotoFile"`
+}

@@ -6,22 +6,22 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/lestrrat-go/jwx/jwa"
-	"github.com/lestrrat-go/jwx/jwt"
-	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer-svc/constant"
-	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nlogger"
-	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/ntime"
-	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nval"
 	"strings"
 	"time"
 
+	"github.com/lestrrat-go/jwx/jwa"
+	"github.com/lestrrat-go/jwx/jwt"
 	"github.com/rs/xid"
+	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer-svc/constant"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer-svc/contract"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer-svc/convert"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer-svc/dto"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer-svc/model"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nclient"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/ncore"
+	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nlogger"
+	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/ntime"
+	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nval"
 )
 
 type Customer struct {
@@ -402,6 +402,28 @@ func (c *Customer) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCu
 				dto.Modifier{ID: "", Role: "", FullName: ""},
 			),
 		)
+
+		customerProfile := dto.CustomerProfileVO{
+			MaidenName:         "",
+			Gender:             "",
+			Nationality:        "",
+			DateOfBirth:        "",
+			PlaceOfBirth:       "",
+			IdentityPhotoFile:  "",
+			MarriageStatus:     "",
+			NPWPNumber:         "",
+			NPWPPhotoFile:      "",
+			NPWPUpdatedAt:      "",
+			ProfileUpdatedAt:   "",
+			CifLinkUpdatedAt:   "",
+			CifUnlinkUpdatedAt: "",
+			SidPhotoFile:       "",
+		}
+		profile, err := json.Marshal(customerProfile)
+		if err != nil {
+			return nil, ncore.TraceError(err)
+		}
+
 		insertCustomer := &model.Customer{
 			CustomerXID:    customerXID,
 			FullName:       payload.Name,
@@ -412,7 +434,7 @@ func (c *Customer) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCu
 			IdentityNumber: "",
 			UserRefId:      0,
 			Photos:         []byte("{}"),
-			Profile:        []byte("{}"),
+			Profile:        profile,
 			Cif:            "",
 			Sid:            "",
 			ReferralCode:   "",
@@ -436,6 +458,28 @@ func (c *Customer) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCu
 		return nil, c.response.GetError("E_REG_1")
 	}
 
+	// create verification
+	verification := &model.Verification{
+		Xid:                             strings.ToUpper(xid.New().String()),
+		CustomerId:                      customerId,
+		KycVerifiedStatus:               0,
+		KycVerifiedAt:                   sql.NullTime{},
+		EmailVerificationToken:          nval.RandomString(78),
+		EmailVerifiedStatus:             0,
+		EmailVerifiedAt:                 sql.NullTime{},
+		DukcapilVerifiedStatus:          0,
+		DukcapilVerifiedAt:              sql.NullTime{},
+		FinancialTransactionStatus:      0,
+		FinancialTransactionActivatedAt: sql.NullTime{},
+		Metadata:                        []byte("{}"),
+		ItemMetadata:                    model.NewItemMetadata(convert.ModifierDTOToModel(dto.Modifier{ID: "", Role: "", FullName: ""})),
+	}
+	err = c.verificationRepo.InsertOrUpdate(verification)
+	if err != nil {
+		log.Errorf("Error when persist customer verification : %s . Err : %v", payload.Name, err)
+		return nil, c.response.GetError("E_REG_1")
+	}
+
 	// set metadata credential
 	var Format dto.MetadataCredential
 	Format.TryLoginAt = ""
@@ -448,7 +492,7 @@ func (c *Customer) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCu
 	credentialInsert := &model.Credential{
 		Xid:                 credentialXID,
 		CustomerId:          customerId,
-		Password:            fmt.Sprintf("%x", md5.Sum([]byte(payload.Password))),
+		Password:            nval.MD5(payload.Password),
 		NextPasswordResetAt: nil,
 		Pin:                 "",
 		PinCif:              "",
