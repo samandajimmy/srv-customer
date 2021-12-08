@@ -4,6 +4,7 @@ import (
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer-svc/contract"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer-svc/dto"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nhttp"
+	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nvalidate"
 )
 
 func NewCustomer(customerService contract.CustomerService) *Customer {
@@ -82,7 +83,8 @@ func (h *Customer) SendOTP(rx *nhttp.Request) (*nhttp.Response, error) {
 	err = payload.Validate()
 	if err != nil {
 		log.Errorf("Bad request. err: %v", err)
-		return nil, nhttp.BadRequestError.Wrap(err)
+		data := nvalidate.Message(err.Error())
+		return nhttp.UnprocessableEntity(data), nil
 	}
 
 	// Call service

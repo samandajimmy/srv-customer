@@ -547,8 +547,6 @@ func (c *Customer) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCu
 		return nil, c.response.GetError("E_REG_1")
 	}
 
-	// TODO email_verification_token
-
 	// TODO call login service
 
 	// Delete OTP RegistrationId
