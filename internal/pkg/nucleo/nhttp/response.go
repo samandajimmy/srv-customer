@@ -52,7 +52,7 @@ func BadRequest(data interface{}) *Response {
 
 func UnprocessableEntity(data interface{}) *Response {
 	return &Response{
-		Success:      true,
+		Success:      false,
 		Code:         UnprocessableEntityError.Code,
 		Message:      UnprocessableEntityError.Message,
 		Data:         data,

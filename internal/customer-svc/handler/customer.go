@@ -82,7 +82,7 @@ func (h *Customer) SendOTP(rx *nhttp.Request) (*nhttp.Response, error) {
 	// Validate payload
 	err = payload.Validate()
 	if err != nil {
-		log.Errorf("Bad request. err: %v", err)
+		log.Errorf("Unprocessable Entity. err: %v", err)
 		data := nvalidate.Message(err.Error())
 		return nhttp.UnprocessableEntity(data), nil
 	}

@@ -79,8 +79,23 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		result.Message = ncore.Success.Message
 	}
 
+	// Set status http by result code
+	var statusHttp int
+	switch result.Code {
+	case "200":
+		statusHttp = http.StatusOK
+	case "400":
+		statusHttp = http.StatusBadRequest
+	case "422":
+		statusHttp = http.StatusUnprocessableEntity
+	case "503":
+		statusHttp = http.StatusServiceUnavailable
+	default:
+		statusHttp = http.StatusOK
+	}
+
 	// Write response
-	httpStatus = h.contentWriter.Write(w, http.StatusOK, result)
+	httpStatus = h.contentWriter.Write(w, statusHttp, result)
 	rx.SetContextValue(HttpStatusRespKey, httpStatus)
 }
 
