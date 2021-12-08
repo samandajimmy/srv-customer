@@ -10,7 +10,7 @@ CREATE TABLE public."Customer"
     "version"        bigint                      NOT NULL DEFAULT 1,
     "fullName"       varchar(255)                NOT NULL,
     "phone"          varchar(16)                 NOT NULL,
-    "email"          varchar(64)                 NOT NULL,
+    "email"          varchar(255)                 NOT NULL,
     "identityType"   SMALLINT                    NULL,
     "identityNumber" varchar(64)                 NULL,
     "userRefId"      bigint                      NULL,
@@ -67,14 +67,14 @@ CREATE TABLE public."Verification"
     "version"                         bigint                      NOT NULL DEFAULT 1,
     "customerId"                      bigint                      NOT NULL,
     "kycVerifiedStatus"               smallint                    NOT NULL,
-    "kycVerifiedAt"                   timestamp without time zone NOT NULL,
+    "kycVerifiedAt"                   timestamp without time zone NULL,
     "emailVerificationToken"          VARCHAR(128),
     "emailVerifiedStatus"             smallint                    NOT NULL,
-    "emailVerifiedAt"                 timestamp without time zone NOT NULL,
+    "emailVerifiedAt"                 timestamp without time zone NULL,
     "dukcapilVerifiedStatus"          smallint                    NOT NULL,
-    "dukcapilVerifiedAt"              timestamp without time zone NOT NULL,
+    "dukcapilVerifiedAt"              timestamp without time zone NULL,
     "financialTransactionStatus"      smallint                    NOT NULL,
-    "financialTransactionActivatedAt" timestamp without time zone NOT NULL
+    "financialTransactionActivatedAt" timestamp without time zone NULL
 );
 
 CREATE TABLE public."FinancialData"

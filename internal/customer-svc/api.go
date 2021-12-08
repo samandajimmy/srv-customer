@@ -12,6 +12,7 @@ import (
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/ncore"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nhttp"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nlogger"
+	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nvalidate"
 )
 
 var log = nlogger.Get()
@@ -33,6 +34,7 @@ func NewAPI(core *ncore.Core, config contract.Config) API {
 				Credential:      new(repository.Credential),
 				AccessSession:   new(repository.AccessSession),
 				AuditLogin:      new(repository.AuditLogin),
+				Verification:    new(repository.Verification),
 			},
 			Services: contract.ServiceMap{
 				Auth:     new(service.Auth),
@@ -66,6 +68,8 @@ func (a *API) Boot() error {
 	if err != nil {
 		return err
 	}
+
+	nvalidate.Init()
 
 	return nil
 }

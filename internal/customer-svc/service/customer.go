@@ -31,6 +31,7 @@ type Customer struct {
 	credentialRepo      contract.CredentialRepository
 	accessSessionRepo   contract.AccessSessionRepository
 	auditLoginRepo      contract.AuditLoginRepository
+	verificationRepo    contract.VerificationRepository
 	otpService          contract.OTPService
 	cacheService        contract.CacheService
 	clientConfig        contract.ClientConfig
@@ -48,6 +49,7 @@ func (c *Customer) Init(app *contract.PdsApp) error {
 	c.credentialRepo = app.Repositories.Credential
 	c.accessSessionRepo = app.Repositories.AccessSession
 	c.auditLoginRepo = app.Repositories.AuditLogin
+	c.verificationRepo = app.Repositories.Verification
 	c.otpService = app.Services.OTP
 	c.cacheService = app.Services.Cache
 	c.clientConfig = app.Config.Client

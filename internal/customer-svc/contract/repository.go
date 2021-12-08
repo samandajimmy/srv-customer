@@ -39,3 +39,11 @@ type AccessSessionRepository interface {
 	Insert(row *model.AccessSession) error
 	Update(row *model.AccessSession) error
 }
+
+type VerificationRepository interface {
+	FindByCustomerId(customerId int64) (*model.Verification, error)
+	Insert(row *model.Verification) error
+	InsertOrUpdate(row *model.Verification) error
+	UpdateByCustomerID(row *model.Verification) error
+	DeleteByID(id string) error
+}

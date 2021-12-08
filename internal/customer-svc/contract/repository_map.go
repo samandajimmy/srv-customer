@@ -7,4 +7,5 @@ type RepositoryMap struct {
 	Credential      CredentialRepository
 	AccessSession   AccessSessionRepository
 	AuditLogin      AuditLoginRepository
+	Verification    VerificationRepository
 }
