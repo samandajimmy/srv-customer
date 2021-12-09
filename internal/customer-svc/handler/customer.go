@@ -30,8 +30,9 @@ func (h *Customer) PostLogin(rx *nhttp.Request) (*nhttp.Response, error) {
 	// Validate payload
 	err = payload.Validate()
 	if err != nil {
-		log.Errorf("Bad request. err: %v", err)
-		return nil, nhttp.BadRequestError.Wrap(err)
+		log.Errorf("Unprocessable Entity. err: %v", err)
+		data := nvalidate.Message(err.Error())
+		return nhttp.UnprocessableEntity(data), nil
 	}
 
 	// Call service
@@ -56,8 +57,9 @@ func (h *Customer) PostRegister(rx *nhttp.Request) (*nhttp.Response, error) {
 	// Validate payload
 	err = payload.Validate()
 	if err != nil {
-		log.Errorf("Bad request. err: %v", err)
-		return nil, nhttp.BadRequestError.Wrap(err)
+		log.Errorf("Unprocessable Entity. err: %v", err)
+		data := nvalidate.Message(err.Error())
+		return nhttp.UnprocessableEntity(data), nil
 	}
 
 	// Call service
@@ -109,8 +111,9 @@ func (h *Customer) VerifyOTP(rx *nhttp.Request) (*nhttp.Response, error) {
 	// Validate payload
 	err = payload.Validate()
 	if err != nil {
-		log.Errorf("Bad request. err: %v", err)
-		return nil, nhttp.BadRequestError.Wrap(err)
+		log.Errorf("Unprocessable Entity. err: %v", err)
+		data := nvalidate.Message(err.Error())
+		return nhttp.UnprocessableEntity(data), nil
 	}
 
 	// Call service
@@ -135,8 +138,9 @@ func (h *Customer) ResendOTP(rx *nhttp.Request) (*nhttp.Response, error) {
 	// Validate payload
 	err = payload.Validate()
 	if err != nil {
-		log.Errorf("Bad request. err: %v", err)
-		return nil, nhttp.BadRequestError.Wrap(err)
+		log.Errorf("Unprocessable Entity. err: %v", err)
+		data := nvalidate.Message(err.Error())
+		return nhttp.UnprocessableEntity(data), nil
 	}
 
 	// Call service

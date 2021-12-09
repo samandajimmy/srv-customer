@@ -3,6 +3,7 @@ module repo.pegadaian.co.id/ms-pds/srv-customer
 go 1.16
 
 require (
+	github.com/asaskevich/govalidator v0.0.0-20200108200545-475eaeb16496
 	github.com/go-ozzo/ozzo-validation/v4 v4.3.0
 	github.com/gomodule/redigo v1.8.6
 	github.com/gorilla/handlers v1.5.1
