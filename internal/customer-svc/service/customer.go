@@ -200,9 +200,14 @@ func (c *Customer) Login(payload dto.LoginRequest) (*dto.LoginResponse, error) {
 			GoldCardApplicationNumber: "",
 			GoldCardAccountNumber:     "",
 			KodeCabang:                "",
-			TabunganEmas:              false,
-			IsFirstLogin:              isFirstLogin,
-			IsForceUpdatePassword:     false,
+			TabunganEmas: &dto.CustomerTabunganEmasVO{
+				TotalSaldoBlokir:  "",
+				TotalSaldoSeluruh: "",
+				TotalSaldoEfektif: "",
+				PrimaryRekening:   "",
+			},
+			IsFirstLogin:          isFirstLogin,
+			IsForceUpdatePassword: false,
 		},
 		JwtToken: token,
 	}, nil
@@ -549,6 +554,8 @@ func (c *Customer) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCu
 
 	// TODO call login service
 
+	// TODO call mail service
+
 	// Delete OTP RegistrationId
 	err = c.verificationOTPRepo.Delete(registerOTP.RegistrationId, customer.Phone)
 	if err != nil {
@@ -557,9 +564,88 @@ func (c *Customer) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCu
 	}
 
 	return &dto.RegisterNewCustomerResponse{
-		Name:        customer.FullName,
-		Email:       customer.Email,
-		PhoneNumber: customer.Phone,
+		// Todo load Customer form login service
+		User: dto.CustomerVO{
+			ID:                        "",
+			Cif:                       "",
+			IsKYC:                     "",
+			Nama:                      "",
+			NamaIbu:                   "",
+			NoKTP:                     "",
+			Email:                     "",
+			JenisKelamin:              "",
+			TempatLahir:               "",
+			TglLahir:                  "",
+			Alamat:                    "",
+			IDProvinsi:                "",
+			IDKabupaten:               "",
+			IDKecamatan:               "",
+			IDKelurahan:               "",
+			Kelurahan:                 "",
+			Provinsi:                  "",
+			Kabupaten:                 "",
+			Kecamatan:                 "",
+			KodePos:                   "",
+			NoHP:                      "",
+			Avatar:                    "",
+			FotoKTP:                   "",
+			IsEmailVerified:           "",
+			Kewarganegaraan:           "",
+			JenisIdentitas:            "",
+			NoIdentitas:               "",
+			TglExpiredIdentitas:       "",
+			NoNPWP:                    "",
+			FotoNPWP:                  "",
+			NoSid:                     "",
+			FotoSid:                   "",
+			StatusKawin:               "",
+			Norek:                     "",
+			Saldo:                     "",
+			AktifasiTransFinansial:    "",
+			IsDukcapilVerified:        "",
+			IsOpenTe:                  "",
+			ReferralCode:              "",
+			GoldCardApplicationNumber: "",
+			GoldCardAccountNumber:     "",
+			KodeCabang:                "",
+			// TODO Load Tabungan
+			TabunganEmas: &dto.CustomerTabunganEmasVO{
+				TotalSaldoBlokir:  "",
+				TotalSaldoSeluruh: "",
+				TotalSaldoEfektif: "",
+				PrimaryRekening:   "",
+			},
+			IsFirstLogin:          false,
+			IsForceUpdatePassword: false,
+		},
+		JwtToken: "",
+		// todo EKYC
+		Ekyc: &dto.EKyc{
+			AccountType: "",
+			Status:      "",
+			Screen:      "",
+		},
+		// TODO GPoint null response by default
+		GPoint: nil,
+		// TODO GCash
+		GCash: &dto.GCash{
+			TotalSaldo: 0,
+			Va: []dto.GCashVa{{
+				ID:             "",
+				UserAIID:       "",
+				Amount:         "",
+				KodeBank:       "",
+				TrxID:          "",
+				TglExpired:     "",
+				VirtualAccount: "",
+				VaNumber:       "",
+				CreatedAt:      "",
+				LastUpdate:     "",
+				NamaBank:       "",
+				Thumbnail:      "",
+			}},
+			VaAvailable: []string{"100", "100"},
+		},
 	}, nil
 }
 
