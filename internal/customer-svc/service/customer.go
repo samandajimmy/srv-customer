@@ -209,9 +209,7 @@ func (c *Customer) SetTokenAuthentication(customer *model.Customer, agen string,
 
 	var accessToken string
 	accessToken, _ = c.cacheService.Get(cacheTokenKey)
-	fmt.Println("old accessToken", accessToken)
 	if accessToken == "" {
-		fmt.Println("generate accessToken")
 		// Generate access token
 		accessToken := nval.Bin2Hex(nval.RandStringBytes(78))
 		// Set token to cache
@@ -248,7 +246,6 @@ func (c *Customer) SetTokenAuthentication(customer *model.Customer, agen string,
 		return "", err
 	}
 	tokenString := string(signed)
-	fmt.Println(tokenString)
 	return tokenString, nil
 }
 
