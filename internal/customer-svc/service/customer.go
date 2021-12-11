@@ -141,15 +141,7 @@ func (c *Customer) Login(payload dto.LoginRequest) (*dto.LoginResponse, error) {
 	// Get token from cache
 	var token string
 	cacheTokenKey := fmt.Sprintf("%v:%v:%v", constant.PREFIX, "token_jwt", customer.Id)
-	token, _ = c.cacheService.Get(cacheTokenKey)
-	if token == "" {
-		// Generate token authentication
-		token, err = c.SetTokenAuthentication(customer, payload.Agen, payload.Version, cacheTokenKey)
-		if err != nil {
-			log.Errorf("Failed to generate token jwt: %v", err)
-			return nil, ncore.TraceError(err)
-		}
-	}
+	token, err = c.SetTokenAuthentication(customer, payload.Agen, payload.Version, cacheTokenKey)
 
 	// get user data
 
@@ -215,8 +207,20 @@ func (c *Customer) Login(payload dto.LoginRequest) (*dto.LoginResponse, error) {
 
 func (c *Customer) SetTokenAuthentication(customer *model.Customer, agen string, version string, cacheTokenKey string) (string, error) {
 
-	// Generate access token
-	accessToken := nval.Bin2Hex(nval.RandStringBytes(78))
+	var accessToken string
+	accessToken, _ = c.cacheService.Get(cacheTokenKey)
+	fmt.Println("old accessToken", accessToken)
+	if accessToken == "" {
+		fmt.Println("generate accessToken")
+		// Generate access token
+		accessToken := nval.Bin2Hex(nval.RandStringBytes(78))
+		// Set token to cache
+		accessToken, err := c.cacheService.SetThenGet(cacheTokenKey, accessToken, c.clientConfig.JWTExpired)
+		if err != nil {
+			return "", err
+		}
+	}
+
 	channelId := GetChannelByAgen(agen)
 	now := time.Now()
 
@@ -244,14 +248,8 @@ func (c *Customer) SetTokenAuthentication(customer *model.Customer, agen string,
 		return "", err
 	}
 	tokenString := string(signed)
-
-	// Set token to cache
-	cacheToken, err := c.cacheService.SetThenGet(cacheTokenKey, tokenString, c.clientConfig.JWTExpired)
-	if err != nil {
-		return "", err
-	}
-
-	return cacheToken, nil
+	fmt.Println(tokenString)
+	return tokenString, nil
 }
 
 func (c *Customer) HandleWrongPassword(credential *model.Credential) error {

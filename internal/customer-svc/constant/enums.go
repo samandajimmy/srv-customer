@@ -18,7 +18,7 @@ const (
 )
 
 const (
-	PREFIX = "MSCUSTOMER"
+	PREFIX = "PDSAPI"
 )
 
 const (
