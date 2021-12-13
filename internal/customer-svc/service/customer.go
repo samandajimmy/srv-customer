@@ -6,10 +6,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"regexp"
+	"strings"
+	"time"
+
 	"github.com/lestrrat-go/jwx/jwa"
 	"github.com/lestrrat-go/jwx/jwt"
 	"github.com/rs/xid"
-	"regexp"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer-svc/constant"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer-svc/contract"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer-svc/convert"
@@ -20,8 +23,6 @@ import (
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nlogger"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/ntime"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nval"
-	"strings"
-	"time"
 )
 
 type Customer struct {
@@ -604,7 +605,19 @@ func (c *Customer) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCu
 		return nil, c.response.GetError("E_REG_1")
 	}
 
-	// TODO call login service
+	payloadLogin := dto.LoginRequest{
+		Email:    payload.Email,
+		Password: payload.Password,
+		Agen:     payload.Agen,
+		Version:  payload.Version,
+	}
+
+	res, err := c.Login(payloadLogin)
+	if err != nil {
+		return nil, ncore.TraceError(err)
+	}
+
+	user := res.Customer
 
 	// TODO call mail service
 
@@ -618,60 +631,60 @@ func (c *Customer) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCu
 	return &dto.RegisterNewCustomerResponse{
 		// Todo load Customer form login service
 		User: dto.CustomerVO{
-			ID:                        "",
-			Cif:                       "",
-			IsKYC:                     "",
-			Nama:                      "",
-			NamaIbu:                   "",
-			NoKTP:                     "",
-			Email:                     "",
-			JenisKelamin:              "",
-			TempatLahir:               "",
-			TglLahir:                  "",
-			Alamat:                    "",
-			IDProvinsi:                "",
-			IDKabupaten:               "",
-			IDKecamatan:               "",
-			IDKelurahan:               "",
-			Kelurahan:                 "",
-			Provinsi:                  "",
-			Kabupaten:                 "",
-			Kecamatan:                 "",
-			KodePos:                   "",
-			NoHP:                      "",
-			Avatar:                    "",
-			FotoKTP:                   "",
-			IsEmailVerified:           "",
-			Kewarganegaraan:           "",
-			JenisIdentitas:            "",
-			NoIdentitas:               "",
-			TglExpiredIdentitas:       "",
-			NoNPWP:                    "",
-			FotoNPWP:                  "",
-			NoSid:                     "",
-			FotoSid:                   "",
-			StatusKawin:               "",
-			Norek:                     "",
-			Saldo:                     "",
-			AktifasiTransFinansial:    "",
-			IsDukcapilVerified:        "",
-			IsOpenTe:                  "",
-			ReferralCode:              "",
-			GoldCardApplicationNumber: "",
-			GoldCardAccountNumber:     "",
-			KodeCabang:                "",
+			ID:                        user.ID,
+			Cif:                       user.Cif,
+			IsKYC:                     user.IsKYC,
+			Nama:                      user.Nama,
+			NamaIbu:                   user.NamaIbu,
+			NoKTP:                     user.NoKTP,
+			Email:                     user.Email,
+			JenisKelamin:              user.JenisKelamin,
+			TempatLahir:               user.TempatLahir,
+			TglLahir:                  user.TglLahir,
+			Alamat:                    user.Alamat,
+			IDProvinsi:                user.IDProvinsi,
+			IDKabupaten:               user.IDKabupaten,
+			IDKecamatan:               user.IDKecamatan,
+			IDKelurahan:               user.IDKelurahan,
+			Kelurahan:                 user.Kelurahan,
+			Provinsi:                  user.Provinsi,
+			Kabupaten:                 user.Kabupaten,
+			Kecamatan:                 user.Kecamatan,
+			KodePos:                   user.KodePos,
+			NoHP:                      user.NoHP,
+			Avatar:                    user.Avatar,
+			FotoKTP:                   user.FotoKTP,
+			IsEmailVerified:           user.IsEmailVerified,
+			Kewarganegaraan:           user.Kewarganegaraan,
+			JenisIdentitas:            user.JenisIdentitas,
+			NoIdentitas:               user.NoIdentitas,
+			TglExpiredIdentitas:       user.TglExpiredIdentitas,
+			NoNPWP:                    user.NoNPWP,
+			FotoNPWP:                  user.FotoNPWP,
+			NoSid:                     user.NoSid,
+			FotoSid:                   user.FotoSid,
+			StatusKawin:               user.StatusKawin,
+			Norek:                     user.Norek,
+			Saldo:                     user.Saldo,
+			AktifasiTransFinansial:    user.AktifasiTransFinansial,
+			IsDukcapilVerified:        user.IsDukcapilVerified,
+			IsOpenTe:                  user.IsOpenTe,
+			ReferralCode:              user.ReferralCode,
+			GoldCardApplicationNumber: user.GoldCardApplicationNumber,
+			GoldCardAccountNumber:     user.GoldCardAccountNumber,
+			KodeCabang:                user.KodeCabang,
+			IsFirstLogin:              user.IsFirstLogin,
+			IsForceUpdatePassword:     user.IsForceUpdatePassword,
 			// TODO Load Tabungan
 			TabunganEmas: &dto.CustomerTabunganEmasVO{
-				TotalSaldoBlokir:  "",
-				TotalSaldoSeluruh: "",
-				TotalSaldoEfektif: "",
-				PrimaryRekening:   "",
+				TotalSaldoBlokir:  user.TabunganEmas.TotalSaldoBlokir,
+				TotalSaldoSeluruh: user.TabunganEmas.TotalSaldoSeluruh,
+				TotalSaldoEfektif: user.TabunganEmas.TotalSaldoEfektif,
+				PrimaryRekening:   user.TabunganEmas.PrimaryRekening,
 			},
-			IsFirstLogin:          false,
-			IsForceUpdatePassword: false,
 		},
-		JwtToken: "",
-		// todo EKYC
+		JwtToken: res.JwtToken,
+		// TODO EKYC
 		Ekyc: &dto.EKyc{
 			AccountType: "",
 			Status:      "",
@@ -696,7 +709,7 @@ func (c *Customer) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCu
 				NamaBank:       "",
 				Thumbnail:      "",
 			}},
-			VaAvailable: []string{"100", "100"},
+			VaAvailable: []string{},
 		},
 	}, nil
 }
