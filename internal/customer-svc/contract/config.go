@@ -42,14 +42,26 @@ func (c *Config) LoadFromEnv() {
 	c.Client.JWTExpired = nval.ParseInt64Fallback(os.Getenv("JWT_EXP"), 3600)
 	c.Client.JWTKey = nval.ParseStringFallback(os.Getenv("JWT_KEY"), nval.RandStringBytes(78))
 
-	// Set config data resource
-	c.DataSources.Postgres = nsql.Config{
-		Driver:          os.Getenv("DB_DRIVER"),
-		Host:            os.Getenv("DB_HOST"),
-		Port:            os.Getenv("DB_PORT"),
-		Username:        os.Getenv("DB_USER"),
-		Password:        os.Getenv("DB_PASS"),
-		Database:        os.Getenv("DB_NAME"),
+	// Set config data resource internal
+	c.DataSources.DBInternal = nsql.Config{
+		Driver:          os.Getenv("INTERNAL_DB_DRIVER"),
+		Host:            os.Getenv("INTERNAL_DB_HOST"),
+		Port:            os.Getenv("INTERNAL_DB_PORT"),
+		Username:        os.Getenv("INTERNAL_DB_USER"),
+		Password:        os.Getenv("INTERNAL_DB_PASS"),
+		Database:        os.Getenv("INTERNAL_DB_NAME"),
+		MaxIdleConn:     nsql.NewInt(10),
+		MaxOpenConn:     nsql.NewInt(10),
+		MaxConnLifetime: nsql.NewInt(1),
+	}
+	// DB EXTERNAL
+	c.DataSources.DBExternal = nsql.Config{
+		Driver:          os.Getenv("EXTERNAL_DB_DRIVER"),
+		Host:            os.Getenv("EXTERNAL_DB_HOST"),
+		Port:            os.Getenv("EXTERNAL_DB_PORT"),
+		Username:        os.Getenv("EXTERNAL_DB_USER"),
+		Password:        os.Getenv("EXTERNAL_DB_PASS"),
+		Database:        os.Getenv("EXTERNAL_DB_NAME"),
 		MaxIdleConn:     nsql.NewInt(10),
 		MaxOpenConn:     nsql.NewInt(10),
 		MaxConnLifetime: nsql.NewInt(1),
@@ -104,12 +116,13 @@ func (c Config) Validate() error {
 }
 
 type DataSourcesConfig struct {
-	Postgres nsql.Config
+	DBInternal nsql.Config
+	DBExternal nsql.Config
 }
 
 func (c DataSourcesConfig) Validate() error {
 	return validation.ValidateStruct(&c,
-		validation.Field(&c.Postgres, validation.Required),
+		validation.Field(&c.DBInternal, validation.Required),
 	)
 }
 

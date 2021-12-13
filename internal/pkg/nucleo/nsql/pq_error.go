@@ -1,6 +1,8 @@
 package nsql
 
-import "github.com/lib/pq"
+import (
+	"github.com/lib/pq"
+)
 
 type ErrorMetadata struct {
 	Constraint string

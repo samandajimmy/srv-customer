@@ -18,7 +18,7 @@ func (a *VerificationOTP) HasInitialized() bool {
 }
 
 func (a *VerificationOTP) Init(dataSources DataSourceMap, _ contract.RepositoryMap) error {
-	a.db = dataSources.Postgres
+	a.db = dataSources.DBInternal
 	a.stmt = statement.NewVerificationOTPStatement(a.db)
 	return nil
 }

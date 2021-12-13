@@ -21,7 +21,7 @@ func (a *Credential) HasInitialized() bool {
 }
 
 func (a *Credential) Init(dataSources DataSourceMap, _ contract.RepositoryMap) error {
-	a.db = dataSources.Postgres
+	a.db = dataSources.DBInternal
 	a.stmt = statement.NewCredentialStatement(a.db)
 	return nil
 }

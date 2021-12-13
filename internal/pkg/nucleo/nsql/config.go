@@ -18,41 +18,60 @@ type Config struct {
 	MaxConnLifetime *int
 }
 
-func (c *Config) loadFromEnv() {
+func LoadFromEnv(c Config, prefixKey string) Config {
+
+	// Default load key
+	defaultLoadKey := map[string]string{
+		"DB_DRIVER": "DB_DRIVER",
+		"DB_HOST":   "DB_HOST",
+		"DB_PORT":   "DB_PORT",
+		"DB_USER":   "DB_USER",
+		"DB_PASS":   "DB_PASS",
+		"DB_NAME":   "DB_NAME",
+	}
+
+	if prefixKey != "" {
+		for i, val := range defaultLoadKey {
+			defaultLoadKey[i] = fmt.Sprintf("%s_%s", prefixKey, val)
+		}
+	}
+
 	// If driver is unset set driver from env
 	if c.Driver == "" {
-		c.Driver = os.Getenv("DB_DRIVER")
-	} else {
-		// Normalize driver
-		switch c.Driver {
-		case "postgresql", "pg":
-			c.Driver = DriverPostgreSQL
-		}
+		c.Driver = os.Getenv(defaultLoadKey["DB_DRIVER"])
+	}
+
+	// Normalize driver
+	switch c.Driver {
+	case "postgresql", "pg":
+		c.Driver = DriverPostgreSQL
+	case "mysql", "mariadb":
+		c.Driver = DriverMySQL
 	}
 
 	// If host is unset set host from env
 	if c.Host == "" {
-		c.Host = os.Getenv("DB_HOST")
+		c.Host = os.Getenv(defaultLoadKey["DB_HOST"])
 	}
 
 	// If port is unset set port from env
 	if c.Port == "" {
-		c.Port = os.Getenv("DB_PORT")
+		c.Port = os.Getenv(defaultLoadKey["DB_PORT"])
 	}
 
 	// If username is unset set username from env
 	if c.Username == "" {
-		c.Username = os.Getenv("DB_USER")
+		c.Username = os.Getenv(defaultLoadKey["DB_USER"])
 	}
 
 	// If password is unset set password from env
 	if c.Password == "" {
-		c.Password = os.Getenv("DB_PASS")
+		c.Password = os.Getenv(defaultLoadKey["DB_PASS"])
 	}
 
 	// If database name is unset set database name from env
 	if c.Database == "" {
-		c.Database = os.Getenv("DB_NAME")
+		c.Database = os.Getenv(defaultLoadKey["DB_NAME"])
 	}
 
 	// If max idle connection is unset, set to 10
@@ -67,6 +86,7 @@ func (c *Config) loadFromEnv() {
 	if c.MaxConnLifetime == nil {
 		c.MaxConnLifetime = NewInt(1)
 	}
+	return c
 }
 
 func (c *Config) getDSN() (dsn string, err error) {

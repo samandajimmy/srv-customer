@@ -10,17 +10,24 @@ import (
 var log = nlogger.Get()
 
 type DataSourceMap struct {
-	Postgres *nsql.DB
+	DBInternal *nsql.DB
+	DBExternal *nsql.DB
 }
 
 func (a *DataSourceMap) Init(config contract.DataSourcesConfig) error {
 	// Skip if not initialized
-	if a.Postgres == nil {
+	if a.DBInternal == nil {
 		log.Debug("Skipping db init")
 		return nil
 	}
 
-	err := a.Postgres.Init(config.Postgres)
+	// Init using prefix key on env
+	err := a.DBInternal.Init(config.DBInternal, "")
+	if err != nil {
+		return ncore.TraceError(err)
+	}
+
+	err = a.DBExternal.Init(config.DBExternal, "EXTERNAL")
 	if err != nil {
 		return ncore.TraceError(err)
 	}
@@ -30,6 +37,6 @@ func (a *DataSourceMap) Init(config contract.DataSourcesConfig) error {
 
 func NewDataSourceMap() DataSourceMap {
 	return DataSourceMap{
-		Postgres: new(nsql.DB),
+		DBInternal: new(nsql.DB),
 	}
 }

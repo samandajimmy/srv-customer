@@ -17,7 +17,7 @@ func (a *Customer) HasInitialized() bool {
 }
 
 func (a *Customer) Init(dataSources DataSourceMap, _ contract.RepositoryMap) error {
-	a.db = dataSources.Postgres
+	a.db = dataSources.DBInternal
 	a.stmt = statement.NewCustomerStatement(a.db)
 	return nil
 }

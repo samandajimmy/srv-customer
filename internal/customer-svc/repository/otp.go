@@ -17,7 +17,7 @@ func (a *OTP) HasInitialized() bool {
 }
 
 func (a *OTP) Init(dataSources DataSourceMap, _ contract.RepositoryMap) error {
-	a.db = dataSources.Postgres
+	a.db = dataSources.DBInternal
 	a.stmt = statement.NewOTPStatement(a.db)
 	return nil
 }

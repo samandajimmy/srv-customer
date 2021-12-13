@@ -17,7 +17,7 @@ func (a *AuditLogin) HasInitialized() bool {
 }
 
 func (a *AuditLogin) Init(dataSources DataSourceMap, _ contract.RepositoryMap) error {
-	a.db = dataSources.Postgres
+	a.db = dataSources.DBInternal
 	a.stmt = statement.NewAuditLoginStatement(a.db)
 	return nil
 }

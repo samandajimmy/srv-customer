@@ -21,7 +21,7 @@ func (a *Verification) HasInitialized() bool {
 }
 
 func (a *Verification) Init(dataSources DataSourceMap, _ contract.RepositoryMap) error {
-	a.db = dataSources.Postgres
+	a.db = dataSources.DBInternal
 	a.stmt = statement.NewVerificationStatement(a.db)
 	return nil
 }

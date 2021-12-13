@@ -17,7 +17,7 @@ func (a *AccessSession) HasInitialized() bool {
 }
 
 func (a *AccessSession) Init(dataSources DataSourceMap, _ contract.RepositoryMap) error {
-	a.db = dataSources.Postgres
+	a.db = dataSources.DBInternal
 	a.stmt = statement.NewAccessSessionStatement(a.db)
 	return nil
 }

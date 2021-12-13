@@ -2,6 +2,7 @@ package nsql
 
 import (
 	"fmt"
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/ncore"
 	"time"
@@ -59,20 +60,33 @@ func (s *DB) ReleaseTx(tx *sqlx.Tx, err *error) {
 	}
 }
 
-func (s *DB) Init(config Config) error {
-	// Load configuration from env
-	config.loadFromEnv()
+func (s *DB) Init(config Config, prefix string) error {
 
+	// Load from env
+	config = LoadFromEnv(config, prefix)
+
+	// Set primary connection
+	conn, err := setConnection(config)
+	if err != nil {
+		return ncore.TraceError(err)
+	}
+
+	s.Conn = conn
+
+	return nil
+}
+
+func setConnection(config Config) (*sqlx.DB, error) {
 	// Generate DSN
 	dsn, err := config.getDSN()
 	if err != nil {
-		return ncore.TraceError(err)
+		return nil, ncore.TraceError(err)
 	}
 
 	// Create connection
 	conn, err := sqlx.Connect(config.Driver, dsn)
 	if err != nil {
-		return ncore.TraceError(err)
+		return nil, ncore.TraceError(err)
 	}
 
 	// Set connection settings
@@ -80,8 +94,5 @@ func (s *DB) Init(config Config) error {
 	conn.SetMaxOpenConns(*config.MaxOpenConn)
 	conn.SetMaxIdleConns(*config.MaxIdleConn)
 
-	// Set connection
-	s.Conn = conn
-
-	return nil
+	return conn, nil
 }
