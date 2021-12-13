@@ -92,7 +92,7 @@ func LoadFromEnv(c Config, prefixKey string) Config {
 func (c *Config) getDSN() (dsn string, err error) {
 	switch c.Driver {
 	case DriverMySQL:
-		dsn = fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true", c.Username, c.Password, c.Host, c.Port,
+		dsn = fmt.Sprintf(`%v:%v@tcp(%v:%v)/%v?parseTime=true`, c.Username, c.Password, c.Host, c.Port,
 			c.Database)
 	case DriverPostgreSQL:
 		dsn = fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", c.Host, c.Port,

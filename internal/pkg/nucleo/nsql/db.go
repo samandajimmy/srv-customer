@@ -24,6 +24,7 @@ func (s *DB) Prepare(query string) *sqlx.Stmt {
 // PrepareFmt prepare sql statements from string format or exit app if fails or error
 func (s *DB) PrepareFmt(queryFmt string, args ...interface{}) *sqlx.Stmt {
 	query := fmt.Sprintf(queryFmt, args...)
+	fmt.Println(query)
 	return s.Prepare(query)
 }
 

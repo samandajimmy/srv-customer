@@ -33,6 +33,7 @@ type Customer struct {
 	accessSessionRepo   contract.AccessSessionRepository
 	auditLoginRepo      contract.AuditLoginRepository
 	verificationRepo    contract.VerificationRepository
+	userExternalRepo    contract.UserExternalRepository
 	otpService          contract.OTPService
 	cacheService        contract.CacheService
 	clientConfig        contract.ClientConfig
@@ -51,6 +52,7 @@ func (c *Customer) Init(app *contract.PdsApp) error {
 	c.accessSessionRepo = app.Repositories.AccessSession
 	c.auditLoginRepo = app.Repositories.AuditLogin
 	c.verificationRepo = app.Repositories.Verification
+	c.userExternalRepo = app.Repositories.UserExternal
 	c.otpService = app.Services.OTP
 	c.cacheService = app.Services.Cache
 	c.clientConfig = app.Config.Client
@@ -63,11 +65,17 @@ func (c *Customer) Login(payload dto.LoginRequest) (*dto.LoginResponse, error) {
 	// Check if user exists
 	t := time.Now()
 	customer, err := c.customerRepo.FindByEmailOrPhone(payload.Email)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
+	if errors.Is(err, sql.ErrNoRows) {
+		// If data not found on internal database check on external database.
+		_, err := c.userExternalRepo.FindByEmailOrPhone(payload.Email)
+		if err != nil {
 			log.Error("failed to retrieve customer not found", nlogger.Error(err))
 			return nil, c.response.GetError("E_RES_1")
 		}
+
+		// TODO: MAPPING FROM DB EXTERNAL AND REGISTER TO DB INTERNAL
+		return nil, ncore.TraceError(err) // TODO: REMOVE THIS
+	} else {
 		log.Errorf("failed to retrieve customer. error: %v", err)
 		return nil, ncore.TraceError(err)
 	}

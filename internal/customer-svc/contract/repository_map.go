@@ -8,4 +8,5 @@ type RepositoryMap struct {
 	AccessSession   AccessSessionRepository
 	AuditLogin      AuditLoginRepository
 	Verification    VerificationRepository
+	UserExternal    UserExternalRepository
 }

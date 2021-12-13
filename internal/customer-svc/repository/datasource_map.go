@@ -38,5 +38,6 @@ func (a *DataSourceMap) Init(config contract.DataSourcesConfig) error {
 func NewDataSourceMap() DataSourceMap {
 	return DataSourceMap{
 		DBInternal: new(nsql.DB),
+		DBExternal: new(nsql.DB),
 	}
 }

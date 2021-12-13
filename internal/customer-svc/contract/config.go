@@ -60,7 +60,7 @@ func (c *Config) LoadFromEnv() {
 		Host:            os.Getenv("EXTERNAL_DB_HOST"),
 		Port:            os.Getenv("EXTERNAL_DB_PORT"),
 		Username:        os.Getenv("EXTERNAL_DB_USER"),
-		Password:        os.Getenv("EXTERNAL_DB_PASS"),
+		Password:        os.Getenv("EXTERNAL_DB_PASS") + "#", // TODO: Resolve env variable don't include "#"
 		Database:        os.Getenv("EXTERNAL_DB_NAME"),
 		MaxIdleConn:     nsql.NewInt(10),
 		MaxOpenConn:     nsql.NewInt(10),

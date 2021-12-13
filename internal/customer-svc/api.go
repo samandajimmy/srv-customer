@@ -35,6 +35,7 @@ func NewAPI(core *ncore.Core, config contract.Config) API {
 				AccessSession:   new(repository.AccessSession),
 				AuditLogin:      new(repository.AuditLogin),
 				Verification:    new(repository.Verification),
+				UserExternal:    new(repository.UserExternal),
 			},
 			Services: contract.ServiceMap{
 				Auth:     new(service.Auth),

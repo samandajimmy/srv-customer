@@ -47,3 +47,7 @@ type VerificationRepository interface {
 	UpdateByCustomerID(row *model.Verification) error
 	DeleteByID(id string) error
 }
+
+type UserExternalRepository interface {
+	FindByEmailOrPhone(email string) (*model.User, error)
+}
