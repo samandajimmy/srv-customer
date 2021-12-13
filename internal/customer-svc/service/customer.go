@@ -6,12 +6,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"strings"
-	"time"
-
 	"github.com/lestrrat-go/jwx/jwa"
 	"github.com/lestrrat-go/jwx/jwt"
 	"github.com/rs/xid"
+	"regexp"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer-svc/constant"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer-svc/contract"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer-svc/convert"
@@ -22,6 +20,8 @@ import (
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nlogger"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/ntime"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nval"
+	"strings"
+	"time"
 )
 
 type Customer struct {
@@ -96,6 +96,11 @@ func (c *Customer) Login(payload dto.LoginRequest) (*dto.LoginResponse, error) {
 		return nil, err
 	}
 
+	// Get token from cache
+	var token string
+	cacheTokenKey := fmt.Sprintf("%v:%v:%v", constant.PREFIX, "token_jwt", customer.Id)
+	token, err = c.SetTokenAuthentication(customer, payload.Agen, payload.Version, cacheTokenKey)
+
 	// Check account is first login or not
 	countAuditLog, err := c.auditLoginRepo.CountLogin(customer.Id)
 	if err != nil {
@@ -138,16 +143,25 @@ func (c *Customer) Login(payload dto.LoginRequest) (*dto.LoginResponse, error) {
 		return nil, c.response.GetError("E_AUTH_1")
 	}
 
-	// Get token from cache
-	var token string
-	cacheTokenKey := fmt.Sprintf("%v:%v:%v", constant.PREFIX, "token_jwt", customer.Id)
-	token, err = c.SetTokenAuthentication(customer, payload.Agen, payload.Version, cacheTokenKey)
-
 	// get user data
 
-	// TODO get tabungan emas service
+	// Unmarshall profile
+	var Profile dto.CustomerProfileVO
+	err = json.Unmarshal(customer.Profile, &Profile)
+	if err != nil {
+		log.Errorf("Error when unmarshalling profile: %v", err)
+		return nil, ncore.TraceError(err)
+	}
 
-	// TODO check is force update password
+	// TODO get tabungan emas service / get tabungan emas from financial table
+
+	// Check is force update password
+	validatePassword := c.ValidatePassword(payload.Password)
+	isForcePassword := false
+	log.Debugf("errCode : %v", validatePassword.ErrCode)
+	if validatePassword.IsValid != true {
+		isForcePassword = true
+	}
 
 	return &dto.LoginResponse{
 		Customer: &dto.CustomerVO{
@@ -155,40 +169,40 @@ func (c *Customer) Login(payload dto.LoginRequest) (*dto.LoginResponse, error) {
 			Cif:                       customer.Cif,
 			IsKYC:                     "1",
 			Nama:                      customer.FullName,
-			NamaIbu:                   "",
-			NoKTP:                     "No ktp",
+			NamaIbu:                   Profile.MaidenName,
+			NoKTP:                     customer.IdentityNumber,
 			Email:                     customer.Email,
-			JenisKelamin:              "L",
-			TempatLahir:               "Jakarta",
-			TglLahir:                  "",
-			Alamat:                    "alamat",
-			IDProvinsi:                "idProvinsi",
-			IDKabupaten:               "idKabupaten",
-			IDKecamatan:               "idKecamatan",
-			IDKelurahan:               "idKelurahan",
-			Kelurahan:                 "Kelurahan",
-			Provinsi:                  "provinsi",
-			Kabupaten:                 "Kabupaten",
-			Kecamatan:                 "Kecamantan",
-			KodePos:                   "Kodepos",
+			JenisKelamin:              Profile.Gender,
+			TempatLahir:               Profile.PlaceOfBirth,
+			TglLahir:                  Profile.DateOfBirth,
+			Alamat:                    "",
+			IDProvinsi:                "",
+			IDKabupaten:               "",
+			IDKecamatan:               "",
+			IDKelurahan:               "",
+			Kelurahan:                 "",
+			Provinsi:                  "",
+			Kabupaten:                 "",
+			Kecamatan:                 "",
+			KodePos:                   "",
 			NoHP:                      customer.Phone,
-			Avatar:                    "avatar",
-			FotoKTP:                   "",
-			IsEmailVerified:           "1",
-			Kewarganegaraan:           "",
-			JenisIdentitas:            "",
-			NoIdentitas:               "",
+			Avatar:                    "",
+			FotoKTP:                   Profile.IdentityPhotoFile,
+			IsEmailVerified:           customer.Email,
+			Kewarganegaraan:           Profile.Nationality,
+			JenisIdentitas:            fmt.Sprintf("%v", customer.IdentityType),
+			NoIdentitas:               customer.IdentityNumber,
 			TglExpiredIdentitas:       "",
-			NoNPWP:                    "npwp",
-			NoSid:                     "",
-			FotoSid:                   "",
-			StatusKawin:               "2",
-			Norek:                     "norek",
-			Saldo:                     "saldo",
-			AktifasiTransFinansial:    "transfinansial",
-			IsDukcapilVerified:        "ok",
-			IsOpenTe:                  "ok",
-			ReferralCode:              "referal",
+			NoNPWP:                    Profile.NPWPNumber,
+			NoSid:                     customer.Sid,
+			FotoSid:                   Profile.SidPhotoFile,
+			StatusKawin:               Profile.MarriageStatus,
+			Norek:                     "",
+			Saldo:                     "",
+			AktifasiTransFinansial:    "",
+			IsDukcapilVerified:        "",
+			IsOpenTe:                  "",
+			ReferralCode:              "",
 			GoldCardApplicationNumber: "",
 			GoldCardAccountNumber:     "",
 			KodeCabang:                "",
@@ -199,7 +213,7 @@ func (c *Customer) Login(payload dto.LoginRequest) (*dto.LoginResponse, error) {
 				PrimaryRekening:   "",
 			},
 			IsFirstLogin:          isFirstLogin,
-			IsForceUpdatePassword: false,
+			IsForceUpdatePassword: isForcePassword,
 		},
 		JwtToken: token,
 	}, nil
@@ -247,6 +261,49 @@ func (c *Customer) SetTokenAuthentication(customer *model.Customer, agen string,
 	}
 	tokenString := string(signed)
 	return tokenString, nil
+}
+
+func (c *Customer) ValidatePassword(password string) *dto.ValidatePassword {
+	var validation dto.ValidatePassword
+
+	lowerCase, _ := regexp.Compile(`[a-z]+`)
+	upperCase, _ := regexp.Compile(`[A-Z]+`)
+	allNumber, _ := regexp.Compile(`[0-9]+`)
+
+	if len(lowerCase.FindStringSubmatch(password)) < 1 {
+		validation.IsValid = false
+		validation.ErrCode = "isLower"
+		return &validation
+	}
+
+	if len(upperCase.FindStringSubmatch(password)) < 1 {
+		validation.IsValid = false
+		validation.ErrCode = "isUpper"
+		return &validation
+	}
+
+	if len(allNumber.FindStringSubmatch(password)) < 1 {
+		validation.IsValid = false
+		validation.ErrCode = "isNumber"
+		return &validation
+	}
+
+	if len(password) < 8 {
+		validation.IsValid = false
+		validation.ErrCode = "length"
+		return &validation
+	}
+
+	if strings.Contains(password, "gadai") {
+		validation.IsValid = false
+		validation.ErrCode = "containsGadai"
+		return &validation
+	}
+
+	validation.IsValid = true
+	validation.ErrCode = ""
+
+	return &validation
 }
 
 func (c *Customer) HandleWrongPassword(credential *model.Credential) error {

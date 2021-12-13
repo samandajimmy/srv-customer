@@ -5,6 +5,11 @@ import (
 	"github.com/go-ozzo/ozzo-validation/v4/is"
 )
 
+type ValidatePassword struct {
+	IsValid bool   `json:"isValid"`
+	ErrCode string `json:"errCode"`
+}
+
 type RegisterNewCustomer struct {
 	Name           string `json:"nama"`
 	Email          string `json:"email"`
