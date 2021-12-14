@@ -11,7 +11,7 @@ import (
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nval"
 )
 
-func ModelUserToCustomer(user model.User) (*model.Customer, error) {
+func ModelUserToCustomer(user *model.User) (*model.Customer, error) {
 
 	customerVO := dto.CustomerProfileVO{
 		MaidenName:         user.NamaIbu.String,
@@ -80,18 +80,7 @@ func ModelUserToCustomer(user model.User) (*model.Customer, error) {
 	return customer, nil
 }
 
-func ModelUserToCredential(user model.User) (*model.Credential, error) {
-	metadata := dto.MetadataCredential{
-		TryLoginAt:   user.TryLoginDate.Time.String(),
-		PinCreatedAt: "", // TODO insert from user_pin.created_at
-		PinBlockedAt: "", // TODO insert from user_pin.blocked_date
-	}
-
-	metadataRawMessage, err := json.Marshal(metadata)
-	if err != nil {
-		return nil, err
-	}
-
+func ModelUserToCredential(user model.User, userPin *model.UserPin) (*model.Credential, error) {
 	itemMetaData := model.NewItemMetadata(ModifierDTOToModel(dto.Modifier{ID: "", Role: "", FullName: ""}))
 
 	//credential
@@ -124,8 +113,29 @@ func ModelUserToCredential(user model.User) (*model.Credential, error) {
 		},
 		BiometricLogin:    user.IsSetBiometric.Int64,
 		BiometricDeviceId: user.DeviceIdBiometric.String,
-		Metadata:          metadataRawMessage,
 		ItemMetadata:      itemMetaData,
+	}
+
+	metadata := dto.MetadataCredential{
+		TryLoginAt:   user.TryLoginDate.Time.String(),
+		PinCreatedAt: "", // TODO insert from user_pin.created_at
+		PinBlockedAt: "", // TODO insert from user_pin.blocked_date
+	}
+
+	metadataRawMessage, err := json.Marshal(metadata)
+	if err != nil {
+		return nil, err
+	}
+
+	credential.Metadata = metadataRawMessage
+	if userPin != nil {
+		metadata.PinCreatedAt = userPin.CreatedAt
+		metadata.PinBlockedAt = userPin.BlockedDate.Time.String()
+
+		credential.PinCounter = userPin.Counter
+		credential.PinLastAccessAt = userPin.LastAccessTime
+		credential.PinCif = userPin.Cif.String
+		credential.PinBlockedStatus = userPin.IsBlocked
 	}
 
 	return credential, nil
