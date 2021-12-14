@@ -3,18 +3,17 @@ package model
 import (
 	"database/sql"
 	"encoding/json"
-	"time"
 )
 
 type Credential struct {
 	Xid                 string          `db:"xid"`
 	CustomerId          int64           `db:"customerId"`
 	Password            string          `db:"password"`
-	NextPasswordResetAt *time.Time      `db:"nextPasswordResetAt"`
+	NextPasswordResetAt sql.NullTime    `db:"nextPasswordResetAt"`
 	Pin                 string          `db:"pin"`
 	PinCif              string          `db:"pinCif"`
-	PinUpdatedAt        *time.Time      `db:"pinUpdatedAt"`
-	PinLastAccessAt     *time.Time      `db:"pinLastAccessAt"`
+	PinUpdatedAt        sql.NullTime    `db:"pinUpdatedAt"`
+	PinLastAccessAt     sql.NullTime    `db:"pinLastAccessAt"`
 	PinCounter          int64           `db:"pinCounter"`
 	PinBlockedStatus    int64           `db:"pinBlockedStatus"`
 	IsLocked            int64           `db:"isLocked"`
