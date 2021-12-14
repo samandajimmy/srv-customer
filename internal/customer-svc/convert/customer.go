@@ -172,7 +172,7 @@ func ModelUserToFinancialData(user model.User) (*model.FinancialData, error) {
 	return financialData, nil
 }
 
-func ModelUserToAddress(user model.User) (*model.Address, error) {
+func ModelUserToAddress(user model.User, userAddress *model.AddressExternal) (*model.Address, error) {
 	itemMetaData := model.NewItemMetadata(ModifierDTOToModel(dto.Modifier{ID: "", Role: "", FullName: ""}))
 
 	var purpose string
@@ -185,14 +185,14 @@ func ModelUserToAddress(user model.User) (*model.Address, error) {
 	address := &model.Address{
 		Xid:             strings.ToUpper(xid.New().String()),
 		Purpose:         purpose,
-		ProvinceId:      sql.NullString{}, // TODO Insert value
-		ProvinceName:    sql.NullString{}, // TODO Insert value
-		CityId:          sql.NullString{}, // TODO Insert value
-		CityName:        sql.NullString{}, // TODO Insert value
-		DistrictId:      sql.NullString{}, // TODO Insert value
-		DistrictName:    sql.NullString{}, // TODO Insert value
-		SubDistrictId:   sql.NullString{}, // TODO Insert value
-		SubDistrictName: sql.NullString{}, // TODO Insert value
+		ProvinceId:      userAddress.IdProvinsi,
+		ProvinceName:    userAddress.Provinsi,
+		CityId:          userAddress.IdKabupaten,
+		CityName:        userAddress.Kabupaten,
+		DistrictId:      userAddress.IdKecamatan,
+		DistrictName:    userAddress.Kecamatan,
+		SubDistrictId:   userAddress.IdKelurahan,
+		SubDistrictName: userAddress.Kelurahan,
 		Metadata:        nil,
 		ItemMetadata:    itemMetaData,
 	}

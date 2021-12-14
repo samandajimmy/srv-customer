@@ -50,6 +50,7 @@ type VerificationRepository interface {
 
 type UserExternalRepository interface {
 	FindByEmailOrPhone(email string) (*model.User, error)
+	FindAddressByCustomerId(id string) (*model.AddressExternal, error)
 }
 
 type UserPinExternalRepository interface {

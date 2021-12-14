@@ -23,3 +23,17 @@ type Address struct {
 	Metadata        json.RawMessage `db:"metadata"`
 	ItemMetadata
 }
+
+type AddressExternal struct {
+	CustomerId  string         `db:"user_AIID"`
+	Alamat      sql.NullString `db:"alamat"`
+	Kodepos     sql.NullString `db:"kodepos"`
+	Kelurahan   sql.NullString `db:"kelurahan"`
+	Kecamatan   sql.NullString `db:"kecamatan"`
+	Kabupaten   sql.NullString `db:"kabupaten"`
+	Provinsi    sql.NullString `db:"provinsi"`
+	IdKelurahan sql.NullString `db:"id_kelurahan"`
+	IdKecamatan sql.NullString `db:"id_kecamatan"`
+	IdKabupaten sql.NullString `db:"id_kabupaten"`
+	IdProvinsi  sql.NullString `db:"id_provinsi"`
+}
