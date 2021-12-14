@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/rs/xid"
+	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer-svc/constant"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer-svc/dto"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer-svc/model"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nval"
@@ -13,7 +14,8 @@ import (
 
 func ModelUserToCustomer(user *model.User) (*model.Customer, error) {
 
-	customerVO := dto.CustomerProfileVO{
+	// prepare profile value object
+	profileVO := dto.CustomerProfileVO{
 		MaidenName:         user.NamaIbu.String,
 		Nationality:        user.Kewarganegaraan,
 		DateOfBirth:        nval.ParseStringFallback(user.TglLahir.Time, ""),
@@ -28,16 +30,18 @@ func ModelUserToCustomer(user *model.User) (*model.Customer, error) {
 		CifUnlinkUpdatedAt: nval.ParseStringFallback(user.LastUpdate.Time, ""),
 		SidPhotoFile:       user.FotoSid.String,
 	}
-	profile, err := json.Marshal(customerVO)
+	profile, err := json.Marshal(profileVO)
 	if err != nil {
 		return nil, err
 	}
-	// TODO adjust foto_url
-	photos := map[string]string{
-		"foto_url": nval.ParseStringFallback(user.FotoUrl, ""),
+	photosVO := dto.CustomerPhotoVO{
+		Xid:      strings.ToUpper(xid.New().String()),
+		Filename: nval.ParseStringFallback(user.FotoUrl, ""),
+		Filesize: 0,
+		Mimetype: "",
 	}
 
-	photoRawMessage, err := json.Marshal(photos)
+	photoRawMessage, err := json.Marshal(photosVO)
 	if err != nil {
 		return nil, err
 	}
@@ -83,43 +87,30 @@ func ModelUserToCustomer(user *model.User) (*model.Customer, error) {
 func ModelUserToCredential(user model.User, userPin *model.UserPin) (*model.Credential, error) {
 	itemMetaData := model.NewItemMetadata(ModifierDTOToModel(dto.Modifier{ID: "", Role: "", FullName: ""}))
 
-	//credential
 	credential := &model.Credential{
-		Xid:      strings.ToUpper(xid.New().String()),
-		Password: user.Password.String,
-		NextPasswordResetAt: sql.NullTime{
-			Time:  user.NextPasswordReset.Time,
-			Valid: user.NextPasswordReset.Valid,
-		},
-		Pin:    user.Pin.String,
-		PinCif: "", // TODO insert from user_pin.cif
-		PinUpdatedAt: sql.NullTime{
-			Time:  user.LastUpdatePin.Time,
-			Valid: user.LastUpdatePin.Valid,
-		},
-		PinLastAccessAt:    sql.NullTime{}, // TODO insert from user_pin.last_access_time
-		PinCounter:         0,              // TODO insert from user_pin.counter
-		PinBlockedStatus:   0,              // TODO insert from user_pin.is_blocked
-		IsLocked:           user.IsLocked.Int64,
-		LoginFailCount:     user.LoginFailCount,
-		WrongPasswordCount: user.WrongPasswordCount,
-		BlockedAt: sql.NullTime{
-			Time:  user.BlockedDate.Time,
-			Valid: user.BlockedDate.Valid,
-		},
-		BlockedUntilAt: sql.NullTime{
-			Time:  user.BlockedToDate.Time,
-			Valid: user.BlockedToDate.Valid,
-		},
-		BiometricLogin:    user.IsSetBiometric.Int64,
-		BiometricDeviceId: user.DeviceIdBiometric.String,
-		ItemMetadata:      itemMetaData,
+		Xid:                 strings.ToUpper(xid.New().String()),
+		Password:            user.Password.String,
+		NextPasswordResetAt: ModifierNullTime(user.NextPasswordReset),
+		Pin:                 user.Pin.String,
+		PinCif:              "",
+		PinUpdatedAt:        ModifierNullTime(user.LastUpdatePin),
+		PinLastAccessAt:     sql.NullTime{},
+		PinCounter:          0,
+		PinBlockedStatus:    0,
+		IsLocked:            user.IsLocked.Int64,
+		LoginFailCount:      user.LoginFailCount,
+		WrongPasswordCount:  user.WrongPasswordCount,
+		BlockedAt:           ModifierNullTime(user.BlockedDate),
+		BlockedUntilAt:      ModifierNullTime(user.BlockedToDate),
+		BiometricLogin:      user.IsSetBiometric.Int64,
+		BiometricDeviceId:   user.DeviceIdBiometric.String,
+		ItemMetadata:        itemMetaData,
 	}
 
 	metadata := dto.MetadataCredential{
 		TryLoginAt:   user.TryLoginDate.Time.String(),
-		PinCreatedAt: "", // TODO insert from user_pin.created_at
-		PinBlockedAt: "", // TODO insert from user_pin.blocked_date
+		PinCreatedAt: "",
+		PinBlockedAt: "",
 	}
 
 	metadataRawMessage, err := json.Marshal(metadata)
@@ -139,5 +130,72 @@ func ModelUserToCredential(user model.User, userPin *model.UserPin) (*model.Cred
 	}
 
 	return credential, nil
+}
 
+func ModelUserToVerification(user model.User) (*model.Verification, error) {
+	itemMetaData := model.NewItemMetadata(ModifierDTOToModel(dto.Modifier{ID: "", Role: "", FullName: ""}))
+
+	//verification
+	verification := &model.Verification{
+		Xid:                             strings.ToUpper(xid.New().String()),
+		KycVerifiedStatus:               user.KycVerified,
+		KycVerifiedAt:                   sql.NullTime{},
+		EmailVerificationToken:          user.EmailVerificationToken,
+		EmailVerifiedStatus:             user.EmailVerified,
+		EmailVerifiedAt:                 sql.NullTime{},
+		DukcapilVerifiedStatus:          user.IsDukcapilVerified.Int64,
+		DukcapilVerifiedAt:              sql.NullTime{},
+		FinancialTransactionStatus:      user.AktifasiTransFinansial,
+		FinancialTransactionActivatedAt: ModifierNullTime(user.TanggalAktifasiFinansial),
+		Metadata:                        nil,
+		ItemMetadata:                    itemMetaData,
+	}
+
+	return verification, nil
+}
+
+func ModelUserToFinancialData(user model.User) (*model.FinancialData, error) {
+	itemMetaData := model.NewItemMetadata(ModifierDTOToModel(dto.Modifier{ID: "", Role: "", FullName: ""}))
+
+	financialData := &model.FinancialData{
+		Xid:                       strings.ToUpper(xid.New().String()),
+		MainAccountNumber:         user.NorekUtama.String,
+		AccountNumber:             user.Norek,
+		GoldSavingStatus:          user.IsOpenTe.Int64,
+		GoldCardApplicationNumber: user.GoldcardApplicationNumber.String,
+		GoldCardAccountNumber:     user.GoldcardApplicationNumber.String,
+		Balance:                   user.Saldo,
+		Metadata:                  nil,
+		ItemMetadata:              itemMetaData,
+	}
+
+	return financialData, nil
+}
+
+func ModelUserToAddress(user model.User) (*model.Address, error) {
+	itemMetaData := model.NewItemMetadata(ModifierDTOToModel(dto.Modifier{ID: "", Role: "", FullName: ""}))
+
+	var purpose string
+	if user.Domisili.String == "1" {
+		purpose = constant.Domicile
+	} else {
+		purpose = constant.IdentityCard
+	}
+
+	address := &model.Address{
+		Xid:             strings.ToUpper(xid.New().String()),
+		Purpose:         purpose,
+		ProvinceId:      sql.NullString{}, // TODO Insert value
+		ProvinceName:    sql.NullString{}, // TODO Insert value
+		CityId:          sql.NullString{}, // TODO Insert value
+		CityName:        sql.NullString{}, // TODO Insert value
+		DistrictId:      sql.NullString{}, // TODO Insert value
+		DistrictName:    sql.NullString{}, // TODO Insert value
+		SubDistrictId:   sql.NullString{}, // TODO Insert value
+		SubDistrictName: sql.NullString{}, // TODO Insert value
+		Metadata:        nil,
+		ItemMetadata:    itemMetaData,
+	}
+
+	return address, nil
 }

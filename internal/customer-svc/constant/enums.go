@@ -45,3 +45,8 @@ const (
 	WITA = "Asia/Makassar"
 	WIT  = "Asia/Jayapura"
 )
+
+const (
+	Domicile     = "DOMICILE"
+	IdentityCard = "IDENTITY_CARD"
+)

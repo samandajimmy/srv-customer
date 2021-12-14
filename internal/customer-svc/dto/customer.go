@@ -136,6 +136,13 @@ type CustomerProfileVO struct {
 	SidPhotoFile       string `json:"sidPhotoFile"`
 }
 
+type CustomerPhotoVO struct {
+	Xid      string `json:"xid"`
+	Filename string `json:"filename"`
+	Filesize int    `json:"filesize"`
+	Mimetype string `json:"mimetype"`
+}
+
 type CustomerTabunganEmasVO struct {
 	TotalSaldoBlokir  string      `json:"totalSaldoBlokir"`
 	TotalSaldoSeluruh string      `json:"totalSaldoSeluruh"`
