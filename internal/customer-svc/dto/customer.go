@@ -114,6 +114,11 @@ type CustomerVO struct {
 	IsForceUpdatePassword     bool                    `json:"isForceUpdatePassword"`
 }
 
+type CustomerMetadata struct {
+	Snapshot          string `json:"snapshot"`
+	SnapshotSignature string `json:"snapshotSignature"`
+}
+
 type CustomerProfileVO struct {
 	MaidenName         string `json:"maidenName"`
 	Gender             string `json:"gender"`
