@@ -12,13 +12,14 @@ import (
 )
 
 type Config struct {
-	Server      nhttp.ServerConfig
-	Client      ClientConfig
-	DataSources DataSourcesConfig
-	CORS        nhttp.CORSConfig
-	SMTP        SMTPConfig
-	CorePDS     CorePDSConfig
-	Redis       RedisConfig
+	Server       nhttp.ServerConfig
+	Client       ClientConfig
+	DataSources  DataSourcesConfig
+	CORS         nhttp.CORSConfig
+	SMTP         SMTPConfig
+	CorePDS      CorePDSConfig
+	Redis        RedisConfig
+	Notification NotificationConfig
 }
 
 func (c *Config) LoadFromEnv() {
@@ -115,6 +116,13 @@ func (c *Config) LoadFromEnv() {
 		RedisPass:   nval.ParseStringFallback(os.Getenv("REDIS_PASS"), ""),
 		RedisExpiry: nval.ParseInt64Fallback(os.Getenv("REDIS_EXPIRY"), 0),
 	}
+
+	// Load notification
+	c.Notification.NotificationServiceUrl = nval.ParseStringFallback(os.Getenv("NOTIFICATION_SERVICE_URL"), "")
+}
+
+type NotificationConfig struct {
+	NotificationServiceUrl string
 }
 
 func (c Config) Validate() error {

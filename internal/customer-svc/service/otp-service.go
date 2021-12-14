@@ -32,7 +32,7 @@ func (c *OTP) Init(app *contract.PdsApp) error {
 		c.pdsAPI.CoreApiUrl,
 	)
 	c.cacheService = app.Services.Cache
-	c.cacheKey = fmt.Sprintf("%s:%s", constant.PREFIX, "token_switching")
+	c.cacheKey = fmt.Sprintf("%s:%s", constant.Prefix, "token_switching")
 	c.response = app.Responses
 	return nil
 }
@@ -53,7 +53,7 @@ func (c *OTP) GetToken() (string, error) {
 	var result string
 
 	// Set payload
-	reqBody := map[string]string{
+	reqBody := map[string]interface{}{
 		"username":   c.pdsAPI.CoreOauthUsername,
 		"password":   c.pdsAPI.CoreOauthPassword,
 		"grant_type": c.pdsAPI.CoreOauthGrantType,
@@ -101,7 +101,7 @@ func (c *OTP) SendOTP(payload dto.SendOTPRequest) (*http.Response, error) {
 	}
 
 	// Set payload
-	reqBody := map[string]string{
+	reqBody := map[string]interface{}{
 		"channelId":   "6017",
 		"clientId":    c.pdsAPI.CoreClientId,
 		"noHp":        payload.PhoneNumber,
@@ -138,7 +138,7 @@ func (c *OTP) VerifyOTP(payload dto.VerifyOTPRequest) (*http.Response, error) {
 	}
 
 	// Set payload
-	reqBody := map[string]string{
+	reqBody := map[string]interface{}{
 		"channelId":   "6017",
 		"clientId":    c.pdsAPI.CoreClientId,
 		"noHp":        payload.PhoneNumber,

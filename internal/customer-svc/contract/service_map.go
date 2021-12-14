@@ -10,8 +10,9 @@ type ServiceInitializer interface {
 }
 
 type ServiceMap struct {
-	Auth     AuthService
-	Customer CustomerService
-	OTP      OTPService
-	Cache    CacheService
+	Auth         AuthService
+	Customer     CustomerService
+	OTP          OTPService
+	Cache        CacheService
+	Notification NotificationService
 }

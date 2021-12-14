@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math/rand"
 	"regexp"
 	"strings"
 	"time"
@@ -36,6 +37,7 @@ type Customer struct {
 	userExternalRepo    contract.UserExternalRepository
 	otpService          contract.OTPService
 	cacheService        contract.CacheService
+	notificationService contract.NotificationService
 	clientConfig        contract.ClientConfig
 	response            *ncore.ResponseMap
 }
@@ -56,6 +58,7 @@ func (c *Customer) Init(app *contract.PdsApp) error {
 	c.otpService = app.Services.OTP
 	c.cacheService = app.Services.Cache
 	c.clientConfig = app.Config.Client
+	c.notificationService = app.Services.Notification
 	c.response = app.Responses
 	return nil
 }
@@ -107,7 +110,7 @@ func (c *Customer) Login(payload dto.LoginRequest) (*dto.LoginResponse, error) {
 
 	// Get token from cache
 	var token string
-	cacheTokenKey := fmt.Sprintf("%v:%v:%v", constant.PREFIX, "token_jwt", customer.Id)
+	cacheTokenKey := fmt.Sprintf("%v:%v:%v", constant.Prefix, "token_jwt", customer.Id)
 	token, err = c.SetTokenAuthentication(customer, payload.Agen, payload.Version, cacheTokenKey)
 
 	// Check account is first login or not
@@ -339,7 +342,7 @@ func (c *Customer) HandleWrongPassword(credential *model.Credential) error {
 
 	// If now is after than blockedUntilAt set wrong password to 0 and unblock account
 	blockedUntil := ntime.ChangeTimezone(credential.BlockedUntilAt.Time, constant.WIB)
-	if credential.WrongPasswordCount == constant.MAX_WRONG_PASSWORD && now.After(blockedUntil) {
+	if credential.WrongPasswordCount == constant.MaxWrongPassword && now.After(blockedUntil) {
 		credential.BlockedAt = sql.NullTime{}
 		credential.BlockedUntilAt = sql.NullTime{}
 		credential.WrongPasswordCount = 0
@@ -348,13 +351,13 @@ func (c *Customer) HandleWrongPassword(credential *model.Credential) error {
 	wrongCount := credential.WrongPasswordCount + 1
 
 	switch wrongCount {
-	case constant.WARN_2X_WRONG_PASSWORD:
+	case constant.Warn2XWrongPassword:
 		code = "E_AUTH_6"
 		credential.WrongPasswordCount = wrongCount
-	case constant.WARN_4X_WRONG_PASSWORD:
+	case constant.Warn4XWrongPassword:
 		code = "E_AUTH_7"
 		credential.WrongPasswordCount = wrongCount
-	case constant.MIN_WRONG_PASSWORD:
+	case constant.MinWrongPassword:
 		code = "E_AUTH_9"
 		// Set block account
 		hour := 1 // Block for 1 hours
@@ -370,7 +373,7 @@ func (c *Customer) HandleWrongPassword(credential *model.Credential) error {
 		credential.WrongPasswordCount = wrongCount
 		// TODO sendNotificationBlockedLoginOneHour
 		break
-	case constant.MAX_WRONG_PASSWORD:
+	case constant.MaxWrongPassword:
 		code = "E_AUTH_9"
 		// Set block account
 		hour := 24 // Block for 24 hours
@@ -414,16 +417,16 @@ func GetChannelByAgen(agen string) string {
 	// Generalize agen
 	agen = strings.ToLower(agen)
 
-	if agen == constant.AGEN_ANDROID {
-		return constant.CHANNEL_ANDROID
+	if agen == constant.AgenAndroid {
+		return constant.ChannelAndroid
 	}
 
-	if agen == constant.AGEN_MOBILE {
-		return constant.CHANNEL_MOBILE
+	if agen == constant.AgenMobile {
+		return constant.ChannelMobile
 	}
 
-	if agen == constant.AGEN_WEB {
-		return constant.CHANNEL_WEB
+	if agen == constant.AgenWeb {
+		return constant.ChannelWeb
 	}
 
 	return ""
@@ -629,7 +632,27 @@ func (c *Customer) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCu
 
 	user := res.Customer
 
-	// TODO call mail service
+	// TODO: Send Mail Service After Register
+	// Send Notification Welcome
+	id, _ := nval.ParseString(rand.Intn(100)) // TODO: insert data to notification
+	var dataWelcomeMessage = map[string]string{
+		"title": "Verifikasi Email",
+		"body":  fmt.Sprintf(`Hai %v, Selamat datang di Pegadaian Digital Service`, user.Nama),
+		"type":  constant.TypeProfile,
+		"id":    id,
+	}
+	welcomeMessage := dto.NotificationPayload{
+		Title: "Verifikasi Email",
+		Body:  fmt.Sprintf(`Hai %v, Selamat datang di Pegadaian Digital Service`, user.Nama),
+		Image: "",
+		Token: payload.FcmToken,
+		Data:  dataWelcomeMessage,
+	}
+	_, err = c.notificationService.SendNotification(welcomeMessage)
+	if err != nil {
+		log.Debugf("Error when send notification message: %s, phone : %s", registerOTP.RegistrationId, customer.Phone)
+		return nil, c.response.GetError("E_REG_1")
+	}
 
 	// Delete OTP RegistrationId
 	err = c.verificationOTPRepo.Delete(registerOTP.RegistrationId, customer.Phone)

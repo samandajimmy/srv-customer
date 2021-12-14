@@ -27,3 +27,7 @@ type CacheService interface {
 	Get(key string) (string, error)
 	SetThenGet(key string, value string, expire int64) (string, error)
 }
+
+type NotificationService interface {
+	SendNotification(payload dto.NotificationPayload) (*http.Response, error)
+}

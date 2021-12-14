@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nval"
 
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/ncore"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nlogger"
@@ -36,7 +37,7 @@ func NewNucleoClient(channelId string, clientId string, baseUrl string) *Nclient
 	}
 }
 
-func (c *Nclient) PostData(endpoint string, body map[string]string, header map[string]string) (*http.Response, error) {
+func (c *Nclient) PostData(endpoint string, body map[string]interface{}, header map[string]string) (*http.Response, error) {
 	var result *http.Response
 	var payload *bytes.Buffer
 
@@ -94,7 +95,7 @@ func GetResponseData(response *http.Response) (*ResponseSwitching, error) {
 	return Response, nil
 }
 
-func getBodyRequest(header map[string]string, body map[string]string) *bytes.Buffer {
+func getBodyRequest(header map[string]string, body map[string]interface{}) *bytes.Buffer {
 	var payload *bytes.Buffer
 	switch header["Content-Type"] {
 	case "application/json":
@@ -110,16 +111,16 @@ func getBodyRequest(header map[string]string, body map[string]string) *bytes.Buf
 	return payload
 }
 
-func setBodyUrlEncoded(data map[string]string) *bytes.Buffer {
+func setBodyUrlEncoded(data map[string]interface{}) *bytes.Buffer {
 	var param = url.Values{}
 	for key, value := range data {
-		param.Set(key, value)
+		param.Set(key, nval.ParseStringFallback(value, ""))
 	}
 
 	return bytes.NewBufferString(param.Encode())
 }
 
-func setBodyApplicationJSON(data map[string]string) *bytes.Buffer {
+func setBodyApplicationJSON(data map[string]interface{}) *bytes.Buffer {
 	// Set param for body request
 	jsonValue, _ := json.Marshal(data)
 

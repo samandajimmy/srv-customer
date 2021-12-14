@@ -18,32 +18,36 @@ const (
 )
 
 const (
-	PREFIX = "PDSAPI"
+	Prefix = "PDSAPI"
 )
 
 const (
-	AGEN_ANDROID = "android"
-	AGEN_MOBILE  = "mobile"
-	AGEN_WEB     = "web"
+	AgenAndroid = "android"
+	AgenMobile  = "mobile"
+	AgenWeb     = "web"
 )
 
 const (
-	CHANNEL_ANDROID = "6017"
-	CHANNEL_MOBILE  = "6017"
-	CHANNEL_WEB     = "6014"
+	ChannelAndroid = "6017"
+	ChannelMobile  = "6017"
+	ChannelWeb     = "6014"
 )
 
 const (
-	WARN_2X_WRONG_PASSWORD = 2
-	WARN_4X_WRONG_PASSWORD = 4
-	MIN_WRONG_PASSWORD     = 3
-	MAX_WRONG_PASSWORD     = 5
+	Warn2XWrongPassword = 2
+	Warn4XWrongPassword = 4
+	MinWrongPassword    = 3
+	MaxWrongPassword    = 5
 )
 
 const (
 	WIB  = "Asia/Jakarta"
 	WITA = "Asia/Makassar"
 	WIT  = "Asia/Jayapura"
+)
+
+const (
+	TypeProfile = "profile"
 )
 
 const (
