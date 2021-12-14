@@ -98,7 +98,11 @@ func (c *Customer) Login(payload dto.LoginRequest) (*dto.LoginResponse, error) {
 	blockedUntil := ntime.ChangeTimezone(credential.BlockedUntilAt.Time, constant.WIB)
 	now := ntime.ChangeTimezone(t, constant.WIB)
 	if credential.BlockedUntilAt.Valid != false && blockedUntil.After(now) {
-		return nil, c.response.GetError("E_AUTH_9")
+		// Set response if blocked
+		message := "Akun dikunci hingga %v karena gagal login %v kali. Hubungi call center jika ini bukan kamu"
+		timeBlocked := ntime.ChangeTimezone(credential.BlockedUntilAt.Time, constant.WIB).Format("02-Jan-2006 15:04:05")
+		setResponse := ncore.Success.SetMessage(message, timeBlocked, credential.WrongPasswordCount)
+		return nil, &setResponse
 	}
 
 	// Counter wrong password count
@@ -321,7 +325,7 @@ func (c *Customer) ValidatePassword(password string) *dto.ValidatePassword {
 }
 
 func (c *Customer) HandleWrongPassword(credential *model.Credential) error {
-	var code string
+	var resp error
 	t := time.Now()
 
 	// Unmarshalling metadata credential to get tryLoginAt
@@ -352,45 +356,60 @@ func (c *Customer) HandleWrongPassword(credential *model.Credential) error {
 
 	switch wrongCount {
 	case constant.Warn2XWrongPassword:
-		code = "E_AUTH_6"
+		resp = c.response.GetError("E_AUTH_6")
 		credential.WrongPasswordCount = wrongCount
 	case constant.Warn4XWrongPassword:
-		code = "E_AUTH_7"
+		resp = c.response.GetError("E_AUTH_7")
 		credential.WrongPasswordCount = wrongCount
 	case constant.MinWrongPassword:
-		code = "E_AUTH_9"
+
 		// Set block account
 		hour := 1 // Block for 1 hours
 		duration := time.Hour * time.Duration(hour)
+		addDuration := t.Add(duration)
 		credential.BlockedAt = sql.NullTime{
 			Time:  t,
 			Valid: true,
 		}
 		credential.BlockedUntilAt = sql.NullTime{
-			Time:  t.Add(duration),
+			Time:  addDuration,
 			Valid: true,
 		}
 		credential.WrongPasswordCount = wrongCount
+
+		// Set response if blocked for 1 hour
+		message := "Akun dikunci hingga %v karena gagal login %v kali. Hubungi call center jika ini bukan kamu"
+		timeBlocked := ntime.ChangeTimezone(credential.BlockedUntilAt.Time, constant.WIB).Format("02-Jan-2006 15:04:05")
+		setResponse := ncore.Success.SetMessage(message, timeBlocked, credential.WrongPasswordCount)
+		resp = &setResponse
+
 		// TODO sendNotificationBlockedLoginOneHour
 		break
 	case constant.MaxWrongPassword:
-		code = "E_AUTH_9"
 		// Set block account
 		hour := 24 // Block for 24 hours
 		duration := time.Hour * time.Duration(hour)
+		addDuration := t.Add(duration)
 		credential.BlockedAt = sql.NullTime{
 			Time:  t,
 			Valid: true,
 		}
 		credential.BlockedUntilAt = sql.NullTime{
-			Time:  t.Add(duration),
+			Time:  addDuration,
 			Valid: true,
 		}
 		credential.WrongPasswordCount = wrongCount
+
+		// Set response if blocked for 24 hour
+		message := "Akun dikunci hingga %v karena gagal login %v kali. Hubungi call center jika ini bukan kamu"
+		timeBlocked := ntime.ChangeTimezone(credential.BlockedUntilAt.Time, constant.WIB).Format("02-Jan-2006 15:04:05")
+		setResponse := ncore.Success.SetMessage(message, timeBlocked, credential.WrongPasswordCount)
+		resp = &setResponse
+
 		// TODO sendNotificationBlockedLoginOneDay
 		break
 	default:
-		code = "E_AUTH_8"
+		resp = c.response.GetError("E_AUTH_8")
 		credential.WrongPasswordCount = wrongCount
 		break
 	}
@@ -409,7 +428,7 @@ func (c *Customer) HandleWrongPassword(credential *model.Credential) error {
 		return ncore.TraceError(err)
 	}
 
-	return c.response.GetError(code)
+	return resp
 }
 
 func GetChannelByAgen(agen string) string {

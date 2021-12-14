@@ -147,3 +147,19 @@ func TraceError(err error) error {
 	respErr.Traces = append(respErr.Traces, Trace(1))
 	return respErr
 }
+
+func (r Response) SetMessage(message string, args ...interface{}) Response {
+
+	r.Message = fmt.Sprintf(message, args...)
+
+	return r
+}
+
+func (r Response) HttpStatus(code int) Response {
+
+	r.Metadata = map[string]interface{}{
+		"http_status": code,
+	}
+
+	return r
+}
