@@ -9,4 +9,5 @@ type RepositoryMap struct {
 	AuditLogin      AuditLoginRepository
 	Verification    VerificationRepository
 	UserExternal    UserExternalRepository
+	UserPinExternal UserPinExternalRepository
 }
