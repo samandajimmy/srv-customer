@@ -69,49 +69,49 @@ type LoginResponse struct {
 type CustomerVO struct {
 	ID                        string                  `json:"id"`
 	Cif                       string                  `json:"cif"`
-	IsKYC                     string                  `json:"isKYC"`
+	IsKYC                     string                  `json:"is_kyc"`
 	Nama                      string                  `json:"nama"`
-	NamaIbu                   string                  `json:"namaIbu"`
-	NoKTP                     string                  `json:"noKTP"`
+	NamaIbu                   string                  `json:"nama_ibu"`
+	NoKTP                     string                  `json:"no_ktp"`
 	Email                     string                  `json:"email"`
-	JenisKelamin              string                  `json:"jenisKelamin"`
-	TempatLahir               string                  `json:"tempatLahir"`
-	TglLahir                  string                  `json:"tglLahir"`
+	JenisKelamin              string                  `json:"jenis_kelamin"`
+	TempatLahir               string                  `json:"tempat_lahir"`
+	TglLahir                  string                  `json:"tgl_lahir"`
 	Alamat                    string                  `json:"alamat"`
-	IDProvinsi                string                  `json:"idProvinsi"`
-	IDKabupaten               string                  `json:"idKabupaten"`
-	IDKecamatan               string                  `json:"idKecamatan"`
-	IDKelurahan               string                  `json:"idKelurahan"`
+	IDProvinsi                string                  `json:"id_provinsi"`
+	IDKabupaten               string                  `json:"id_kabupaten"`
+	IDKecamatan               string                  `json:"id_kecamatan"`
+	IDKelurahan               string                  `json:"id_kelurahan"`
 	Kelurahan                 string                  `json:"kelurahan"`
 	Provinsi                  string                  `json:"provinsi"`
 	Kabupaten                 string                  `json:"kabupaten"`
 	Kecamatan                 string                  `json:"kecamatan"`
-	KodePos                   string                  `json:"kodePos"`
-	NoHP                      string                  `json:"noHP"`
+	KodePos                   string                  `json:"kode_pos"`
+	NoHP                      string                  `json:"no_hp"`
 	Avatar                    string                  `json:"avatar"`
-	FotoKTP                   string                  `json:"fotoKTP"`
-	IsEmailVerified           string                  `json:"isEmailVerified"`
+	FotoKTP                   string                  `json:"foto_ktp"`
+	IsEmailVerified           string                  `json:"is_email_verified"`
 	Kewarganegaraan           string                  `json:"kewarganegaraan"`
-	JenisIdentitas            string                  `json:"jenisIdentitas"`
-	NoIdentitas               string                  `json:"noIdentitas"`
-	TglExpiredIdentitas       string                  `json:"tglExpiredIdentitas"`
-	NoNPWP                    string                  `json:"noNPWP"`
-	FotoNPWP                  string                  `json:"fotoNPWP"`
-	NoSid                     interface{}             `json:"noSid"`
-	FotoSid                   interface{}             `json:"fotoSid"`
-	StatusKawin               string                  `json:"statusKawin"`
+	JenisIdentitas            string                  `json:"jenis_identitas"`
+	NoIdentitas               string                  `json:"no_identitas"`
+	TglExpiredIdentitas       string                  `json:"tgl_expired_identitas"`
+	NoNPWP                    string                  `json:"no_npwp"`
+	FotoNPWP                  string                  `json:"foto_npwp"`
+	NoSid                     interface{}             `json:"no_sid"`
+	FotoSid                   interface{}             `json:"foto_sid"`
+	StatusKawin               string                  `json:"status_kawin"`
 	Norek                     string                  `json:"norek"`
 	Saldo                     string                  `json:"saldo"`
-	AktifasiTransFinansial    string                  `json:"aktifasiTransFinansial"`
-	IsDukcapilVerified        string                  `json:"isDukcapilVerified"`
-	IsOpenTe                  string                  `json:"isOpenTe"`
-	ReferralCode              interface{}             `json:"referralCode"`
-	GoldCardApplicationNumber string                  `json:"GoldCardApplicationNumber"`
-	GoldCardAccountNumber     interface{}             `json:"goldCardAccountNumber"`
-	KodeCabang                string                  `json:"kodeCabang"`
-	TabunganEmas              *CustomerTabunganEmasVO `json:"tabunganEmas"`
-	IsFirstLogin              bool                    `json:"isFirstLogin"`
-	IsForceUpdatePassword     bool                    `json:"isForceUpdatePassword"`
+	AktifasiTransFinansial    string                  `json:"aktifasi_trans_finansial"`
+	IsDukcapilVerified        string                  `json:"is_dukcapil_verified"`
+	IsOpenTe                  string                  `json:"is_open_te"`
+	ReferralCode              interface{}             `json:"referral_code"`
+	GoldCardApplicationNumber string                  `json:"gold_card_application_number"`
+	GoldCardAccountNumber     interface{}             `json:"gold_card_account_number"`
+	KodeCabang                string                  `json:"kode_cabang"`
+	TabunganEmas              *CustomerTabunganEmasVO `json:"tabungan_emas"`
+	IsFirstLogin              bool                    `json:"is_first_login"`
+	IsForceUpdatePassword     bool                    `json:"is_force_update_password"`
 }
 
 type CustomerMetadata struct {
