@@ -1,10 +1,11 @@
 package contract
 
 import (
+	"encoding/hex"
+	"fmt"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"net/http"
 	"os"
-
-	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nhttp"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nsql"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nval"
@@ -60,11 +61,19 @@ func (c *Config) LoadFromEnv() {
 		Host:            os.Getenv("EXTERNAL_DB_HOST"),
 		Port:            os.Getenv("EXTERNAL_DB_PORT"),
 		Username:        os.Getenv("EXTERNAL_DB_USER"),
-		Password:        os.Getenv("EXTERNAL_DB_PASS") + "#", // TODO: Resolve env variable don't include "#"
+		Password:        os.Getenv("EXTERNAL_DB_PASS"),
 		Database:        os.Getenv("EXTERNAL_DB_NAME"),
 		MaxIdleConn:     nsql.NewInt(10),
 		MaxOpenConn:     nsql.NewInt(10),
 		MaxConnLifetime: nsql.NewInt(1),
+	}
+
+	// If password is hex
+	password, err := hex.DecodeString(fmt.Sprintf("%v", os.Getenv("EXTERNAL_DB_PASS")))
+	c.DataSources.DBExternal.Password = string(password)
+	if err != nil {
+		log.Errorf("Error parsing hex env for password: %v", err)
+		c.DataSources.DBExternal.Password = os.Getenv("EXTERNAL_DB_PASS")
 	}
 
 	// Load cors

@@ -75,7 +75,7 @@ func (c *Customer) Login(payload dto.LoginRequest) (*dto.LoginResponse, error) {
 
 		// TODO: MAPPING FROM DB EXTERNAL AND REGISTER TO DB INTERNAL
 		return nil, ncore.TraceError(err) // TODO: REMOVE THIS
-	} else {
+	} else if err != nil {
 		log.Errorf("failed to retrieve customer. error: %v", err)
 		return nil, ncore.TraceError(err)
 	}
@@ -234,12 +234,14 @@ func (c *Customer) SetTokenAuthentication(customer *model.Customer, agen string,
 	accessToken, _ = c.cacheService.Get(cacheTokenKey)
 	if accessToken == "" {
 		// Generate access token
-		accessToken := nval.Bin2Hex(nval.RandStringBytes(78))
+		accessToken = nval.Bin2Hex(nval.RandStringBytes(78))
 		// Set token to cache
-		accessToken, err := c.cacheService.SetThenGet(cacheTokenKey, accessToken, c.clientConfig.JWTExpired)
+		cacheToken, err := c.cacheService.SetThenGet(cacheTokenKey, accessToken, c.clientConfig.JWTExpired)
 		if err != nil {
 			return "", err
 		}
+		// Set access token
+		accessToken = cacheToken
 	}
 
 	channelId := GetChannelByAgen(agen)
