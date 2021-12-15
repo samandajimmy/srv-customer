@@ -85,7 +85,7 @@ func ModelUserToCustomer(user *model.User) (*model.Customer, error) {
 	return customer, nil
 }
 
-func ModelUserToCredential(user model.User, userPin *model.UserPin) (*model.Credential, error) {
+func ModelUserToCredential(user *model.User, userPin *model.UserPin) (*model.Credential, error) {
 	itemMetaData := model.NewItemMetadata(ModifierDTOToModel(dto.Modifier{ID: "", Role: "", FullName: ""}))
 
 	credential := &model.Credential{
@@ -133,7 +133,7 @@ func ModelUserToCredential(user model.User, userPin *model.UserPin) (*model.Cred
 	return credential, nil
 }
 
-func ModelUserToVerification(user model.User) (*model.Verification, error) {
+func ModelUserToVerification(user *model.User) (*model.Verification, error) {
 	itemMetaData := model.NewItemMetadata(ModifierDTOToModel(dto.Modifier{ID: "", Role: "", FullName: ""}))
 
 	//verification
@@ -155,7 +155,7 @@ func ModelUserToVerification(user model.User) (*model.Verification, error) {
 	return verification, nil
 }
 
-func ModelUserToFinancialData(user model.User) (*model.FinancialData, error) {
+func ModelUserToFinancialData(user *model.User) (*model.FinancialData, error) {
 	itemMetaData := model.NewItemMetadata(ModifierDTOToModel(dto.Modifier{ID: "", Role: "", FullName: ""}))
 
 	financialData := &model.FinancialData{
@@ -173,7 +173,7 @@ func ModelUserToFinancialData(user model.User) (*model.FinancialData, error) {
 	return financialData, nil
 }
 
-func ModelUserToAddress(user model.User, userAddress *model.AddressExternal) (*model.Address, error) {
+func ModelUserToAddress(user *model.User, userAddress *model.AddressExternal) (*model.Address, error) {
 	itemMetaData := model.NewItemMetadata(ModifierDTOToModel(dto.Modifier{ID: "", Role: "", FullName: ""}))
 
 	var purpose string

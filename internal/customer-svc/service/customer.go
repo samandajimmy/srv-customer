@@ -34,7 +34,10 @@ type Customer struct {
 	accessSessionRepo   contract.AccessSessionRepository
 	auditLoginRepo      contract.AuditLoginRepository
 	verificationRepo    contract.VerificationRepository
+	financialDataRepo   contract.FinancialDataRepository
+	addressRepo         contract.AddressRepository
 	userExternalRepo    contract.UserExternalRepository
+	userPinExternalRepo contract.UserPinExternalRepository
 	otpService          contract.OTPService
 	cacheService        contract.CacheService
 	notificationService contract.NotificationService
@@ -56,7 +59,10 @@ func (c *Customer) Init(app *contract.PdsApp) error {
 	c.accessSessionRepo = app.Repositories.AccessSession
 	c.auditLoginRepo = app.Repositories.AuditLogin
 	c.verificationRepo = app.Repositories.Verification
+	c.financialDataRepo = app.Repositories.FinancialData
+	c.addressRepo = app.Repositories.Address
 	c.userExternalRepo = app.Repositories.UserExternal
+	c.userPinExternalRepo = app.Repositories.UserPinExternal
 	c.otpService = app.Services.OTP
 	c.cacheService = app.Services.Cache
 	c.clientConfig = app.Config.Client
@@ -80,8 +86,15 @@ func (c *Customer) Login(payload dto.LoginRequest) (*dto.LoginResponse, error) {
 			return nil, c.response.GetError("E_RES_1")
 		}
 
-		// TODO: MAPPING FROM DB EXTERNAL AND REGISTER TO DB INTERNAL
-		return nil, ncore.TraceError(err) // TODO: REMOVE THIS
+		// sync data external to internal
+		//err = c.syncExternalToInternal(user)
+		//if err != nil {
+		//	log.Error("error while sync data External to Internal", nlogger.Error(err))
+		//	return nil, err
+		//}
+
+		return nil, ncore.TraceError(err)
+
 	} else if err != nil {
 		log.Errorf("failed to retrieve customer. error: %v", err)
 		return nil, ncore.TraceError(err)
@@ -923,4 +936,90 @@ func GetChannelByAgen(agen string) string {
 	}
 
 	return ""
+}
+
+func (c *Customer) syncExternalToInternal(user *model.User) error {
+	// prepare customer
+	customer, err := convert.ModelUserToCustomer(user)
+	if err != nil {
+		log.Error("failed to convert to model customer", nlogger.Error(err))
+		return err
+	}
+	// persist customer data
+	customerId, err := c.customerRepo.Insert(customer)
+	if err != nil {
+		return err
+	}
+
+	// Check has userPin or not
+	userPin, err := c.userPinExternalRepo.FindByCustomerId(customer.Id)
+	if err != nil {
+		log.Error("failed retrieve user pin from external database", nlogger.Error(err))
+		return err
+	}
+
+	// prepare credential
+	credential, err := convert.ModelUserToCredential(user, userPin)
+	if err != nil {
+		log.Error("failed convert to credential model", nlogger.Error(err))
+		return err
+	}
+	credential.CustomerId = customerId
+	// persist credential
+	err = c.credentialRepo.InsertOrUpdate(credential)
+	if err != nil {
+		log.Error("failed persist to credential", nlogger.Error(err))
+		return err
+	}
+
+	// prepare financial data
+	financialData, err := convert.ModelUserToFinancialData(user)
+	if err != nil {
+		log.Error("failed convert to financial data", nlogger.Error(err))
+		return err
+	}
+	financialData.CustomerId = customerId
+	// persist financial data
+	err = c.financialDataRepo.InsertOrUpdate(financialData)
+	if err != nil {
+		log.Error("failed persist to financial data", nlogger.Error(err))
+		return err
+	}
+
+	// prepare verification
+	verification, err := convert.ModelUserToVerification(user)
+	if err != nil {
+		log.Error("failed convert to verification", nlogger.Error(err))
+		return err
+	}
+	verification.CustomerId = customerId
+	// persist verification
+	err = c.verificationRepo.InsertOrUpdate(verification)
+	if err != nil {
+		log.Error("failed persist verification", nlogger.Error(err))
+		return err
+	}
+
+	// prepare address
+	// check user address on external database
+	addressExternal, err := c.userExternalRepo.FindAddressByCustomerId(user.UserAiid)
+	if err != nil {
+		log.Error("failed retrieve address from external database", nlogger.Error(err))
+		return err
+	}
+	// prepare address
+	address, err := convert.ModelUserToAddress(user, addressExternal)
+	if err != nil {
+		log.Error("failed convert address", nlogger.Error(err))
+		return err
+	}
+	address.CustomerId = customerId
+	// persist address
+	err = c.addressRepo.InsertOrUpdate(address)
+	if err != nil {
+		log.Error("failed persist address", nlogger.Error(err))
+		return err
+	}
+
+	return nil
 }

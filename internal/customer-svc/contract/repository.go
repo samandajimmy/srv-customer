@@ -59,7 +59,9 @@ type VerificationRepository interface {
 }
 
 type AddressRepository interface {
+	FindByCustomerId(id int64) (*model.Address, error)
 	Insert(row *model.Address) error
+	InsertOrUpdate(row *model.Address) error
 	FindPrimaryAddress(customerId int64) (*model.Address, error)
 	Update(row *model.Address) error
 }
