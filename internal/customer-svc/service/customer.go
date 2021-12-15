@@ -572,7 +572,7 @@ func (c *Customer) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCu
 		Password:            nval.MD5(payload.Password),
 		NextPasswordResetAt: sql.NullTime{},
 		Pin:                 "",
-		PinCif:              "",
+		PinCif:              sql.NullString{},
 		PinUpdatedAt:        sql.NullTime{},
 		PinLastAccessAt:     sql.NullTime{},
 		PinCounter:          0,

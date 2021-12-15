@@ -48,6 +48,12 @@ type VerificationRepository interface {
 	DeleteByID(id string) error
 }
 
+type AddressRepository interface {
+	Insert(row *model.Address) error
+	FindPrimaryAddress(customerId int64) (*model.Address, error)
+	Update(row *model.Address) error
+}
+
 type UserExternalRepository interface {
 	FindByEmailOrPhone(email string) (*model.User, error)
 	FindAddressByCustomerId(id string) (*model.AddressExternal, error)
