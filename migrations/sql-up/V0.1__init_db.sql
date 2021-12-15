@@ -10,7 +10,7 @@ CREATE TABLE public."Customer"
     "version"        bigint                      NOT NULL DEFAULT 1,
     "fullName"       varchar(255)                NOT NULL,
     "phone"          varchar(16)                 NOT NULL,
-    "email"          varchar(255)                 NOT NULL,
+    "email"          varchar(255)                NOT NULL,
     "identityType"   SMALLINT                    NULL,
     "identityNumber" varchar(64)                 NULL,
     "userRefId"      bigint                      NULL,
@@ -51,8 +51,10 @@ CREATE TABLE public."Address"
     "districtId"      bigint                      NOT NULL,
     "districtName"    varchar(255)                NOT NULL,
     "subDistrictId"   bigint                      NOT NULL,
-    "subDistrictName" varchar(255)                NOT NULL
-
+    "subDistrictName" VARCHAR(255)                NOT NULL,
+    "line"            TEXT                        NULL,
+    "postalCode"      VARCHAR(16)                 NULL,
+    "isPrimary"       BOOLEAN                     NULL     DEFAULT FALSE
 );
 
 
@@ -169,7 +171,7 @@ CREATE TABLE public."AuditLogin"
     "brand"        varchar(250)                NULL,
     "osVersion"    varchar(20)                 NULL,
     "browser"      varchar(200)                NULL,
-    "useBiometric" INT               default 0 NULL
+    "useBiometric" INT                                  DEFAULT 0 NULL
 );
 
 create index customerId
