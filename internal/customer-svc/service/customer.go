@@ -43,6 +43,8 @@ type Customer struct {
 	notificationService contract.NotificationService
 	clientConfig        contract.ClientConfig
 	response            *ncore.ResponseMap
+	httpBaseUrl         string
+	emailConfig         contract.EmailConfig
 }
 
 func (c *Customer) HasInitialized() bool {
@@ -63,6 +65,8 @@ func (c *Customer) Init(app *contract.PdsApp) error {
 	c.clientConfig = app.Config.Client
 	c.notificationService = app.Services.Notification
 	c.response = app.Responses
+	c.httpBaseUrl = app.Config.Server.GetHttpBaseUrl()
+	c.emailConfig = app.Config.Email
 	return nil
 }
 
@@ -636,7 +640,7 @@ func (c *Customer) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCu
 	dataEmailVerification := &dto.EmailVerification{
 		FullName:        customer.FullName,
 		Email:           customer.Email,
-		VerificationUrl: fmt.Sprintf("%s/auth/verify_email?t=%s", "http://localhost:4000", verification.EmailVerificationToken),
+		VerificationUrl: fmt.Sprintf("%sauth/verify_email?t=%s", c.httpBaseUrl, verification.EmailVerificationToken),
 	}
 	htmlMessage, err := templateFile(dataEmailVerification, "email_verification.html")
 	if err != nil {
@@ -647,8 +651,8 @@ func (c *Customer) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCu
 	emailPayload := dto.EmailPayload{
 		Subject: fmt.Sprintf("Verifikasi Email %s", customer.FullName),
 		From: dto.FromEmailPayload{
-			Name:  "PT. Pegadaian (Persero)",  // TODO load from env
-			Email: "no-reply@pegadaian.co.id", // TODO load from env
+			Name:  c.emailConfig.PdsEmailFromName,
+			Email: c.emailConfig.PdsEmailFrom,
 		},
 		To:         customer.Email,
 		Message:    htmlMessage,

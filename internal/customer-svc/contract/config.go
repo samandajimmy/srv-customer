@@ -20,6 +20,7 @@ type Config struct {
 	CorePDS      CorePDSConfig
 	Redis        RedisConfig
 	Notification NotificationConfig
+	Email        EmailConfig
 }
 
 func (c *Config) LoadFromEnv() {
@@ -119,6 +120,10 @@ func (c *Config) LoadFromEnv() {
 
 	// Load notification
 	c.Notification.NotificationServiceUrl = nval.ParseStringFallback(os.Getenv("NOTIFICATION_SERVICE_URL"), "")
+
+	// Load email config
+	c.Email.PdsEmailFrom = nval.ParseStringFallback(os.Getenv("PDS_EMAIL_FROM"), "no-reply@pegadaian.co.id")
+	c.Email.PdsEmailFromName = nval.ParseStringFallback(os.Getenv("PDS_EMAIL_FROMNAME"), "Pegadaian Digital Service")
 }
 
 type NotificationConfig struct {
@@ -206,5 +211,17 @@ func (c RedisConfig) Validate() error {
 		validation.Field(&c.RedisScheme, validation.Required),
 		validation.Field(&c.RedisHost, validation.Required),
 		validation.Field(&c.RedisPort, validation.Required),
+	)
+}
+
+type EmailConfig struct {
+	PdsEmailFrom     string
+	PdsEmailFromName string
+}
+
+func (c EmailConfig) Validate() error {
+	return validation.ValidateStruct(&c,
+		validation.Field(&c.PdsEmailFrom, validation.Required),
+		validation.Field(&c.PdsEmailFromName, validation.Required),
 	)
 }
