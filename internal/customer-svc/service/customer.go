@@ -1,12 +1,15 @@
 package service
 
 import (
+	"bytes"
 	"crypto/md5"
 	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"html/template"
 	"math/rand"
+	"path"
 	"regexp"
 	"strings"
 	"time"
@@ -431,26 +434,6 @@ func (c *Customer) HandleWrongPassword(credential *model.Credential) error {
 	return resp
 }
 
-func GetChannelByAgen(agen string) string {
-
-	// Generalize agen
-	agen = strings.ToLower(agen)
-
-	if agen == constant.AgenAndroid {
-		return constant.ChannelAndroid
-	}
-
-	if agen == constant.AgenMobile {
-		return constant.ChannelMobile
-	}
-
-	if agen == constant.AgenWeb {
-		return constant.ChannelWeb
-	}
-
-	return ""
-}
-
 func (c *Customer) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCustomerResponse, error) {
 	// validate exist
 	customer, err := c.customerRepo.FindByEmail(payload.Email)
@@ -637,21 +620,46 @@ func (c *Customer) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCu
 		return nil, c.response.GetError("E_REG_1")
 	}
 
+	// call login service
 	payloadLogin := dto.LoginRequest{
 		Email:    payload.Email,
 		Password: payload.Password,
 		Agen:     payload.Agen,
 		Version:  payload.Version,
 	}
-
 	res, err := c.Login(payloadLogin)
 	if err != nil {
 		return nil, ncore.TraceError(err)
 	}
-
 	user := res.Customer
+	// Send Email Verification
+	dataEmailVerification := &dto.EmailVerification{
+		FullName:        customer.FullName,
+		Email:           customer.Email,
+		VerificationUrl: fmt.Sprintf("%s/auth/verify_email?t=%s", "http://localhost:4000", verification.EmailVerificationToken),
+	}
+	htmlMessage, err := templateFile(dataEmailVerification, "email_verification.html")
+	if err != nil {
+		return nil, err
+	}
 
-	// TODO: Send Mail Service After Register
+	// set payload email service
+	emailPayload := dto.EmailPayload{
+		Subject: fmt.Sprintf("Verifikasi Email %s", customer.FullName),
+		From: dto.FromEmailPayload{
+			Name:  "PT. Pegadaian (Persero)",  // TODO load from env
+			Email: "no-reply@pegadaian.co.id", // TODO load from env
+		},
+		To:         customer.Email,
+		Message:    htmlMessage,
+		Attachment: "",
+		MimeType:   "",
+	}
+	_, err = c.notificationService.SendEmail(emailPayload)
+	if err != nil {
+		log.Debugf("Error when send email verification. Payload %v", emailPayload)
+	}
+
 	// Send Notification Welcome
 	id, _ := nval.ParseString(rand.Intn(100)) // TODO: insert data to notification
 	var dataWelcomeMessage = map[string]string{
@@ -670,7 +678,6 @@ func (c *Customer) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCu
 	_, err = c.notificationService.SendNotification(welcomeMessage)
 	if err != nil {
 		log.Debugf("Error when send notification message: %s, phone : %s", registerOTP.RegistrationId, customer.Phone)
-		return nil, c.response.GetError("E_REG_1")
 	}
 
 	// Delete OTP RegistrationId
@@ -681,7 +688,6 @@ func (c *Customer) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCu
 	}
 
 	return &dto.RegisterNewCustomerResponse{
-		// Todo load Customer form login service
 		User: dto.CustomerVO{
 			ID:                        user.ID,
 			Cif:                       user.Cif,
@@ -896,4 +902,40 @@ func (c *Customer) RegisterResendOTP(payload dto.RegisterResendOTP) (*dto.Regist
 	return &dto.RegisterResendOTPResponse{
 		Action: data.ResponseDesc,
 	}, nil
+}
+
+func GetChannelByAgen(agen string) string {
+
+	// Generalize agen
+	agen = strings.ToLower(agen)
+
+	if agen == constant.AgenAndroid {
+		return constant.ChannelAndroid
+	}
+
+	if agen == constant.AgenMobile {
+		return constant.ChannelMobile
+	}
+
+	if agen == constant.AgenWeb {
+		return constant.ChannelWeb
+	}
+
+	return ""
+}
+
+func templateFile(data interface{}, htmlFile string) (string, error) {
+	var filepath = path.Join("web/templates", htmlFile)
+	var tmpl, err = template.ParseFiles(filepath)
+	if err != nil {
+		return "", err
+	}
+
+	buf := new(bytes.Buffer)
+
+	if err := tmpl.Execute(buf, data); err != nil {
+		return "", err
+	}
+
+	return buf.String(), nil
 }

@@ -2,6 +2,7 @@ package service
 
 import (
 	"net/http"
+
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer-svc/contract"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer-svc/dto"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nclient"
@@ -54,6 +55,40 @@ func (c *Notification) SendNotification(payload dto.NotificationPayload) (*http.
 	if err != nil {
 		log.Errorf("Error when send notification")
 		return resp, ncore.TraceError(err)
+	}
+
+	// Set result
+	result = resp
+
+	return result, nil
+}
+
+func (c *Notification) SendEmail(payload dto.EmailPayload) (*http.Response, error) {
+	var result *http.Response
+	// Set payload
+	reqBody := map[string]interface{}{
+		"from": map[string]string{
+			"name":  payload.From.Name,
+			"email": payload.From.Email,
+		},
+		"to":         payload.To,
+		"subject":    payload.Subject,
+		"message":    payload.Message,
+		"attachment": payload.Attachment,
+		"mimeType":   payload.MimeType,
+	}
+
+	// Set header
+	reqHeader := map[string]string{
+		"Accept":       "application/json",
+		"Content-Type": "application/json",
+	}
+
+	// Send email
+	resp, err := c.client.PostData("/send-email", reqBody, reqHeader)
+	if err != nil {
+		log.Errorf("Error when send email. %v", err)
+		return resp, err
 	}
 
 	// Set result

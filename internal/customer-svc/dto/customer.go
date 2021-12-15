@@ -66,6 +66,20 @@ type LoginResponse struct {
 	JwtToken string      `json:"token"`
 }
 
+type EmailPayload struct {
+	Subject    string           `json:"subject"`
+	From       FromEmailPayload `json:"from"`
+	To         string           `json:"to"`
+	Message    string           `json:"message"`
+	Attachment string           `json:"attachment"`
+	MimeType   string           `json:"mimeType"`
+}
+
+type FromEmailPayload struct {
+	Name  string `json:"name"`
+	Email string `json:"email"`
+}
+
 type CustomerVO struct {
 	ID                        string                  `json:"id"`
 	Cif                       string                  `json:"cif"`

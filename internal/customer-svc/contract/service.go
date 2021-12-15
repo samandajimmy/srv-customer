@@ -30,4 +30,5 @@ type CacheService interface {
 
 type NotificationService interface {
 	SendNotification(payload dto.NotificationPayload) (*http.Response, error)
+	SendEmail(payload dto.EmailPayload) (*http.Response, error)
 }
