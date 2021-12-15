@@ -8,7 +8,7 @@ import (
 type Address struct {
 	Id              int64           `db:"id"`
 	Xid             string          `db:"xid"`
-	CustomerId      string          `db:"customerId"`
+	CustomerId      int64           `db:"customerId"`
 	Purpose         string          `db:"purpose"`
 	ProvinceId      sql.NullString  `db:"provinceId"`
 	ProvinceName    sql.NullString  `db:"provinceName"`

@@ -5,6 +5,7 @@ type RepositoryMap struct {
 	VerificationOTP VerificationOTPRepository
 	OTP             OTPRepository
 	Credential      CredentialRepository
+	FinancialData   FinancialDataRepository
 	AccessSession   AccessSessionRepository
 	AuditLogin      AuditLoginRepository
 	Verification    VerificationRepository

@@ -22,7 +22,7 @@ func (a *UserPinExternal) Init(dataSources DataSourceMap, _ contract.RepositoryM
 	return nil
 }
 
-func (a *UserPinExternal) FindByCustomerId(id string) (*model.UserPin, error) {
+func (a *UserPinExternal) FindByCustomerId(id int64) (*model.UserPin, error) {
 	var row model.UserPin
 	err := a.stmt.FindByCustomerID.Get(&row, id)
 	return &row, err

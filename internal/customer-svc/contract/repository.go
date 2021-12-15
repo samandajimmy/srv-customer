@@ -35,6 +35,14 @@ type CredentialRepository interface {
 	DeleteByID(id string) error
 }
 
+type FinancialDataRepository interface {
+	FindByCustomerId(customerId int64) (*model.FinancialData, error)
+	Insert(row *model.FinancialData) error
+	InsertOrUpdate(row *model.FinancialData) error
+	UpdateByCustomerID(row *model.FinancialData) error
+	DeleteByID(id string) error
+}
+
 type AccessSessionRepository interface {
 	Insert(row *model.AccessSession) error
 	Update(row *model.AccessSession) error
@@ -60,5 +68,5 @@ type UserExternalRepository interface {
 }
 
 type UserPinExternalRepository interface {
-	FindByCustomerId(id string) (*model.UserPin, error)
+	FindByCustomerId(id int64) (*model.UserPin, error)
 }

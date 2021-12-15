@@ -32,6 +32,7 @@ func NewAPI(core *ncore.Core, config contract.Config) API {
 				VerificationOTP: new(repository.VerificationOTP),
 				OTP:             new(repository.OTP),
 				Credential:      new(repository.Credential),
+				FinancialData:   new(repository.FinancialData),
 				AccessSession:   new(repository.AccessSession),
 				AuditLogin:      new(repository.AuditLogin),
 				Verification:    new(repository.Verification),
