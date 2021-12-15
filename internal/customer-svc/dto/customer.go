@@ -116,7 +116,7 @@ type CustomerVO struct {
 	StatusKawin               string                  `json:"status_kawin"`
 	Norek                     string                  `json:"norek"`
 	Saldo                     string                  `json:"saldo"`
-	AktifasiTransFinansial    string                  `json:"aktifasi_trans_finansial"`
+	AktifasiTransFinansial    string                  `json:"AktifasiTransFinansial"`
 	IsDukcapilVerified        string                  `json:"is_dukcapil_verified"`
 	IsOpenTe                  string                  `json:"is_open_te"`
 	ReferralCode              interface{}             `json:"referral_code"`

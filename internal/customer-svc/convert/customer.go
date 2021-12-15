@@ -17,6 +17,7 @@ func ModelUserToCustomer(user *model.User) (*model.Customer, error) {
 	// prepare profile value object
 	profileVO := dto.CustomerProfileVO{
 		MaidenName:         user.NamaIbu.String,
+		Gender:             user.JenisKelamin,
 		Nationality:        user.Kewarganegaraan,
 		DateOfBirth:        nval.ParseStringFallback(user.TglLahir.Time, ""),
 		PlaceOfBirth:       user.TempatLahir.String,
@@ -92,7 +93,7 @@ func ModelUserToCredential(user model.User, userPin *model.UserPin) (*model.Cred
 		Password:            user.Password.String,
 		NextPasswordResetAt: ModifierNullTime(user.NextPasswordReset),
 		Pin:                 user.Pin.String,
-		PinCif:              "",
+		PinCif:              sql.NullString{},
 		PinUpdatedAt:        ModifierNullTime(user.LastUpdatePin),
 		PinLastAccessAt:     sql.NullTime{},
 		PinCounter:          0,
@@ -125,7 +126,7 @@ func ModelUserToCredential(user model.User, userPin *model.UserPin) (*model.Cred
 
 		credential.PinCounter = userPin.Counter
 		credential.PinLastAccessAt = userPin.LastAccessTime
-		credential.PinCif = userPin.Cif.String
+		credential.PinCif = userPin.Cif
 		credential.PinBlockedStatus = userPin.IsBlocked
 	}
 

@@ -11,7 +11,7 @@ type Credential struct {
 	Password            string          `db:"password"`
 	NextPasswordResetAt sql.NullTime    `db:"nextPasswordResetAt"`
 	Pin                 string          `db:"pin"`
-	PinCif              string          `db:"pinCif"`
+	PinCif              sql.NullString  `db:"pinCif"`
 	PinUpdatedAt        sql.NullTime    `db:"pinUpdatedAt"`
 	PinLastAccessAt     sql.NullTime    `db:"pinLastAccessAt"`
 	PinCounter          int64           `db:"pinCounter"`

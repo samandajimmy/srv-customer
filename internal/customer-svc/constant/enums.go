@@ -54,3 +54,8 @@ const (
 	Domicile     = "DOMICILE"
 	IdentityCard = "IDENTITY_CARD"
 )
+
+const (
+	KTP   = "1"
+	KITAS = "2"
+)
