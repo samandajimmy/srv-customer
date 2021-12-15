@@ -37,6 +37,12 @@ func (a *Verification) FindByCustomerId(id int64) (*model.Verification, error) {
 	return &row, err
 }
 
+func (a *Verification) FindByEmailToken(token string) (*model.Verification, error) {
+	var row model.Verification
+	err := a.stmt.FindByEmailToken.Get(&row, token)
+	return &row, err
+}
+
 func (a *Verification) DeleteByID(id string) error {
 	_, err := a.stmt.DeleteByID.Exec(id)
 	return ncore.TraceError(err)

@@ -9,6 +9,7 @@ type ResponseFlag = int
 const (
 	EndRequest = ResponseFlag(iota)
 	ContinueRequest
+	ViewRequest
 )
 
 func NewResponse() *Response {
@@ -36,6 +37,17 @@ func Success() *Response {
 		Message:      ncore.Success.Message,
 		Header:       make(map[string]string),
 		responseFlag: EndRequest,
+	}
+}
+
+func View() *Response {
+	return &Response{
+		Success:      true,
+		Code:         ncore.Success.Code,
+		Message:      ncore.Success.Message,
+		Header:       make(map[string]string),
+		Data:         "",
+		responseFlag: ViewRequest,
 	}
 }
 

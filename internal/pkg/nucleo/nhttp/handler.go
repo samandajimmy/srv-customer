@@ -94,8 +94,14 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		statusHttp = http.StatusOK
 	}
 
-	// Write response
-	httpStatus = h.contentWriter.Write(w, statusHttp, result)
+	if result.responseFlag == ViewRequest {
+		// Write response html
+		httpStatus = h.contentWriter.WriteView(w, statusHttp, result.Data)
+	} else {
+		// Write standard response json
+		httpStatus = h.contentWriter.Write(w, statusHttp, result)
+	}
+
 	rx.SetContextValue(HttpStatusRespKey, httpStatus)
 }
 

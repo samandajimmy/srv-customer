@@ -7,6 +7,7 @@ import (
 )
 
 func setUpRoute(router *nhttp.Router, handlers *HandlerMap) {
+
 	// Common
 	router.Handle(http.MethodGet, "/", router.HandleFunc(handlers.Common.GetAPIStatus))
 
@@ -21,4 +22,7 @@ func setUpRoute(router *nhttp.Router, handlers *HandlerMap) {
 	router.Handle(http.MethodPost, "/register/step-2", router.HandleFunc(handlers.Customer.VerifyOTP))
 	// Register Step-3
 	router.Handle(http.MethodPost, "/register/step-3", router.HandleFunc(handlers.Customer.PostRegister))
+
+	// Verification
+	router.Handle(http.MethodGet, "/auth/verify_email", router.HandleFunc(handlers.Verification.VerfiyEmail))
 }

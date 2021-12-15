@@ -15,4 +15,5 @@ type ServiceMap struct {
 	OTP          OTPService
 	Cache        CacheService
 	Notification NotificationService
+	Verification VerificationService
 }

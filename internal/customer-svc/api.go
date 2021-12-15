@@ -46,6 +46,7 @@ func NewAPI(core *ncore.Core, config contract.Config) API {
 				OTP:          new(service.OTP),
 				Cache:        new(service.Cache),
 				Notification: new(service.Notification),
+				Verification: new(service.Verification),
 			},
 		},
 		dataSources: repository.NewDataSourceMap(),

@@ -1,15 +1,12 @@
 package service
 
 import (
-	"bytes"
 	"crypto/md5"
 	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"html/template"
 	"math/rand"
-	"path"
 	"regexp"
 	"strings"
 	"time"
@@ -642,7 +639,7 @@ func (c *Customer) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCu
 		Email:           customer.Email,
 		VerificationUrl: fmt.Sprintf("%sauth/verify_email?t=%s", c.httpBaseUrl, verification.EmailVerificationToken),
 	}
-	htmlMessage, err := templateFile(dataEmailVerification, "email_verification.html")
+	htmlMessage, err := nval.TemplateFile(dataEmailVerification, "email_verification.html")
 	if err != nil {
 		return nil, err
 	}
@@ -926,20 +923,4 @@ func GetChannelByAgen(agen string) string {
 	}
 
 	return ""
-}
-
-func templateFile(data interface{}, htmlFile string) (string, error) {
-	var filepath = path.Join("web/templates", htmlFile)
-	var tmpl, err = template.ParseFiles(filepath)
-	if err != nil {
-		return "", err
-	}
-
-	buf := new(bytes.Buffer)
-
-	if err := tmpl.Execute(buf, data); err != nil {
-		return "", err
-	}
-
-	return buf.String(), nil
 }

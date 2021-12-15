@@ -28,11 +28,20 @@ func (a *Customer) Insert(row *model.Customer) (int64, error) {
 	return lastInsertId, err
 }
 
+func (a *Customer) FindById(id int64) (*model.Customer, error) {
+	var row model.Customer
+	err := a.stmt.FindById.Get(&row, id)
+	if err != nil {
+		return nil, err
+	}
+	return &row, nil
+}
+
 func (a *Customer) FindByPhone(phone string) (*model.Customer, error) {
 	var row model.Customer
 	err := a.stmt.FindByPhone.Get(&row, phone)
 	if err != nil {
-		return nil, nil
+		return nil, err
 	}
 	return &row, nil
 }
@@ -41,7 +50,7 @@ func (a *Customer) FindByEmail(email string) (*model.Customer, error) {
 	var row model.Customer
 	err := a.stmt.FindByEmail.Get(&row, email)
 	if err != nil {
-		return nil, nil
+		return nil, err
 	}
 	return &row, nil
 }

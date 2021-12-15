@@ -11,6 +11,7 @@ type VerificationOTPRepository interface {
 type CustomerRepository interface {
 	Insert(row *model.Customer) (int64, error)
 	UpdateByPhone(row *model.Customer) error
+	FindById(id int64) (*model.Customer, error)
 	FindByPhone(phone string) (*model.Customer, error)
 	FindByEmail(email string) (*model.Customer, error)
 	FindByEmailOrPhone(email string) (*model.Customer, error)
@@ -50,6 +51,7 @@ type AccessSessionRepository interface {
 
 type VerificationRepository interface {
 	FindByCustomerId(customerId int64) (*model.Verification, error)
+	FindByEmailToken(token string) (*model.Verification, error)
 	Insert(row *model.Verification) error
 	InsertOrUpdate(row *model.Verification) error
 	UpdateByCustomerID(row *model.Verification) error

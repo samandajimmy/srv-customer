@@ -2,6 +2,7 @@ package nhttp
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/ncore"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nval"
@@ -9,6 +10,7 @@ import (
 
 const (
 	ContentTypeJSON = "application/json; charset=utf-8"
+	ContentTypeHTML = "text/html"
 )
 
 type JSONContentWriter struct {
@@ -24,6 +26,20 @@ func (jw JSONContentWriter) Write(w http.ResponseWriter, httpStatus int, body in
 	err := json.NewEncoder(w).Encode(body)
 	if err != nil {
 		log.Errorf("failed to write response to json ( payload = %+v )", body)
+	}
+	// Return httpStatus
+	return httpStatus
+}
+
+func (jw JSONContentWriter) WriteView(w http.ResponseWriter, httpStatus int, view interface{}) int {
+	// Add content type
+	w.Header().Add(ContentTypeHeader, ContentTypeHTML)
+	// Write http status
+	w.WriteHeader(httpStatus)
+	// Send JSON response
+	_, err := fmt.Fprintf(w, view.(string))
+	if err != nil {
+		log.Errorf("failed to write response to html ( payload = %+v )", view)
 	}
 	// Return httpStatus
 	return httpStatus

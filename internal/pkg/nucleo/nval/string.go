@@ -1,6 +1,9 @@
 package nval
 
 import (
+	"bytes"
+	"html/template"
+	"path"
 	"unicode"
 )
 
@@ -29,4 +32,20 @@ func IsNumber(s string) bool {
 		}
 	}
 	return true
+}
+
+func TemplateFile(data interface{}, htmlFile string) (string, error) {
+	var filepath = path.Join("web/templates", htmlFile)
+	var tmpl, err = template.ParseFiles(filepath)
+	if err != nil {
+		return "", err
+	}
+
+	buf := new(bytes.Buffer)
+
+	if err := tmpl.Execute(buf, data); err != nil {
+		return "", err
+	}
+
+	return buf.String(), nil
 }

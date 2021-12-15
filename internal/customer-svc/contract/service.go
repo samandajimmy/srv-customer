@@ -2,7 +2,6 @@ package contract
 
 import (
 	"net/http"
-
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer-svc/dto"
 )
 
@@ -31,4 +30,8 @@ type CacheService interface {
 type NotificationService interface {
 	SendNotification(payload dto.NotificationPayload) (*http.Response, error)
 	SendEmail(payload dto.EmailPayload) (*http.Response, error)
+}
+
+type VerificationService interface {
+	VerifyEmailCustomer(payload dto.VerificationPayload) (string, error)
 }

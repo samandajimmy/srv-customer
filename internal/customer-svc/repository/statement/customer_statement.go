@@ -8,6 +8,7 @@ import (
 type CustomerStatement struct {
 	Insert             *sqlx.NamedStmt
 	UpdateByPhone      *sqlx.NamedStmt
+	FindById           *sqlx.Stmt
 	FindByPhone        *sqlx.Stmt
 	FindByEmail        *sqlx.Stmt
 	FindByEmailOrPhone *sqlx.Stmt
@@ -23,6 +24,7 @@ func NewCustomerStatement(db *nsql.DB) *CustomerStatement {
 
 	return &CustomerStatement{
 		Insert:      db.PrepareNamedFmt(`INSERT INTO "%s" (%s) VALUES (%s) RETURNING id`, tableName, columns, namedColumns),
+		FindById:    db.PrepareFmt(`SELECT "id", %s FROM "%s" WHERE "id" = $1`, columns, tableName),
 		FindByPhone: db.PrepareFmt(`SELECT "id", %s FROM "%s" WHERE "phone" = $1`, columns, tableName),
 		FindByEmail: db.PrepareFmt(`SELECT "id", %s FROM "%s" WHERE "email" = $1`, columns, tableName),
 		FindByEmailOrPhone: db.PrepareFmt(
