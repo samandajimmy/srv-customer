@@ -41,12 +41,6 @@ func boot() customer_svc.API {
 }
 
 func start(app *customer_svc.API) {
-	// Set server config from env
-	err := app.Config.Server.LoadFromEnv()
-	if err != nil {
-		panic(err)
-	}
-
 	// Get server config
 	config := app.Config.Server
 
@@ -55,7 +49,7 @@ func start(app *customer_svc.API) {
 
 	log.Infof("%s HTTP Server is listening to port %d", AppSlug, config.ListenPort)
 	log.Infof("%s HTTP Server Started. Base URL: %s", AppSlug, config.GetHttpBaseUrl())
-	err = http.ListenAndServe(config.GetListenPort(), router)
+	err := http.ListenAndServe(config.GetListenPort(), router)
 	if err != nil {
 		panic(fmt.Errorf("%s: failed to on listen.\n  > %w", AppSlug, err))
 	}

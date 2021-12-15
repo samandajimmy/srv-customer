@@ -54,8 +54,14 @@ func (a *API) Boot() error {
 	// Set value default configs
 	a.Config.LoadFromEnv()
 
+	// Init server config
+	err := a.Config.Server.LoadFromEnv()
+	if err != nil {
+		panic(err)
+	}
+
 	// Init data sources
-	err := a.dataSources.Init(a.Config.DataSources)
+	err = a.dataSources.Init(a.Config.DataSources)
 	if err != nil {
 		return err
 	}
@@ -72,6 +78,7 @@ func (a *API) Boot() error {
 		return err
 	}
 
+	// Init set validate
 	nvalidate.Init()
 
 	return nil
