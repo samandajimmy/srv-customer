@@ -59,3 +59,10 @@ const (
 	KTP   = "1"
 	KITAS = "2"
 )
+
+// Request Type
+const (
+	RequestTypeRegister     = "register"
+	RequestTypeBlockOneHour = "block-login-hour"
+	RequestTypeBlockOneDay  = "block-login-day"
+)

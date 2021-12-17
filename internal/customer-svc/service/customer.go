@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"math/rand"
 	"regexp"
 	"strings"
 	"time"
@@ -68,8 +67,6 @@ func (c *Customer) Init(app *contract.PdsApp) error {
 	c.clientConfig = app.Config.Client
 	c.notificationService = app.Services.Notification
 	c.response = app.Responses
-	c.httpBaseUrl = app.Config.Server.GetHttpBaseUrl()
-	c.emailConfig = app.Config.Email
 	return nil
 }
 
@@ -118,14 +115,14 @@ func (c *Customer) Login(payload dto.LoginRequest) (*dto.LoginResponse, error) {
 		// Set response if blocked
 		message := "Akun dikunci hingga %v karena gagal login %v kali. Hubungi call center jika ini bukan kamu"
 		timeBlocked := ntime.ChangeTimezone(credential.BlockedUntilAt.Time, constant.WIB).Format("02-Jan-2006 15:04:05")
-		setResponse := ncore.Success.SetMessage(message, timeBlocked, credential.WrongPasswordCount)
+		setResponse := ncore.Success.HttpStatus(401).SetMessage(message, timeBlocked, credential.WrongPasswordCount)
 		return nil, &setResponse
 	}
 
 	// Counter wrong password count
 	passwordRequest := fmt.Sprintf("%x", md5.Sum([]byte(payload.Password)))
 	if credential.Password != passwordRequest {
-		err := c.HandleWrongPassword(credential)
+		err := c.HandleWrongPassword(credential, customer)
 		return nil, err
 	}
 
@@ -179,8 +176,8 @@ func (c *Customer) Login(payload dto.LoginRequest) (*dto.LoginResponse, error) {
 	// get user data
 
 	// Unmarshall profile
-	var Profile dto.CustomerProfileVO
-	err = json.Unmarshal(customer.Profile, &Profile)
+	var profile dto.CustomerProfileVO
+	err = json.Unmarshal(customer.Profile, &profile)
 	if err != nil {
 		log.Errorf("Error when unmarshalling profile: %v", err)
 		return nil, ncore.TraceError(err)
@@ -190,66 +187,19 @@ func (c *Customer) Login(payload dto.LoginRequest) (*dto.LoginResponse, error) {
 
 	// Check is force update password
 	validatePassword := c.ValidatePassword(payload.Password)
-	isForcePassword := false
+	isForceUpdatePassword := false
 	log.Debugf("errCode : %v", validatePassword.ErrCode)
 	if validatePassword.IsValid != true {
-		isForcePassword = true
+		isForceUpdatePassword = true
 	}
 
-	return &dto.LoginResponse{
-		Customer: &dto.CustomerVO{
-			ID:                        nval.ParseStringFallback(customer.Id, ""),
-			Cif:                       customer.Cif,
-			IsKYC:                     "1",
-			Nama:                      customer.FullName,
-			NamaIbu:                   Profile.MaidenName,
-			NoKTP:                     customer.IdentityNumber,
-			Email:                     customer.Email,
-			JenisKelamin:              Profile.Gender,
-			TempatLahir:               Profile.PlaceOfBirth,
-			TglLahir:                  Profile.DateOfBirth,
-			Alamat:                    "",
-			IDProvinsi:                "",
-			IDKabupaten:               "",
-			IDKecamatan:               "",
-			IDKelurahan:               "",
-			Kelurahan:                 "",
-			Provinsi:                  "",
-			Kabupaten:                 "",
-			Kecamatan:                 "",
-			KodePos:                   "",
-			NoHP:                      customer.Phone,
-			Avatar:                    "",
-			FotoKTP:                   Profile.IdentityPhotoFile,
-			IsEmailVerified:           customer.Email,
-			Kewarganegaraan:           Profile.Nationality,
-			JenisIdentitas:            fmt.Sprintf("%v", customer.IdentityType),
-			NoIdentitas:               customer.IdentityNumber,
-			TglExpiredIdentitas:       "",
-			NoNPWP:                    Profile.NPWPNumber,
-			NoSid:                     customer.Sid,
-			FotoSid:                   Profile.SidPhotoFile,
-			StatusKawin:               Profile.MarriageStatus,
-			Norek:                     "",
-			Saldo:                     "",
-			AktifasiTransFinansial:    "",
-			IsDukcapilVerified:        "",
-			IsOpenTe:                  "",
-			ReferralCode:              "",
-			GoldCardApplicationNumber: "",
-			GoldCardAccountNumber:     "",
-			KodeCabang:                "",
-			TabunganEmas: &dto.CustomerTabunganEmasVO{
-				TotalSaldoBlokir:  "",
-				TotalSaldoSeluruh: "",
-				TotalSaldoEfektif: "",
-				PrimaryRekening:   "",
-			},
-			IsFirstLogin:          isFirstLogin,
-			IsForceUpdatePassword: isForcePassword,
-		},
-		JwtToken: token,
-	}, nil
+	return c.composeLoginResponse(dto.LoginVO{
+		Customer:              customer,
+		Profile:               profile,
+		IsFirstLogin:          isFirstLogin,
+		IsForceUpdatePassword: isForceUpdatePassword,
+		Token:                 token,
+	})
 }
 
 func (c *Customer) SetTokenAuthentication(customer *model.Customer, agen string, version string, cacheTokenKey string) (string, error) {
@@ -341,7 +291,7 @@ func (c *Customer) ValidatePassword(password string) *dto.ValidatePassword {
 	return &validation
 }
 
-func (c *Customer) HandleWrongPassword(credential *model.Credential) error {
+func (c *Customer) HandleWrongPassword(credential *model.Credential, customer *model.Customer) error {
 	var resp error
 	t := time.Now()
 
@@ -395,12 +345,28 @@ func (c *Customer) HandleWrongPassword(credential *model.Credential) error {
 		credential.WrongPasswordCount = wrongCount
 
 		// Set response if blocked for 1 hour
-		message := "Akun dikunci hingga %v karena gagal login %v kali. Hubungi call center jika ini bukan kamu"
+		message := "Akun dikunci hingga %v WIB karena gagal login %v kali. Hubungi call center jika ini bukan kamu"
 		timeBlocked := ntime.ChangeTimezone(credential.BlockedUntilAt.Time, constant.WIB).Format("02-Jan-2006 15:04:05")
-		setResponse := ncore.Success.SetMessage(message, timeBlocked, credential.WrongPasswordCount)
+		setResponse := ncore.Success.HttpStatus(401).SetMessage(message, timeBlocked, credential.WrongPasswordCount)
 		resp = &setResponse
 
-		// TODO sendNotificationBlockedLoginOneHour
+		// Send OTP To Phone Number
+		request := dto.SendOTPRequest{
+			PhoneNumber: customer.Phone,
+			RequestType: constant.RequestTypeBlockOneHour,
+		}
+		_, err := c.otpService.SendOTP(request)
+		if err != nil {
+			log.Debugf("Error when sending otp block one hour. err: %v", err)
+		}
+
+		// Send Notification Blocked Login One Hour
+		err = c.notificationService.SendNotificationBlock(dto.NotificationBlock{
+			Customer:     customer,
+			Message:      fmt.Sprintf(message, timeBlocked, credential.WrongPasswordCount),
+			LastTryLogin: ntime.NewTimeWIB(tryLoginAt).Format("02-Jan-2006 15:04:05"),
+		})
+
 		break
 	case constant.MaxWrongPassword:
 		// Set block account
@@ -418,17 +384,37 @@ func (c *Customer) HandleWrongPassword(credential *model.Credential) error {
 		credential.WrongPasswordCount = wrongCount
 
 		// Set response if blocked for 24 hour
-		message := "Akun dikunci hingga %v karena gagal login %v kali. Hubungi call center jika ini bukan kamu"
+		message := "Akun dikunci hingga %v WIB karena gagal login %v kali. Hubungi call center jika ini bukan kamu"
 		timeBlocked := ntime.ChangeTimezone(credential.BlockedUntilAt.Time, constant.WIB).Format("02-Jan-2006 15:04:05")
-		setResponse := ncore.Success.SetMessage(message, timeBlocked, credential.WrongPasswordCount)
+		setResponse := ncore.Success.HttpStatus(401).SetMessage(message, timeBlocked, credential.WrongPasswordCount)
 		resp = &setResponse
 
-		// TODO sendNotificationBlockedLoginOneDay
+		// Send OTP To Phone Number
+		request := dto.SendOTPRequest{
+			PhoneNumber: customer.Phone,
+			RequestType: constant.RequestTypeBlockOneDay,
+		}
+		_, err := c.otpService.SendOTP(request)
+		if err != nil {
+			log.Debugf("Error when sending otp block one hour. err: %v", err)
+		}
+
+		// Send Notification Blocked Login One Day
+		err = c.notificationService.SendNotificationBlock(dto.NotificationBlock{
+			Customer:     customer,
+			Message:      fmt.Sprintf(message, timeBlocked, credential.WrongPasswordCount),
+			LastTryLogin: ntime.NewTimeWIB(tryLoginAt).Format("02-Jan-2006 15:04:05"),
+		})
 		break
 	default:
 		resp = c.response.GetError("E_AUTH_8")
 		credential.WrongPasswordCount = wrongCount
 		break
+	}
+
+	// Handle notification error
+	if err != nil {
+		log.Debugf("Error when sending notification block: %v", err)
 	}
 
 	// Set trying login at to metadata
@@ -599,7 +585,7 @@ func (c *Customer) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCu
 	}
 	err = c.credentialRepo.InsertOrUpdate(credentialInsert)
 	if err != nil {
-		log.Errorf("Error when persist customer credential : %s", payload.Name)
+		log.Errorf("Error when persist customer credential err: %v", err)
 		return nil, c.response.GetError("E_REG_1")
 	}
 
@@ -645,53 +631,16 @@ func (c *Customer) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCu
 	if err != nil {
 		return nil, ncore.TraceError(err)
 	}
-	user := res.Customer
-	// Send Email Verification
-	dataEmailVerification := &dto.EmailVerification{
-		FullName:        customer.FullName,
-		Email:           customer.Email,
-		VerificationUrl: fmt.Sprintf("%sauth/verify_email?t=%s", c.httpBaseUrl, verification.EmailVerificationToken),
-	}
-	htmlMessage, err := nval.TemplateFile(dataEmailVerification, "email_verification.html")
-	if err != nil {
-		return nil, err
-	}
 
-	// set payload email service
-	emailPayload := dto.EmailPayload{
-		Subject: fmt.Sprintf("Verifikasi Email %s", customer.FullName),
-		From: dto.FromEmailPayload{
-			Name:  c.emailConfig.PdsEmailFromName,
-			Email: c.emailConfig.PdsEmailFrom,
-		},
-		To:         customer.Email,
-		Message:    htmlMessage,
-		Attachment: "",
-		MimeType:   "",
-	}
-	_, err = c.notificationService.SendEmail(emailPayload)
+	// Send Notification Register
+	err = c.notificationService.SendNotificationRegister(dto.NotificationRegister{
+		Customer:     customer,
+		Verification: verification,
+		RegisterOTP:  registerOTP,
+		Payload:      payload,
+	})
 	if err != nil {
-		log.Debugf("Error when send email verification. Payload %v", emailPayload)
-	}
-
-	// Send Notification Welcome
-	id, _ := nval.ParseString(rand.Intn(100)) // TODO: insert data to notification
-	var dataWelcomeMessage = map[string]string{
-		"title": "Verifikasi Email",
-		"body":  fmt.Sprintf(`Hai %v, Selamat datang di Pegadaian Digital Service`, user.Nama),
-		"type":  constant.TypeProfile,
-		"id":    id,
-	}
-	welcomeMessage := dto.NotificationPayload{
-		Title: "Verifikasi Email",
-		Body:  fmt.Sprintf(`Hai %v, Selamat datang di Pegadaian Digital Service`, user.Nama),
-		Image: "",
-		Token: payload.FcmToken,
-		Data:  dataWelcomeMessage,
-	}
-	_, err = c.notificationService.SendNotification(welcomeMessage)
-	if err != nil {
-		log.Debugf("Error when send notification message: %s, phone : %s", registerOTP.RegistrationId, customer.Phone)
+		log.Debugf("Error when send notification: %v", err)
 	}
 
 	// Delete OTP RegistrationId
@@ -702,60 +651,7 @@ func (c *Customer) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCu
 	}
 
 	return &dto.RegisterNewCustomerResponse{
-		User: dto.CustomerVO{
-			ID:                        user.ID,
-			Cif:                       user.Cif,
-			IsKYC:                     user.IsKYC,
-			Nama:                      user.Nama,
-			NamaIbu:                   user.NamaIbu,
-			NoKTP:                     user.NoKTP,
-			Email:                     user.Email,
-			JenisKelamin:              user.JenisKelamin,
-			TempatLahir:               user.TempatLahir,
-			TglLahir:                  user.TglLahir,
-			Alamat:                    user.Alamat,
-			IDProvinsi:                user.IDProvinsi,
-			IDKabupaten:               user.IDKabupaten,
-			IDKecamatan:               user.IDKecamatan,
-			IDKelurahan:               user.IDKelurahan,
-			Kelurahan:                 user.Kelurahan,
-			Provinsi:                  user.Provinsi,
-			Kabupaten:                 user.Kabupaten,
-			Kecamatan:                 user.Kecamatan,
-			KodePos:                   user.KodePos,
-			NoHP:                      user.NoHP,
-			Avatar:                    user.Avatar,
-			FotoKTP:                   user.FotoKTP,
-			IsEmailVerified:           user.IsEmailVerified,
-			Kewarganegaraan:           user.Kewarganegaraan,
-			JenisIdentitas:            user.JenisIdentitas,
-			NoIdentitas:               user.NoIdentitas,
-			TglExpiredIdentitas:       user.TglExpiredIdentitas,
-			NoNPWP:                    user.NoNPWP,
-			FotoNPWP:                  user.FotoNPWP,
-			NoSid:                     user.NoSid,
-			FotoSid:                   user.FotoSid,
-			StatusKawin:               user.StatusKawin,
-			Norek:                     user.Norek,
-			Saldo:                     user.Saldo,
-			AktifasiTransFinansial:    user.AktifasiTransFinansial,
-			IsDukcapilVerified:        user.IsDukcapilVerified,
-			IsOpenTe:                  user.IsOpenTe,
-			ReferralCode:              user.ReferralCode,
-			GoldCardApplicationNumber: user.GoldCardApplicationNumber,
-			GoldCardAccountNumber:     user.GoldCardAccountNumber,
-			KodeCabang:                user.KodeCabang,
-			IsFirstLogin:              user.IsFirstLogin,
-			IsForceUpdatePassword:     user.IsForceUpdatePassword,
-			// TODO Load Tabungan
-			TabunganEmas: &dto.CustomerTabunganEmasVO{
-				TotalSaldoBlokir:  user.TabunganEmas.TotalSaldoBlokir,
-				TotalSaldoSeluruh: user.TabunganEmas.TotalSaldoSeluruh,
-				TotalSaldoEfektif: user.TabunganEmas.TotalSaldoEfektif,
-				PrimaryRekening:   user.TabunganEmas.PrimaryRekening,
-			},
-		},
-		JwtToken: res.JwtToken,
+		LoginResponse: res,
 		// TODO EKYC
 		Ekyc: &dto.EKyc{
 			AccountType: "",
@@ -813,7 +709,7 @@ func (c *Customer) RegisterStepOne(payload dto.RegisterStepOne) (*dto.RegisterSt
 	// Set request
 	request := dto.SendOTPRequest{
 		PhoneNumber: payload.PhoneNumber,
-		RequestType: "register",
+		RequestType: constant.RequestTypeRegister,
 	}
 
 	// Send OTP To Phone Number
@@ -893,7 +789,7 @@ func (c *Customer) RegisterResendOTP(payload dto.RegisterResendOTP) (*dto.Regist
 	// Set request
 	request := dto.SendOTPRequest{
 		PhoneNumber: payload.PhoneNumber,
-		RequestType: "register",
+		RequestType: constant.RequestTypeRegister,
 	}
 
 	// Send OTP To Phone Number
@@ -936,6 +832,63 @@ func GetChannelByAgen(agen string) string {
 	}
 
 	return ""
+}
+
+func (c *Customer) composeLoginResponse(data dto.LoginVO) (*dto.LoginResponse, error) {
+	return &dto.LoginResponse{
+		Customer: &dto.CustomerVO{
+			ID:                        nval.ParseStringFallback(data.Customer.Id, ""),
+			Cif:                       data.Customer.Cif,
+			IsKYC:                     "0",
+			Nama:                      data.Customer.FullName,
+			NamaIbu:                   data.Profile.MaidenName,
+			NoKTP:                     data.Customer.IdentityNumber,
+			Email:                     data.Customer.Email,
+			JenisKelamin:              data.Profile.Gender,
+			TempatLahir:               data.Profile.PlaceOfBirth,
+			TglLahir:                  data.Profile.DateOfBirth,
+			Alamat:                    "",
+			IDProvinsi:                "",
+			IDKabupaten:               "",
+			IDKecamatan:               "",
+			IDKelurahan:               "",
+			Kelurahan:                 "",
+			Provinsi:                  "",
+			Kabupaten:                 "",
+			Kecamatan:                 "",
+			KodePos:                   "",
+			NoHP:                      data.Customer.Phone,
+			Avatar:                    "",
+			FotoKTP:                   data.Profile.IdentityPhotoFile,
+			IsEmailVerified:           data.Customer.Email,
+			Kewarganegaraan:           data.Profile.Nationality,
+			JenisIdentitas:            fmt.Sprintf("%v", data.Customer.IdentityType),
+			NoIdentitas:               data.Customer.IdentityNumber,
+			TglExpiredIdentitas:       "",
+			NoNPWP:                    data.Profile.NPWPNumber,
+			NoSid:                     data.Customer.Sid,
+			FotoSid:                   data.Profile.SidPhotoFile,
+			StatusKawin:               data.Profile.MarriageStatus,
+			Norek:                     "",
+			Saldo:                     "",
+			AktifasiTransFinansial:    "",
+			IsDukcapilVerified:        "",
+			IsOpenTe:                  "",
+			ReferralCode:              "",
+			GoldCardApplicationNumber: "",
+			GoldCardAccountNumber:     "",
+			KodeCabang:                "",
+			TabunganEmas: &dto.CustomerTabunganEmasVO{
+				TotalSaldoBlokir:  "",
+				TotalSaldoSeluruh: "",
+				TotalSaldoEfektif: "",
+				PrimaryRekening:   "",
+			},
+			IsFirstLogin:          data.IsFirstLogin,
+			IsForceUpdatePassword: data.IsForceUpdatePassword,
+		},
+		JwtToken: data.Token,
+	}, nil
 }
 
 func (c *Customer) syncExternalToInternal(user *model.User) error {

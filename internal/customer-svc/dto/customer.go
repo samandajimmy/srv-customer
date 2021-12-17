@@ -3,6 +3,7 @@ package dto
 import (
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/go-ozzo/ozzo-validation/v4/is"
+	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer-svc/model"
 )
 
 type ValidatePassword struct {
@@ -22,11 +23,10 @@ type RegisterNewCustomer struct {
 }
 
 type RegisterNewCustomerResponse struct {
-	User     CustomerVO  `json:"user"`
-	JwtToken string      `json:"token"`
-	Ekyc     *EKyc       `json:"ekyc"`
-	GPoint   interface{} `json:"gpoint"`
-	GCash    *GCash      `json:"gcash"`
+	LoginResponse *LoginResponse
+	Ekyc          *EKyc       `json:"ekyc"`
+	GPoint        interface{} `json:"gpoint"`
+	GCash         *GCash      `json:"gcash"`
 }
 
 type NewRegisterResponse struct {
@@ -64,6 +64,14 @@ type RegisterStepTwoResponse struct {
 type LoginResponse struct {
 	Customer *CustomerVO `json:"user"`
 	JwtToken string      `json:"token"`
+}
+
+type LoginVO struct {
+	Customer              *model.Customer
+	Profile               CustomerProfileVO
+	IsFirstLogin          bool
+	IsForceUpdatePassword bool
+	Token                 string
 }
 
 type EmailPayload struct {

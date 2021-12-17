@@ -30,6 +30,8 @@ type CacheService interface {
 type NotificationService interface {
 	SendNotification(payload dto.NotificationPayload) (*http.Response, error)
 	SendEmail(payload dto.EmailPayload) (*http.Response, error)
+	SendNotificationRegister(data dto.NotificationRegister) error
+	SendNotificationBlock(data dto.NotificationBlock) error
 }
 
 type VerificationService interface {
