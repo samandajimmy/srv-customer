@@ -125,7 +125,7 @@ CREATE TABLE public."Credential"
     "password"            varchar(60)                 NOT NULL,
     "nextPasswordResetAt" timestamp without time zone,
     "pin"                 varchar(32)                 NOT NULL,
-    "pinCif"              varchar(200)                NOT NULL,
+    "pinCif"              varchar(200)                NULL,
     "pinUpdatedAt"        timestamp without time zone,
     "pinLastAccessAt"     timestamp without time zone,
     "pinCounter"          smallint                    NOT NULL,

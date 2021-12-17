@@ -451,7 +451,7 @@ func (c *Customer) HandleWrongPassword(credential *model.Credential) error {
 func (c *Customer) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCustomerResponse, error) {
 	// validate exist
 	customer, err := c.customerRepo.FindByEmail(payload.Email)
-	if err != nil {
+	if !errors.Is(err, sql.ErrNoRows) {
 		log.Errorf("error while retrieve by email: %s", payload.Email)
 		return nil, c.response.GetError("E_REG_1")
 	}
@@ -790,9 +790,9 @@ func (c *Customer) RegisterStepOne(payload dto.RegisterStepOne) (*dto.RegisterSt
 
 	// validate email
 	emailExist, err := c.customerRepo.FindByEmail(payload.Email)
-	if err != nil {
-		log.Errorf("error while retrieve by email: %s", payload.Email)
-		return nil, c.response.GetError("E_REG_1")
+	if !errors.Is(err, sql.ErrNoRows) {
+		log.Errorf("failed when query check email. error: %v", err)
+		return nil, ncore.TraceError(err)
 	}
 	if emailExist != nil {
 		log.Debugf("Email already registered")
@@ -801,7 +801,7 @@ func (c *Customer) RegisterStepOne(payload dto.RegisterStepOne) (*dto.RegisterSt
 
 	// validate phone
 	phoneExist, err := c.customerRepo.FindByPhone(payload.PhoneNumber)
-	if err != nil {
+	if !errors.Is(err, sql.ErrNoRows) {
 		log.Errorf("error while retrieve by phone: %s", payload.PhoneNumber)
 		return nil, c.response.GetError("E_REG_1")
 	}
@@ -847,7 +847,7 @@ func (c *Customer) RegisterStepTwo(payload dto.RegisterStepTwo) (*dto.RegisterSt
 	}
 	// validate phone
 	phoneExist, err := c.customerRepo.FindByPhone(payload.PhoneNumber)
-	if err != nil {
+	if !errors.Is(err, sql.ErrNoRows) {
 		log.Errorf("error while retrieve by phone: %s", payload.PhoneNumber)
 		return nil, c.response.GetError("E_REG_1")
 	}
@@ -996,7 +996,7 @@ func (c *Customer) syncExternalToInternal(user *model.User) error {
 	// persist verification
 	err = c.verificationRepo.InsertOrUpdate(verification)
 	if err != nil {
-		log.Error("failed persist verification", nlogger.Error(err))
+		log.Errorf("failed persist verification err: %v", nlogger.Error(err))
 		return err
 	}
 
