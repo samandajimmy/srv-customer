@@ -77,20 +77,18 @@ func (c *Customer) Login(payload dto.LoginRequest) (*dto.LoginResponse, error) {
 	customer, err := c.customerRepo.FindByEmailOrPhone(payload.Email)
 	if errors.Is(err, sql.ErrNoRows) {
 		// If data not found on internal database check on external database.
-		_, err := c.userExternalRepo.FindByEmailOrPhone(payload.Email)
+		user, err := c.userExternalRepo.FindByEmailOrPhone(payload.Email)
 		if err != nil {
 			log.Error("failed to retrieve customer not found", nlogger.Error(err))
 			return nil, c.response.GetError("E_RES_1")
 		}
 
 		// sync data external to internal
-		//err = c.syncExternalToInternal(user)
-		//if err != nil {
-		//	log.Error("error while sync data External to Internal", nlogger.Error(err))
-		//	return nil, err
-		//}
-
-		return nil, ncore.TraceError(err)
+		customer, err = c.syncExternalToInternal(user)
+		if err != nil {
+			log.Error("error while sync data External to Internal", nlogger.Error(err))
+			return nil, err
+		}
 
 	} else if err != nil {
 		log.Errorf("failed to retrieve customer. error: %v", err)
@@ -891,88 +889,105 @@ func (c *Customer) composeLoginResponse(data dto.LoginVO) (*dto.LoginResponse, e
 	}, nil
 }
 
-func (c *Customer) syncExternalToInternal(user *model.User) error {
+func (c *Customer) syncExternalToInternal(user *model.User) (*model.Customer, error) {
 	// prepare customer
 	customer, err := convert.ModelUserToCustomer(user)
 	if err != nil {
 		log.Error("failed to convert to model customer", nlogger.Error(err))
-		return err
-	}
-	// persist customer data
-	customerId, err := c.customerRepo.Insert(customer)
-	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// Check has userPin or not
 	userPin, err := c.userPinExternalRepo.FindByCustomerId(customer.Id)
-	if err != nil {
+	if errors.Is(err, sql.ErrNoRows) {
+		userPin = &model.UserPin{}
+	} else if err != nil {
 		log.Error("failed retrieve user pin from external database", nlogger.Error(err))
-		return err
+		return nil, err
 	}
 
-	// prepare credential
+	// Check user address on external database
+	addressExternal, err := c.userExternalRepo.FindAddressByCustomerId(user.UserAiid)
+	if errors.Is(err, sql.ErrNoRows) {
+		addressExternal = &model.AddressExternal{}
+	} else if err != nil {
+		log.Error("failed retrieve address from external database", nlogger.Error(err))
+		return nil, err
+	}
+
+	// Prepare credential
 	credential, err := convert.ModelUserToCredential(user, userPin)
 	if err != nil {
 		log.Error("failed convert to credential model", nlogger.Error(err))
-		return err
+		return nil, err
 	}
+
+	// Prepare financial data
+	financialData, err := convert.ModelUserToFinancialData(user)
+	if err != nil {
+		log.Error("failed convert to financial data", nlogger.Error(err))
+		return nil, err
+	}
+
+	// Prepare verification
+	verification, err := convert.ModelUserToVerification(user)
+	if err != nil {
+		log.Error("failed convert to verification", nlogger.Error(err))
+		return nil, err
+	}
+
+	// Prepare address
+	address, err := convert.ModelUserToAddress(user, addressExternal)
+	if err != nil {
+		log.Error("failed convert address", nlogger.Error(err))
+		return nil, err
+	}
+
+	// Persist customer data
+	customerId, err := c.customerRepo.Insert(customer)
+	if err != nil {
+		return nil, err
+	}
+
+	// Set credential customer id to last inserted
 	credential.CustomerId = customerId
+	financialData.CustomerId = customerId
+	verification.CustomerId = customerId
+	address.CustomerId = customerId
+
 	// persist credential
 	err = c.credentialRepo.InsertOrUpdate(credential)
 	if err != nil {
 		log.Error("failed persist to credential", nlogger.Error(err))
-		return err
+		return nil, err
 	}
 
-	// prepare financial data
-	financialData, err := convert.ModelUserToFinancialData(user)
-	if err != nil {
-		log.Error("failed convert to financial data", nlogger.Error(err))
-		return err
-	}
-	financialData.CustomerId = customerId
 	// persist financial data
 	err = c.financialDataRepo.InsertOrUpdate(financialData)
 	if err != nil {
 		log.Error("failed persist to financial data", nlogger.Error(err))
-		return err
+		return nil, err
 	}
 
-	// prepare verification
-	verification, err := convert.ModelUserToVerification(user)
-	if err != nil {
-		log.Error("failed convert to verification", nlogger.Error(err))
-		return err
-	}
-	verification.CustomerId = customerId
 	// persist verification
 	err = c.verificationRepo.InsertOrUpdate(verification)
 	if err != nil {
 		log.Errorf("failed persist verification err: %v", nlogger.Error(err))
-		return err
+		return nil, err
 	}
 
-	// prepare address
-	// check user address on external database
-	addressExternal, err := c.userExternalRepo.FindAddressByCustomerId(user.UserAiid)
-	if err != nil {
-		log.Error("failed retrieve address from external database", nlogger.Error(err))
-		return err
-	}
-	// prepare address
-	address, err := convert.ModelUserToAddress(user, addressExternal)
-	if err != nil {
-		log.Error("failed convert address", nlogger.Error(err))
-		return err
-	}
-	address.CustomerId = customerId
 	// persist address
 	err = c.addressRepo.InsertOrUpdate(address)
 	if err != nil {
 		log.Error("failed persist address", nlogger.Error(err))
-		return err
+		return nil, err
 	}
 
-	return nil
+	customer, err = c.customerRepo.FindById(customerId)
+	if err != nil {
+		log.Error("failed to retrieve customer not found", nlogger.Error(err))
+		return nil, c.response.GetError("E_RES_1")
+	}
+
+	return customer, nil
 }
