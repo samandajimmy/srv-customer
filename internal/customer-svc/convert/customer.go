@@ -148,7 +148,7 @@ func ModelUserToVerification(user *model.User) (*model.Verification, error) {
 		DukcapilVerifiedAt:              sql.NullTime{},
 		FinancialTransactionStatus:      user.AktifasiTransFinansial,
 		FinancialTransactionActivatedAt: ModifierNullTime(user.TanggalAktifasiFinansial),
-		Metadata:                        nil,
+		Metadata:                        []byte("{}"),
 		ItemMetadata:                    itemMetaData,
 	}
 
@@ -166,7 +166,7 @@ func ModelUserToFinancialData(user *model.User) (*model.FinancialData, error) {
 		GoldCardApplicationNumber: user.GoldcardApplicationNumber.String,
 		GoldCardAccountNumber:     user.GoldcardApplicationNumber.String,
 		Balance:                   user.Saldo,
-		Metadata:                  nil,
+		Metadata:                  []byte("{}"),
 		ItemMetadata:              itemMetaData,
 	}
 
@@ -176,7 +176,7 @@ func ModelUserToFinancialData(user *model.User) (*model.FinancialData, error) {
 func ModelUserToAddress(user *model.User, userAddress *model.AddressExternal) (*model.Address, error) {
 	itemMetaData := model.NewItemMetadata(ModifierDTOToModel(dto.Modifier{ID: "", Role: "", FullName: ""}))
 
-	var purpose string
+	var purpose int64
 	if user.Domisili.String == "1" {
 		purpose = constant.Domicile
 	} else {
@@ -194,7 +194,7 @@ func ModelUserToAddress(user *model.User, userAddress *model.AddressExternal) (*
 		DistrictName:    userAddress.Kecamatan,
 		SubDistrictId:   userAddress.IdKelurahan,
 		SubDistrictName: userAddress.Kelurahan,
-		Metadata:        nil,
+		Metadata:        []byte("{}"),
 		ItemMetadata:    itemMetaData,
 	}
 
