@@ -51,8 +51,8 @@ const (
 )
 
 const (
-	Domicile     = "DOMICILE"
-	IdentityCard = "IDENTITY_CARD"
+	Domicile     int64 = 1
+	IdentityCard int64 = 2
 )
 
 const (
