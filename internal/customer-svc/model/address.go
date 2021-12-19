@@ -9,7 +9,7 @@ type Address struct {
 	Id              int64           `db:"id"`
 	Xid             string          `db:"xid"`
 	CustomerId      int64           `db:"customerId"`
-	Purpose         string          `db:"purpose"`
+	Purpose         int64           `db:"purpose"`
 	ProvinceId      sql.NullString  `db:"provinceId"`
 	ProvinceName    sql.NullString  `db:"provinceName"`
 	CityId          sql.NullString  `db:"cityId"`
@@ -18,6 +18,7 @@ type Address struct {
 	DistrictName    sql.NullString  `db:"districtName"`
 	SubDistrictId   sql.NullString  `db:"subDistrictId"`
 	SubDistrictName sql.NullString  `db:"subDistrictName"`
+	PostalCode      sql.NullString  `db:"postalCode"`
 	Line            sql.NullString  `db:"line"`
 	IsPrimary       sql.NullBool    `db:"isPrimary"`
 	Metadata        json.RawMessage `db:"metadata"`
