@@ -23,10 +23,10 @@ type RegisterNewCustomer struct {
 }
 
 type RegisterNewCustomerResponse struct {
-	LoginResponse *LoginResponse
-	Ekyc          *EKyc       `json:"ekyc"`
-	GPoint        interface{} `json:"gpoint"`
-	GCash         *GCash      `json:"gcash"`
+	*LoginResponse
+	Ekyc   *EKyc       `json:"ekyc"`
+	GPoint interface{} `json:"gpoint"`
+	GCash  *GCash      `json:"gcash"`
 }
 
 type NewRegisterResponse struct {
@@ -70,6 +70,7 @@ type LoginVO struct {
 	Customer              *model.Customer
 	Address               *model.Address
 	Profile               CustomerProfileVO
+	Verification          *model.Verification
 	IsFirstLogin          bool
 	IsForceUpdatePassword bool
 	Token                 string

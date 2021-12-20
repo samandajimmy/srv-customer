@@ -199,10 +199,21 @@ func (c *Customer) Login(payload dto.LoginRequest) (*dto.LoginResponse, error) {
 		return nil, c.response.GetError("E_AUTH_8")
 	}
 
+	// Get data verification
+	verification, err := c.verificationRepo.FindByCustomerId(customer.Id)
+	if errors.Is(err, sql.ErrNoRows) {
+		log.Error("failed to retrieve verification not found", nlogger.Error(err))
+		verification = &model.Verification{}
+	} else if err != nil {
+		log.Errorf("Error when retrieve verification error: %v", err)
+		return nil, c.response.GetError("E_AUTH_8")
+	}
+
 	return c.composeLoginResponse(dto.LoginVO{
 		Customer:              customer,
 		Address:               address,
 		Profile:               profile,
+		Verification:          verification,
 		IsFirstLogin:          isFirstLogin,
 		IsForceUpdatePassword: isForceUpdatePassword,
 		Token:                 token,
@@ -842,11 +853,12 @@ func GetChannelByAgen(agen string) string {
 }
 
 func (c *Customer) composeLoginResponse(data dto.LoginVO) (*dto.LoginResponse, error) {
+
 	return &dto.LoginResponse{
 		Customer: &dto.CustomerVO{
 			ID:                        nval.ParseStringFallback(data.Customer.Id, ""),
 			Cif:                       data.Customer.Cif,
-			IsKYC:                     "0",
+			IsKYC:                     nval.ParseStringFallback(data.Verification.KycVerifiedStatus, "0"),
 			Nama:                      data.Customer.FullName,
 			NamaIbu:                   data.Profile.MaidenName,
 			NoKTP:                     data.Customer.IdentityNumber,
@@ -867,19 +879,20 @@ func (c *Customer) composeLoginResponse(data dto.LoginVO) (*dto.LoginResponse, e
 			NoHP:                      data.Customer.Phone,
 			Avatar:                    "",
 			FotoKTP:                   data.Profile.IdentityPhotoFile,
-			IsEmailVerified:           data.Customer.Email,
+			IsEmailVerified:           nval.ParseStringFallback(data.Verification.EmailVerifiedStatus, "0"),
 			Kewarganegaraan:           data.Profile.Nationality,
 			JenisIdentitas:            fmt.Sprintf("%v", data.Customer.IdentityType),
 			NoIdentitas:               data.Customer.IdentityNumber,
 			TglExpiredIdentitas:       "",
 			NoNPWP:                    data.Profile.NPWPNumber,
+			FotoNPWP:                  data.Profile.NPWPPhotoFile,
 			NoSid:                     data.Customer.Sid,
 			FotoSid:                   data.Profile.SidPhotoFile,
 			StatusKawin:               data.Profile.MarriageStatus,
 			Norek:                     "",
 			Saldo:                     "",
-			AktifasiTransFinansial:    "",
-			IsDukcapilVerified:        "",
+			AktifasiTransFinansial:    nval.ParseStringFallback(data.Verification.FinancialTransactionStatus, ""),
+			IsDukcapilVerified:        nval.ParseStringFallback(data.Verification.DukcapilVerifiedStatus, "0"),
 			IsOpenTe:                  "",
 			ReferralCode:              "",
 			GoldCardApplicationNumber: "",
