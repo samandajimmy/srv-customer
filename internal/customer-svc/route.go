@@ -25,4 +25,8 @@ func setUpRoute(router *nhttp.Router, handlers *HandlerMap) {
 
 	// Verification
 	router.Handle(http.MethodGet, "/auth/verify_email", router.HandleFunc(handlers.Verification.VerfiyEmail))
+
+	// Static asset
+	staticDir := "/web/assets/"
+	router.PathPrefix(staticDir).Handler(http.StripPrefix(staticDir, http.FileServer(http.Dir("."+staticDir))))
 }
