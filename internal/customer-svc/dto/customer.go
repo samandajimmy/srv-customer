@@ -68,6 +68,7 @@ type LoginResponse struct {
 
 type LoginVO struct {
 	Customer              *model.Customer
+	Address               *model.Address
 	Profile               CustomerProfileVO
 	IsFirstLogin          bool
 	IsForceUpdatePassword bool

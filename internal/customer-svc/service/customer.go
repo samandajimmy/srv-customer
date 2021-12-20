@@ -171,8 +171,6 @@ func (c *Customer) Login(payload dto.LoginRequest) (*dto.LoginResponse, error) {
 		return nil, c.response.GetError("E_AUTH_1")
 	}
 
-	// get user data
-
 	// Unmarshall profile
 	var profile dto.CustomerProfileVO
 	err = json.Unmarshal(customer.Profile, &profile)
@@ -191,8 +189,19 @@ func (c *Customer) Login(payload dto.LoginRequest) (*dto.LoginResponse, error) {
 		isForceUpdatePassword = true
 	}
 
+	// Get data address
+	address, err := c.addressRepo.FindByCustomerId(customer.Id)
+	if errors.Is(err, sql.ErrNoRows) {
+		log.Error("failed to retrieve address not found", nlogger.Error(err))
+		address = &model.Address{}
+	} else if err != nil {
+		log.Errorf("Error when retrieve address error: %v", err)
+		return nil, c.response.GetError("E_AUTH_8")
+	}
+
 	return c.composeLoginResponse(dto.LoginVO{
 		Customer:              customer,
+		Address:               address,
 		Profile:               profile,
 		IsFirstLogin:          isFirstLogin,
 		IsForceUpdatePassword: isForceUpdatePassword,
@@ -845,16 +854,16 @@ func (c *Customer) composeLoginResponse(data dto.LoginVO) (*dto.LoginResponse, e
 			JenisKelamin:              data.Profile.Gender,
 			TempatLahir:               data.Profile.PlaceOfBirth,
 			TglLahir:                  data.Profile.DateOfBirth,
-			Alamat:                    "",
-			IDProvinsi:                "",
-			IDKabupaten:               "",
-			IDKecamatan:               "",
-			IDKelurahan:               "",
-			Kelurahan:                 "",
-			Provinsi:                  "",
-			Kabupaten:                 "",
-			Kecamatan:                 "",
-			KodePos:                   "",
+			Alamat:                    data.Address.Line.String,
+			IDProvinsi:                data.Address.ProvinceId.String,
+			IDKabupaten:               data.Address.CityId.String,
+			IDKecamatan:               data.Address.DistrictId.String,
+			IDKelurahan:               data.Address.SubDistrictId.String,
+			Kelurahan:                 data.Address.DistrictName.String,
+			Provinsi:                  data.Address.ProvinceName.String,
+			Kabupaten:                 data.Address.CityName.String,
+			Kecamatan:                 data.Address.DistrictName.String,
+			KodePos:                   data.Address.PostalCode.String,
 			NoHP:                      data.Customer.Phone,
 			Avatar:                    "",
 			FotoKTP:                   data.Profile.IdentityPhotoFile,

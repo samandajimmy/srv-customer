@@ -19,7 +19,7 @@ func ModelUserToCustomer(user *model.User) (*model.Customer, error) {
 		MaidenName:         user.NamaIbu.String,
 		Gender:             user.JenisKelamin,
 		Nationality:        user.Kewarganegaraan,
-		DateOfBirth:        nval.ParseStringFallback(user.TglLahir.Time, ""),
+		DateOfBirth:        nval.ParseStringFallback(user.TglLahir.Time.Format("02-01-2006"), ""),
 		PlaceOfBirth:       user.TempatLahir.String,
 		IdentityPhotoFile:  user.FotoKtpUrl,
 		MarriageStatus:     user.StatusKawin,
@@ -194,6 +194,7 @@ func ModelUserToAddress(user *model.User, userAddress *model.AddressExternal) (*
 		DistrictName:    userAddress.Kecamatan,
 		SubDistrictId:   userAddress.IdKelurahan,
 		SubDistrictName: userAddress.Kelurahan,
+		PostalCode:      userAddress.Kodepos,
 		Metadata:        []byte("{}"),
 		ItemMetadata:    itemMetaData,
 	}
