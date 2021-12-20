@@ -70,7 +70,7 @@ CREATE TABLE public."Verification"
     "customerId"                      bigint                      NOT NULL,
     "kycVerifiedStatus"               smallint                    NOT NULL,
     "kycVerifiedAt"                   timestamp without time zone NULL,
-    "emailVerificationToken"          VARCHAR(128),
+    "emailVerificationToken"          TEXT                        NULL,
     "emailVerifiedStatus"             smallint                    NOT NULL,
     "emailVerifiedAt"                 timestamp without time zone NULL,
     "dukcapilVerifiedStatus"          smallint                    NOT NULL,
