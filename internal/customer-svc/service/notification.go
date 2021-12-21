@@ -32,7 +32,7 @@ func (c *Notification) Init(app *contract.PdsApp) error {
 	c.client = nclient.NewNucleoClient(
 		c.pdsAPI.CoreOauthUsername,
 		c.pdsAPI.CoreClientId,
-		app.Config.Notification.NotificationServiceUrl,
+		app.Config.ClientEndpoint.NotificationServiceUrl,
 	)
 	c.httpBaseUrl = app.Config.Server.GetHttpBaseUrl()
 	c.emailConfig = app.Config.Email

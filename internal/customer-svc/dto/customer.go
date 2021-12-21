@@ -38,6 +38,7 @@ type RegisterStepOne struct {
 	Name        string `json:"nama"`
 	Email       string `json:"email"`
 	PhoneNumber string `json:"no_hp"`
+	Agen        string `json:"agen"`
 }
 
 type RegisterResendOTP struct {

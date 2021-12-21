@@ -12,15 +12,15 @@ import (
 )
 
 type Config struct {
-	Server       nhttp.ServerConfig
-	Client       ClientConfig
-	DataSources  DataSourcesConfig
-	CORS         nhttp.CORSConfig
-	SMTP         SMTPConfig
-	CorePDS      CorePDSConfig
-	Redis        RedisConfig
-	Notification NotificationConfig
-	Email        EmailConfig
+	Server         nhttp.ServerConfig
+	Client         ClientConfig
+	DataSources    DataSourcesConfig
+	CORS           nhttp.CORSConfig
+	SMTP           SMTPConfig
+	CorePDS        CorePDSConfig
+	Redis          RedisConfig
+	ClientEndpoint ClientEndpointConfig
+	Email          EmailConfig
 }
 
 func (c *Config) LoadFromEnv() {
@@ -119,15 +119,17 @@ func (c *Config) LoadFromEnv() {
 	}
 
 	// Load notification
-	c.Notification.NotificationServiceUrl = nval.ParseStringFallback(os.Getenv("NOTIFICATION_SERVICE_URL"), "")
+	c.ClientEndpoint.NotificationServiceUrl = nval.ParseStringFallback(os.Getenv("NOTIFICATION_SERVICE_URL"), "")
+	c.ClientEndpoint.PdsApiServiceUrl = nval.ParseStringFallback(os.Getenv("PDS_API_SERVICE_URL"), "")
 
 	// Load email config
 	c.Email.PdsEmailFrom = nval.ParseStringFallback(os.Getenv("PDS_EMAIL_FROM"), "no-reply@pegadaian.co.id")
 	c.Email.PdsEmailFromName = nval.ParseStringFallback(os.Getenv("PDS_EMAIL_FROMNAME"), "Pegadaian Digital Service")
 }
 
-type NotificationConfig struct {
+type ClientEndpointConfig struct {
 	NotificationServiceUrl string
+	PdsApiServiceUrl       string
 }
 
 func (c Config) Validate() error {
