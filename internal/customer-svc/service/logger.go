@@ -1,5 +1,5 @@
 package service
 
-import "repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nlogger"
+import "github.com/nbs-go/nlogger"
 
 var log = nlogger.Get()
