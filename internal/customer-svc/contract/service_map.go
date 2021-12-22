@@ -16,4 +16,5 @@ type ServiceMap struct {
 	Cache        CacheService
 	Notification NotificationService
 	Verification VerificationService
+	PdsAPI       PdsAPIService
 }

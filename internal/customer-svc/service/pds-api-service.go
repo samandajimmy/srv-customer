@@ -2,6 +2,7 @@ package service
 
 import (
 	"net/http"
+
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer-svc/contract"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer-svc/dto"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nclient"
@@ -12,17 +13,18 @@ type PdsAPI struct {
 	pdsAPI *contract.CorePDSConfig
 }
 
-func (s *PdsAPI) Init(app *contract.PdsApp) {
+func (s *PdsAPI) HasInitialized() bool {
+	return true
+}
+
+func (s *PdsAPI) Init(app *contract.PdsApp) error {
 	s.pdsAPI = &app.Config.CorePDS
 	s.client = nclient.NewNucleoClient(
 		s.pdsAPI.CoreOauthUsername,
 		s.pdsAPI.CoreClientId,
 		app.Config.ClientEndpoint.PdsApiServiceUrl,
 	)
-}
-
-func (s *PdsAPI) HasInitialized() bool {
-	return true
+	return nil
 }
 
 func (s *PdsAPI) StepOneRegistration(payload dto.RegisterStepOne) (*http.Response, error) {

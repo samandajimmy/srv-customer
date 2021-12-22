@@ -2,6 +2,7 @@ package contract
 
 import (
 	"net/http"
+
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer-svc/dto"
 )
 
@@ -36,4 +37,10 @@ type NotificationService interface {
 
 type VerificationService interface {
 	VerifyEmailCustomer(payload dto.VerificationPayload) (string, error)
+}
+
+type PdsAPIService interface {
+	StepOneRegistration(payload dto.RegisterStepOne) (*http.Response, error)
+	StepTwoRegistration(payload dto.RegisterStepTwo) (*http.Response, error)
+	Register(payload dto.RegisterNewCustomer) (*http.Response, error)
 }

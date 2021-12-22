@@ -26,24 +26,26 @@ import (
 )
 
 type Customer struct {
-	customerRepo        contract.CustomerRepository
-	verificationOTPRepo contract.VerificationOTPRepository
-	OTPRepo             contract.OTPRepository
-	credentialRepo      contract.CredentialRepository
-	accessSessionRepo   contract.AccessSessionRepository
-	auditLoginRepo      contract.AuditLoginRepository
-	verificationRepo    contract.VerificationRepository
-	financialDataRepo   contract.FinancialDataRepository
-	addressRepo         contract.AddressRepository
-	userExternalRepo    contract.UserExternalRepository
-	userPinExternalRepo contract.UserPinExternalRepository
-	otpService          contract.OTPService
-	cacheService        contract.CacheService
-	notificationService contract.NotificationService
-	clientConfig        contract.ClientConfig
-	response            *ncore.ResponseMap
-	httpBaseUrl         string
-	emailConfig         contract.EmailConfig
+	customerRepo             contract.CustomerRepository
+	verificationOTPRepo      contract.VerificationOTPRepository
+	OTPRepo                  contract.OTPRepository
+	credentialRepo           contract.CredentialRepository
+	accessSessionRepo        contract.AccessSessionRepository
+	auditLoginRepo           contract.AuditLoginRepository
+	verificationRepo         contract.VerificationRepository
+	financialDataRepo        contract.FinancialDataRepository
+	addressRepo              contract.AddressRepository
+	userExternalRepo         contract.UserExternalRepository
+	userPinExternalRepo      contract.UserPinExternalRepository
+	userRegisterExternalRepo contract.UserRegisterExternalRepository
+	otpService               contract.OTPService
+	cacheService             contract.CacheService
+	notificationService      contract.NotificationService
+	pdsAPIService            contract.PdsAPIService
+	clientConfig             contract.ClientConfig
+	response                 *ncore.ResponseMap
+	httpBaseUrl              string
+	emailConfig              contract.EmailConfig
 }
 
 func (c *Customer) HasInitialized() bool {
@@ -62,8 +64,10 @@ func (c *Customer) Init(app *contract.PdsApp) error {
 	c.addressRepo = app.Repositories.Address
 	c.userExternalRepo = app.Repositories.UserExternal
 	c.userPinExternalRepo = app.Repositories.UserPinExternal
+	c.userRegisterExternalRepo = app.Repositories.UserRegisterExternal
 	c.otpService = app.Services.OTP
 	c.cacheService = app.Services.Cache
+	c.pdsAPIService = app.Services.PdsAPI
 	c.clientConfig = app.Config.Client
 	c.notificationService = app.Services.Notification
 	c.response = app.Responses
@@ -241,7 +245,7 @@ func (c *Customer) SetTokenAuthentication(customer *model.Customer, agen string,
 
 	// Generate JWT
 	token, err := jwt.NewBuilder().
-		Claim("id", customer.Id).
+		Claim("id", customer.UserRefId).
 		Claim("email", customer.Email).
 		Claim("nama", customer.FullName).
 		Claim("no_hp", customer.Phone).
@@ -1012,4 +1016,63 @@ func (c *Customer) syncExternalToInternal(user *model.User) (*model.Customer, er
 	}
 
 	return customer, nil
+}
+
+func (c *Customer) syncInternalToExternal(payload *dto.RegisterNewCustomer) (*dto.LoginResponse, error) {
+	// prepare userRegister
+	userRegister := &model.UserRegister{
+		Id:   payload.RegistrationId,
+		NoHp: payload.PhoneNumber,
+		CreatedAt: sql.NullTime{
+			Time: time.Now(),
+		},
+	}
+	// execute insert data to userRegister repo
+	err := c.userRegisterExternalRepo.Insert(userRegister)
+	if err != nil {
+		log.Errorf("failed to insert user register external. %s", nlogger.Error(err))
+		return nil, err
+	}
+
+	// call register pds api
+	registerCustomer := dto.RegisterNewCustomer{
+		Name:           payload.Name,
+		Email:          payload.Email,
+		PhoneNumber:    payload.PhoneNumber,
+		Password:       payload.Password,
+		FcmToken:       payload.FcmToken,
+		RegistrationId: payload.RegistrationId,
+		Agen:           payload.Agen,
+		Version:        payload.Version,
+	}
+	register, err := c.pdsAPIService.Register(registerCustomer)
+	if err != nil {
+		log.Errorf("Cannot Register err: %v", err)
+		return nil, ncore.TraceError(err)
+	}
+
+	// set response data
+	var LoginResponse dto.LoginResponse
+	resp, err := nclient.GetResponseDataPdsAPI(register)
+	if err != nil {
+		log.Errorf("Cannot parsing response login response. err: %v", err)
+		return nil, ncore.TraceError(err)
+	}
+
+	// handle status error
+	if resp.Status != "error" {
+		log.Error("Error when Register PDS API")
+		return nil, ncore.NewError(resp.Message)
+	}
+	// parsing response
+	err = json.Unmarshal(resp.Data, &LoginResponse)
+	if err != nil {
+		log.Errorf("Cannot unmarshall data login pds. err: %v", err)
+		return nil, ncore.TraceError(err)
+	}
+
+	// set result
+	result := &LoginResponse
+
+	return result, nil
 }
