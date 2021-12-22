@@ -74,3 +74,7 @@ type UserExternalRepository interface {
 type UserPinExternalRepository interface {
 	FindByCustomerId(id int64) (*model.UserPin, error)
 }
+
+type UserRegisterExternalRepository interface {
+	Insert(row *model.UserRegister) error
+}
