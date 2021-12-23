@@ -35,7 +35,7 @@ func customMessage() {
 	is.Digit = validation.NewStringRuleWithError(isDigit, is.ErrDigit)
 }
 
-func Message(err string) interface{} {
+func Message(err string, additional ...*ErrMessageVO) interface{} {
 	splitErrMessage := strings.Split(err, "; ")
 
 	var messages []*ErrMessageVO
@@ -50,6 +50,12 @@ func Message(err string) interface{} {
 		}
 
 		messages = append(messages, item)
+	}
+
+	if additional != nil && len(additional) != 0 {
+		for _, m := range additional {
+			messages = append(messages, m)
+		}
 	}
 
 	return messages

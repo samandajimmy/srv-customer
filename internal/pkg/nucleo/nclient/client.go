@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"mime/multipart"
 	"net/http"
 	"net/url"
 
@@ -49,11 +50,12 @@ func (c *Nclient) PostData(endpoint string, body map[string]interface{}, header 
 	var payload *bytes.Buffer
 
 	// Get body request
-	payload = getBodyRequest(header, body)
+	payload, header = getBodyRequest(header, body)
 
 	// Make request http
-	endPoint := c.BaseUrl + endpoint
-	request, err := http.NewRequest("POST", endPoint, payload)
+	baseUrlWithEndpoint := c.BaseUrl + endpoint
+	log.Debugf("PostData.Endpoint %s", baseUrlWithEndpoint)
+	request, err := http.NewRequest("POST", baseUrlWithEndpoint, payload)
 	if err != nil {
 		log.Errorf("Error when make new request. err: %s", err)
 		return result, ncore.TraceError(err)
@@ -113,7 +115,7 @@ func GetResponseDataPdsAPI(response *http.Response) (*ResponsePdsAPI, error) {
 	return Response, nil
 }
 
-func getBodyRequest(header map[string]string, body map[string]interface{}) *bytes.Buffer {
+func getBodyRequest(header map[string]string, body map[string]interface{}) (*bytes.Buffer, map[string]string) {
 	var payload *bytes.Buffer
 	switch header["Content-Type"] {
 	case "application/json":
@@ -122,11 +124,16 @@ func getBodyRequest(header map[string]string, body map[string]interface{}) *byte
 	case "application/x-www-form-urlencoded":
 		payload = setBodyUrlEncoded(body)
 		break
+	case "multipart/form-data":
+		result, contentType := setBodyFormData(body)
+		header["Content-Type"] = contentType
+		payload = result
+		break
 	default:
 		payload = setBodyApplicationJSON(body)
 		break
 	}
-	return payload
+	return payload, header
 }
 
 func setBodyUrlEncoded(data map[string]interface{}) *bytes.Buffer {
@@ -136,6 +143,23 @@ func setBodyUrlEncoded(data map[string]interface{}) *bytes.Buffer {
 	}
 
 	return bytes.NewBufferString(param.Encode())
+}
+
+func setBodyFormData(data map[string]interface{}) (*bytes.Buffer, string) {
+	result := &bytes.Buffer{}
+	writer := multipart.NewWriter(result)
+	for key, value := range data {
+		_ = writer.WriteField(key, nval.ParseStringFallback(value, ""))
+	}
+	err := writer.Close()
+	if err != nil {
+		fmt.Println(err)
+		return nil, ""
+	}
+
+	contentType := writer.FormDataContentType()
+
+	return result, contentType
 }
 
 func setBodyApplicationJSON(data map[string]interface{}) *bytes.Buffer {

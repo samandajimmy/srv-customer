@@ -12,7 +12,7 @@ type Customer struct {
 	Email          string          `db:"email"`
 	IdentityType   int64           `db:"identityType"`
 	IdentityNumber string          `db:"identityNumber"`
-	UserRefId      int64           `db:"userRefId"`
+	UserRefId      string          `db:"userRefId"`
 	Photos         json.RawMessage `db:"photos"`
 	Profile        json.RawMessage `db:"profile"`
 	Cif            string          `db:"cif"`

@@ -128,9 +128,36 @@ func (c *Customer) Login(payload dto.LoginRequest) (*dto.LoginResponse, error) {
 		return nil, err
 	}
 
+	// get userRefId from external DB
+	if customer.UserRefId == "" {
+		registerPayload := &dto.RegisterNewCustomer{
+			Name:           customer.FullName,
+			Email:          customer.Email,
+			PhoneNumber:    customer.Phone,
+			FcmToken:       payload.FcmToken,
+			Password:       payload.Password,
+			RegistrationId: xid.New().String(),
+		}
+		//
+		resultRegister, err := c.syncInternalToExternal(registerPayload)
+
+		if err != nil {
+			log.Errorf("failed to sync to external. error: %v", err)
+			return nil, ncore.TraceError(err)
+		}
+		// set userRefId
+		customer.UserRefId = resultRegister.Customer.ID
+		// update customer
+		err = c.customerRepo.UpdateByPhone(customer)
+		if err != nil {
+			log.Errorf("failed to update userRefId. error: %v", err)
+			return nil, ncore.TraceError(err)
+		}
+	}
+
 	// Get token from cache
 	var token string
-	cacheTokenKey := fmt.Sprintf("%v:%v:%v", constant.Prefix, "token_jwt", customer.Id)
+	cacheTokenKey := fmt.Sprintf("%v:%v:%v", constant.Prefix, "token_jwt", customer.UserRefId)
 	token, err = c.SetTokenAuthentication(customer, payload.Agen, payload.Version, cacheTokenKey)
 
 	// Check account is first login or not
@@ -186,9 +213,8 @@ func (c *Customer) Login(payload dto.LoginRequest) (*dto.LoginResponse, error) {
 	// TODO get tabungan emas service / get tabungan emas from financial table
 
 	// Check is force update password
-	validatePassword := c.ValidatePassword(payload.Password)
+	validatePassword := ValidatePassword(payload.Password)
 	isForceUpdatePassword := false
-	log.Debugf("errCode : %v", validatePassword.ErrCode)
 	if validatePassword.IsValid != true {
 		isForceUpdatePassword = true
 	}
@@ -270,7 +296,7 @@ func (c *Customer) SetTokenAuthentication(customer *model.Customer, agen string,
 	return tokenString, nil
 }
 
-func (c *Customer) ValidatePassword(password string) *dto.ValidatePassword {
+func ValidatePassword(password string) *dto.ValidatePassword {
 	var validation dto.ValidatePassword
 
 	lowerCase, _ := regexp.Compile(`[a-z]+`)
@@ -280,30 +306,35 @@ func (c *Customer) ValidatePassword(password string) *dto.ValidatePassword {
 	if len(lowerCase.FindStringSubmatch(password)) < 1 {
 		validation.IsValid = false
 		validation.ErrCode = "isLower"
+		validation.Message = "Password harus terdapat satu huruf kecil."
 		return &validation
 	}
 
 	if len(upperCase.FindStringSubmatch(password)) < 1 {
 		validation.IsValid = false
 		validation.ErrCode = "isUpper"
+		validation.Message = "Password harus terdapat satu huruf kapital.."
 		return &validation
 	}
 
 	if len(allNumber.FindStringSubmatch(password)) < 1 {
 		validation.IsValid = false
 		validation.ErrCode = "isNumber"
+		validation.Message = "Password harus terdapat angka."
 		return &validation
 	}
 
 	if len(password) < 8 {
 		validation.IsValid = false
 		validation.ErrCode = "length"
+		validation.Message = "Pasword harus terdapat minimal 8 karakter."
 		return &validation
 	}
 
 	if strings.Contains(password, "gadai") {
 		validation.IsValid = false
 		validation.ErrCode = "containsGadai"
+		validation.Message = "Hindari menggunakan kata gadai."
 		return &validation
 	}
 
@@ -458,12 +489,11 @@ func (c *Customer) HandleWrongPassword(credential *model.Credential, customer *m
 
 func (c *Customer) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCustomerResponse, error) {
 	// validate exist
+	var customer *model.Customer
 	customer, err := c.customerRepo.FindByEmail(payload.Email)
-	if !errors.Is(err, sql.ErrNoRows) {
-		log.Errorf("error while retrieve by email: %s", payload.Email)
-		return nil, c.response.GetError("E_REG_1")
-	}
-	if customer != nil {
+	if errors.Is(err, sql.ErrNoRows) {
+		customer = nil
+	} else if customer != nil {
 		log.Debugf("Email already registered: %s", payload.RegistrationId)
 		return nil, c.response.GetError("E_REG_2")
 	}
@@ -527,7 +557,7 @@ func (c *Customer) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCu
 			Status:         0,
 			IdentityType:   0,
 			IdentityNumber: "",
-			UserRefId:      0,
+			UserRefId:      "",
 			Photos:         []byte("{}"),
 			Profile:        profile,
 			Cif:            "",
@@ -648,6 +678,7 @@ func (c *Customer) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCu
 		Password: payload.Password,
 		Agen:     payload.Agen,
 		Version:  payload.Version,
+		FcmToken: payload.FcmToken,
 	}
 	res, err := c.Login(payloadLogin)
 	if err != nil {
@@ -1021,11 +1052,9 @@ func (c *Customer) syncExternalToInternal(user *model.User) (*model.Customer, er
 func (c *Customer) syncInternalToExternal(payload *dto.RegisterNewCustomer) (*dto.LoginResponse, error) {
 	// prepare userRegister
 	userRegister := &model.UserRegister{
-		Id:   payload.RegistrationId,
-		NoHp: payload.PhoneNumber,
-		CreatedAt: sql.NullTime{
-			Time: time.Now(),
-		},
+		Id:        payload.RegistrationId,
+		NoHp:      payload.PhoneNumber,
+		CreatedAt: time.Now(),
 	}
 	// execute insert data to userRegister repo
 	err := c.userRegisterExternalRepo.Insert(userRegister)
@@ -1060,8 +1089,8 @@ func (c *Customer) syncInternalToExternal(payload *dto.RegisterNewCustomer) (*dt
 	}
 
 	// handle status error
-	if resp.Status != "error" {
-		log.Error("Error when Register PDS API")
+	if resp.Status != "success" {
+		log.Errorf("Error when Register PDS API. Err %s", resp.Data)
 		return nil, ncore.NewError(resp.Message)
 	}
 	// parsing response

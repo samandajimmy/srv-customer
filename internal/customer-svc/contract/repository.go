@@ -68,7 +68,7 @@ type AddressRepository interface {
 
 type UserExternalRepository interface {
 	FindByEmailOrPhone(email string) (*model.User, error)
-	FindAddressByCustomerId(id string) (*model.AddressExternal, error)
+	FindAddressByCustomerId(id int64) (*model.AddressExternal, error)
 }
 
 type UserPinExternalRepository interface {

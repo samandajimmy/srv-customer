@@ -66,3 +66,7 @@ const (
 	RequestTypeBlockOneHour = "block-login-hour"
 	RequestTypeBlockOneDay  = "block-login-day"
 )
+
+const (
+	NotificationProviderFCM = iota + 1
+)

@@ -9,6 +9,7 @@ import (
 type ValidatePassword struct {
 	IsValid bool   `json:"isValid"`
 	ErrCode string `json:"errCode"`
+	Message string `json:"message"`
 }
 
 type RegisterNewCustomer struct {
@@ -189,6 +190,7 @@ type LoginRequest struct {
 	OsVersion    string `json:"os_version"`
 	Browser      string `json:"browser"`
 	UseBiometric int64  `json:"use_biometric"`
+	FcmToken     string `json:"fcm_token"`
 }
 
 func (d RegisterNewCustomer) Validate() error {

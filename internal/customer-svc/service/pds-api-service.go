@@ -96,8 +96,8 @@ func (s *PdsAPI) Register(payload dto.RegisterNewCustomer) (*http.Response, erro
 
 	// Set header
 	reqHeader := map[string]string{
-		"Accept":       "application/json",
-		"Content-Type": "application/json",
+		"Accept":       "*/*",
+		"Content-Type": "multipart/form-data",
 	}
 
 	// Send email

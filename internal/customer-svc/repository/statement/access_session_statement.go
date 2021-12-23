@@ -12,7 +12,7 @@ type AccessSessionStatement struct {
 
 func NewAccessSessionStatement(db *nsql.DB) *AccessSessionStatement {
 
-	tableName := "AccessSession"
+	tableName := `AccessSession`
 	columns := `"xid", "metadata", "createdAt", "updatedAt", "modifiedBy", "version", "customerId", "expiredAt", "notificationToken", "notificationProvider"`
 	namedColumns := `:xid,:metadata,:createdAt,:updatedAt,:modifiedBy,:version,:customerId,:expiredAt,:notificationToken,:notificationProvider`
 	updatedNamedColumns := `"xid" = :xid, "metadata" = :metadata, "updatedAt" = :updatedAt, "modifiedBy" = :modifiedBy, "version" = :version, "customerId" = :customerId, "expiredAt" = :expiredAt, "notificationToken" = :notificationToken, "notificationProvider" = :notificationProvider`

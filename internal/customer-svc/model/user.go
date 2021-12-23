@@ -4,7 +4,7 @@ import "database/sql"
 
 // User model old structure from PDS-API
 type User struct {
-	UserAiid                  string         `db:"user_AIID"`
+	UserAiid                  int64          `db:"user_AIID"`
 	JenisIdentitas            string         `db:"jenis_identitas"`
 	NoKtp                     sql.NullString `db:"no_ktp"`
 	TanggalExpiredIdentitas   string         `db:"tanggal_expired_identitas"`

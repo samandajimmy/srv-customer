@@ -71,7 +71,7 @@ func ModelUserToCustomer(user *model.User) (*model.Customer, error) {
 		Email:          user.Email.String,
 		IdentityType:   nval.ParseInt64Fallback(user.JenisIdentitas, 0),
 		IdentityNumber: user.NoKtp.String,
-		UserRefId:      nval.ParseInt64Fallback(user.UserAiid, 0),
+		UserRefId:      nval.ParseStringFallback(user.UserAiid, ""),
 		Photos:         photoRawMessage,
 		Profile:        profile,
 		Cif:            user.Cif,

@@ -3,6 +3,7 @@ package handler
 import (
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer-svc/contract"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer-svc/dto"
+	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer-svc/service"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nhttp"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nvalidate"
 )
@@ -58,7 +59,17 @@ func (h *Customer) PostRegister(rx *nhttp.Request) (*nhttp.Response, error) {
 	err = payload.Validate()
 	if err != nil {
 		log.Errorf("Unprocessable Entity. err: %v", err)
-		data := nvalidate.Message(err.Error())
+		// Check is force update password
+		validatePassword := service.ValidatePassword(payload.Password)
+		var errPassword *nvalidate.ErrMessageVO
+		if validatePassword.IsValid != true {
+			log.Debugf("password validated exception: %v", validatePassword.ErrCode)
+			errPassword = &nvalidate.ErrMessageVO{
+				Field:   "password",
+				Message: validatePassword.Message,
+			}
+		}
+		data := nvalidate.Message(err.Error(), errPassword)
 		return nhttp.UnprocessableEntity(data), nil
 	}
 

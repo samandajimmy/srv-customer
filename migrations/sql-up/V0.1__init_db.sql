@@ -13,7 +13,7 @@ CREATE TABLE public."Customer"
     "email"          varchar(255)                NOT NULL,
     "identityType"   SMALLINT                    NULL,
     "identityNumber" varchar(64)                 NULL,
-    "userRefId"      bigint                      NULL,
+    "userRefId"      VARCHAR(255)                NULL,
     "photos"         JSON                        NULL,
     "profile"        JSON                        NULL,
     "cif"            varchar(16)                 NULL,
