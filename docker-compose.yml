@@ -18,7 +18,7 @@ services:
   customer-svc:
     build:
       context: .
-      dockerfile: deployments/customer-svc/Dockerfile
+      dockerfile: deployments/pds-svc/Dockerfile
     restart: "${DOCKER_RESTART_POLICY}"
     container_name: "customer-svc"
     env_file: .env
