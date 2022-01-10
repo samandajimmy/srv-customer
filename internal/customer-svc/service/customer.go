@@ -130,23 +130,21 @@ func (c *Customer) Login(payload dto.LoginRequest) (*dto.LoginResponse, error) {
 
 	// get userRefId from external DB
 	if customer.UserRefId == "" {
-		registerPayload := &dto.RegisterNewCustomer{
-			Name:           customer.FullName,
-			Email:          customer.Email,
-			PhoneNumber:    customer.Phone,
-			FcmToken:       payload.FcmToken,
-			Password:       payload.Password,
-			RegistrationId: xid.New().String(),
+		registerPayload := &dto.CustomerSynchronizeRequest{
+			Name:        customer.FullName,
+			Email:       customer.Email,
+			PhoneNumber: customer.Phone,
+			Password:    credential.Password,
+			FcmToken:    payload.FcmToken,
 		}
-		//
-		resultRegister, err := c.syncInternalToExternal(registerPayload)
+		resultSync, err := c.syncInternalToExternal(registerPayload)
 
 		if err != nil {
 			log.Errorf("failed to sync to external. error: %v", err)
 			return nil, ncore.TraceError(err)
 		}
 		// set userRefId
-		customer.UserRefId = resultRegister.Customer.ID
+		customer.UserRefId = nval.ParseStringFallback(resultSync.Customer.UserAiid, "")
 		// update customer
 		err = c.customerRepo.UpdateByPhone(customer)
 		if err != nil {
@@ -1049,44 +1047,31 @@ func (c *Customer) syncExternalToInternal(user *model.User) (*model.Customer, er
 	return customer, nil
 }
 
-func (c *Customer) syncInternalToExternal(payload *dto.RegisterNewCustomer) (*dto.LoginResponse, error) {
-	// prepare userRegister
-	userRegister := &model.UserRegister{
-		Id:        payload.RegistrationId,
-		NoHp:      payload.PhoneNumber,
-		CreatedAt: time.Now(),
-	}
-	// execute insert data to userRegister repo
-	err := c.userRegisterExternalRepo.Insert(userRegister)
-	if err != nil {
-		log.Errorf("failed to insert user register external. %s", nlogger.Error(err))
-		return nil, err
-	}
+func (c *Customer) syncInternalToExternal(payload *dto.CustomerSynchronizeRequest) (*dto.CustomerSynchronizeResponse, error) {
 
 	// call register pds api
 	registerCustomer := dto.RegisterNewCustomer{
-		Name:           payload.Name,
-		Email:          payload.Email,
-		PhoneNumber:    payload.PhoneNumber,
-		Password:       payload.Password,
-		FcmToken:       payload.FcmToken,
-		RegistrationId: payload.RegistrationId,
-		Agen:           payload.Agen,
-		Version:        payload.Version,
+		Name:        payload.Name,
+		Email:       payload.Email,
+		PhoneNumber: payload.PhoneNumber,
+		Password:    payload.Password,
+		FcmToken:    payload.FcmToken,
 	}
-	register, err := c.pdsAPIService.Register(registerCustomer)
+	// sync
+	sync, err := c.pdsAPIService.SynchronizeCustomer(registerCustomer)
 	if err != nil {
 		log.Errorf("Cannot Register err: %v", err)
 		return nil, ncore.TraceError(err)
 	}
 
 	// set response data
-	var LoginResponse dto.LoginResponse
-	resp, err := nclient.GetResponseDataPdsAPI(register)
+	resp, err := nclient.GetResponseDataPdsAPI(sync)
 	if err != nil {
 		log.Errorf("Cannot parsing response login response. err: %v", err)
 		return nil, ncore.TraceError(err)
 	}
+
+	log.Debugf("RESP resp.Data : %s", resp.Data)
 
 	// handle status error
 	if resp.Status != "success" {
@@ -1094,14 +1079,15 @@ func (c *Customer) syncInternalToExternal(payload *dto.RegisterNewCustomer) (*dt
 		return nil, ncore.NewError(resp.Message)
 	}
 	// parsing response
-	err = json.Unmarshal(resp.Data, &LoginResponse)
+	var user dto.CustomerSynchronizeResponse
+	err = json.Unmarshal(resp.Data, &user)
 	if err != nil {
 		log.Errorf("Cannot unmarshall data login pds. err: %v", err)
 		return nil, ncore.TraceError(err)
 	}
 
 	// set result
-	result := &LoginResponse
+	result := &user
 
 	return result, nil
 }

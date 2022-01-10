@@ -43,4 +43,5 @@ type PdsAPIService interface {
 	StepOneRegistration(payload dto.RegisterStepOne) (*http.Response, error)
 	StepTwoRegistration(payload dto.RegisterStepTwo) (*http.Response, error)
 	Register(payload dto.RegisterNewCustomer) (*http.Response, error)
+	SynchronizeCustomer(payload dto.RegisterNewCustomer) (*http.Response, error)
 }

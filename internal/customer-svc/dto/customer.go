@@ -68,6 +68,18 @@ type LoginResponse struct {
 	JwtToken string      `json:"token"`
 }
 
+type CustomerSynchronizeRequest struct {
+	Name        string `json:"nama"`
+	Email       string `json:"email"`
+	PhoneNumber string `json:"no_hp"`
+	Password    string `json:"password"`
+	FcmToken    string `json:"fcm_token"`
+}
+
+type CustomerSynchronizeResponse struct {
+	Customer *UserVO `json:"user"`
+}
+
 type LoginVO struct {
 	Customer              *model.Customer
 	Address               *model.Address
@@ -138,6 +150,70 @@ type CustomerVO struct {
 	TabunganEmas              *CustomerTabunganEmasVO `json:"tabungan_emas"`
 	IsFirstLogin              bool                    `json:"is_first_login"`
 	IsForceUpdatePassword     bool                    `json:"is_force_update_password"`
+}
+
+type UserVO struct {
+	UserAiid                  string `json:"user_AIID,omitempty"`
+	JenisIdentitas            string `json:"jenis_identitas,omitempty"`
+	NoKtp                     string `json:"no_ktp"`
+	TanggalExpiredIdentitas   string `json:"tanggal_expired_identitas,omitempty"`
+	Cif                       string `json:"cif,omitempty"`
+	Email                     string `json:"email"`
+	NoHp                      string `json:"no_hp"`
+	Password                  string `json:"password"`
+	NextPasswordReset         string `json:"next_password_reset"`
+	Pin                       string `json:"pin"`
+	Nama                      string `json:"nama"`
+	NamaIbu                   string `json:"nama_ibu"`
+	JenisKelamin              string `json:"jenis_kelamin,omitempty"`
+	TempatLahir               string `json:"tempat_lahir"`
+	Agama                     string `json:"agama"`
+	TglLahir                  string `json:"tgl_lahir"`
+	Alamat                    string `json:"alamat"`
+	Domisili                  string `json:"domisili"`
+	Kewarganegaraan           string `json:"kewarganegaraan,omitempty"`
+	StatusKawin               string `json:"status_kawin,omitempty"`
+	Kodepos                   string `json:"kodepos"`
+	IdKelurahan               string `json:"id_kelurahan,omitempty"`
+	NoNpwp                    string `json:"no_npwp,omitempty"`
+	FotoNpwp                  string `json:"foto_npwp,omitempty"`
+	NoSid                     string `json:"no_sid"`
+	FotoSid                   string `json:"foto_sid"`
+	KodeCabang                string `json:"kode_cabang,omitempty"`
+	FotoUrl                   string `json:"foto_url"`
+	FotoKtpUrl                string `json:"foto_ktp_url,omitempty"`
+	Status                    string `json:"status"`
+	IsLocked                  string `json:"is_locked"`
+	LoginFailCount            string `json:"login_fail_count,omitempty"`
+	EmailVerified             string `json:"email_verified,omitempty"`
+	KycVerified               string `json:"kyc_verified,omitempty"`
+	EmailVerificationToken    string `json:"email_verification_token,omitempty"`
+	Token                     string `json:"token"`
+	TokenWeb                  string `json:"token_web,omitempty"`
+	FcmToken                  string `json:"fcm_token,omitempty"`
+	LastUpdate                string `json:"last_update"`
+	Norek                     string `json:"norek,omitempty"`
+	Saldo                     string `json:"saldo,omitempty"`
+	PinTemp                   string `json:"pin_temp"`
+	LastUpdateDataNasabah     string `json:"last_update_data_nasabah,omitempty"`
+	LastUpdateDataNpwp        string `json:"last_update_data_npwp,omitempty"`
+	LastUpdateLinkCif         string `json:"last_update_link_cif,omitempty"`
+	LastUpdateUnlinkCif       string `json:"last_update_unlink_cif,omitempty"`
+	LastUpdatePin             string `json:"last_update_pin"`
+	AktifasiTransFinansial    string `json:"aktifasiTransFinansial,omitempty"`
+	TanggalAktifasiFinansial  string `json:"tanggal_aktifasi_finansial"`
+	IsDukcapilVerified        string `json:"is_dukcapil_verified"`
+	IsOpenTe                  string `json:"is_open_te"`
+	ReferralCode              string `json:"referral_code"`
+	GoldcardApplicationNumber string `json:"goldcard_application_number"`
+	GoldcardAccountNumber     string `json:"goldcard_account_number"`
+	TryLoginDate              string `json:"try_login_date"`
+	WrongPasswordCount        string `json:"wrong_password_count,omitempty"`
+	BlockedDate               string `json:"blocked_date"`
+	BlockedToDate             string `json:"blocked_to_date"`
+	NorekUtama                string `json:"norek_utama"`
+	IsSetBiometric            string `json:"is_set_biometric"`
+	DeviceIdBiometric         string `json:"device_id_biometric"`
 }
 
 type CustomerMetadata struct {
