@@ -104,6 +104,12 @@ E_OTP_3:
   metadata:
     http_status: 400
 
+E_OTP_4:
+  success: false
+  message: OTP Expired
+  metadata:
+    http_status: 400
+
 E_REG_1:
   success: false
   message: registration failed

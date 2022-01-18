@@ -824,7 +824,17 @@ func (c *Customer) RegisterStepTwo(payload dto.RegisterStepTwo) (*dto.RegisterSt
 	// Extract response from server
 	data, err := nclient.GetResponseData(resp)
 
-	// wrong otp handle
+	// handle Expired OTP
+	if data.ResponseCode == "12" {
+		log.Errorf("Expired OTP. Phone Number : %s", payload.PhoneNumber)
+		return nil, c.response.GetError("E_OTP_4")
+	}
+	// handle Wrong OTP
+	if data.ResponseCode == "14" {
+		log.Errorf("Wrong OTP. Phone Number : %s", payload.PhoneNumber)
+		return nil, c.response.GetError("E_OTP_1")
+	}
+
 	if data.ResponseCode != "00" {
 		log.Errorf("Wrong OTP. Phone Number : %s", payload.PhoneNumber)
 		return nil, c.response.GetError("E_OTP_1")
