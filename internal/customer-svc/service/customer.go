@@ -737,9 +737,13 @@ func (c *Customer) RegisterStepOne(payload dto.RegisterStepOne) (*dto.RegisterSt
 
 	// validate email
 	emailExist, err := c.customerRepo.FindByEmail(payload.Email)
-	if !errors.Is(err, sql.ErrNoRows) {
-		log.Errorf("failed when query check email. error: %v", err)
-		return nil, ncore.TraceError(err)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			emailExist = nil
+		} else {
+			log.Error("failed when query check email.", nlogger.Error(err))
+			return nil, ncore.TraceError(err)
+		}
 	}
 	if emailExist != nil {
 		log.Debugf("Email already registered")
@@ -748,9 +752,13 @@ func (c *Customer) RegisterStepOne(payload dto.RegisterStepOne) (*dto.RegisterSt
 
 	// validate phone
 	phoneExist, err := c.customerRepo.FindByPhone(payload.PhoneNumber)
-	if !errors.Is(err, sql.ErrNoRows) {
-		log.Errorf("error while retrieve by phone: %s", payload.PhoneNumber)
-		return nil, c.response.GetError("E_REG_1")
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			phoneExist = nil
+		} else {
+			log.Error("failed when query check phone.", nlogger.Error(err))
+			return nil, ncore.TraceError(err)
+		}
 	}
 	if phoneExist != nil {
 		log.Debugf("Phone already registered")
@@ -794,9 +802,13 @@ func (c *Customer) RegisterStepTwo(payload dto.RegisterStepTwo) (*dto.RegisterSt
 	}
 	// validate phone
 	phoneExist, err := c.customerRepo.FindByPhone(payload.PhoneNumber)
-	if !errors.Is(err, sql.ErrNoRows) {
-		log.Errorf("error while retrieve by phone: %s", payload.PhoneNumber)
-		return nil, c.response.GetError("E_REG_1")
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			phoneExist = nil
+		} else {
+			log.Error("failed when query check phone.", nlogger.Error(err))
+			return nil, ncore.TraceError(err)
+		}
 	}
 	if phoneExist != nil {
 		log.Debugf("Phone already registered")
@@ -841,6 +853,21 @@ func (c *Customer) RegisterResendOTP(payload dto.RegisterResendOTP) (*dto.Regist
 	request := dto.SendOTPRequest{
 		PhoneNumber: payload.PhoneNumber,
 		RequestType: constant.RequestTypeRegister,
+	}
+
+	// validate phone
+	phoneExist, err := c.customerRepo.FindByPhone(payload.PhoneNumber)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			phoneExist = nil
+		} else {
+			log.Error("failed when query check phone.", nlogger.Error(err))
+			return nil, ncore.TraceError(err)
+		}
+	}
+	if phoneExist != nil {
+		log.Debugf("Phone already registered")
+		return nil, c.response.GetError("E_REG_3")
 	}
 
 	// Send OTP To Phone Number
