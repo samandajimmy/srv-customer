@@ -84,7 +84,7 @@ func (c *Customer) Login(payload dto.LoginRequest) (*dto.LoginResponse, error) {
 		user, err := c.userExternalRepo.FindByEmailOrPhone(payload.Email)
 		if err != nil {
 			log.Error("failed to retrieve customer not found", nlogger.Error(err))
-			return nil, c.response.GetError("E_RES_1")
+			return nil, c.response.GetError("E_AUTH_10")
 		}
 
 		// sync data external to internal
@@ -1067,7 +1067,7 @@ func (c *Customer) syncInternalToExternal(payload *dto.CustomerSynchronizeReques
 	// set response data
 	resp, err := nclient.GetResponseDataPdsAPI(sync)
 	if err != nil {
-		log.Errorf("Cannot parsing response login response. err: %v", err)
+		log.Errorf("Cannot parsing sync customer response. err: %v", err)
 		return nil, ncore.TraceError(err)
 	}
 

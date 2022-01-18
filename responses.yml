@@ -79,6 +79,13 @@ E_AUTH_9:
   metadata:
     http_status: 200
 
+E_AUTH_10:
+  success: false
+  message: No HP atau Email tidak terdaftar
+  metadata:
+    http_status: 400
+
+
 E_OTP_1:
   success: false
   message: incorrect otp
