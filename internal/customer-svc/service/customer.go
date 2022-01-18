@@ -144,7 +144,7 @@ func (c *Customer) Login(payload dto.LoginRequest) (*dto.LoginResponse, error) {
 			return nil, ncore.TraceError(err)
 		}
 		// set userRefId
-		customer.UserRefId = nval.ParseStringFallback(resultSync.Customer.UserAiid, "")
+		customer.UserRefId = nval.ParseStringFallback(resultSync.UserAiid, "")
 		// update customer
 		err = c.customerRepo.UpdateByPhone(customer)
 		if err != nil {
@@ -1084,7 +1084,7 @@ func (c *Customer) syncExternalToInternal(user *model.User) (*model.Customer, er
 	return customer, nil
 }
 
-func (c *Customer) syncInternalToExternal(payload *dto.CustomerSynchronizeRequest) (*dto.CustomerSynchronizeResponse, error) {
+func (c *Customer) syncInternalToExternal(payload *dto.CustomerSynchronizeRequest) (*dto.UserVO, error) {
 
 	// call register pds api
 	registerCustomer := dto.RegisterNewCustomer{
@@ -1097,26 +1097,25 @@ func (c *Customer) syncInternalToExternal(payload *dto.CustomerSynchronizeReques
 	// sync
 	sync, err := c.pdsAPIService.SynchronizeCustomer(registerCustomer)
 	if err != nil {
-		log.Errorf("Cannot Register err: %v", err)
+		log.Error("Error when SynchronizeCustomer.", nlogger.Error(err))
 		return nil, ncore.TraceError(err)
 	}
 
 	// set response data
 	resp, err := nclient.GetResponseDataPdsAPI(sync)
 	if err != nil {
-		log.Errorf("Cannot parsing sync customer response. err: %v", err)
+		log.Error("Cannot parsing from SynchronizeCustomer response.", nlogger.Error(err))
 		return nil, ncore.TraceError(err)
 	}
 
-	log.Debugf("RESP resp.Data : %s", resp.Data)
-
 	// handle status error
 	if resp.Status != "success" {
-		log.Errorf("Error when Register PDS API. Err %s", resp.Data)
+		log.Error("Get Error from SynchronizeCustomer.", nlogger.Error(err))
 		return nil, ncore.NewError(resp.Message)
 	}
+
 	// parsing response
-	var user dto.CustomerSynchronizeResponse
+	var user dto.UserVO
 	err = json.Unmarshal(resp.Data, &user)
 	if err != nil {
 		log.Errorf("Cannot unmarshall data login pds. err: %v", err)
