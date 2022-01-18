@@ -329,7 +329,7 @@ func ValidatePassword(password string) *dto.ValidatePassword {
 		return &validation
 	}
 
-	if strings.Contains(password, "gadai") {
+	if strings.Contains(strings.ToLower(password), "gadai") {
 		validation.IsValid = false
 		validation.ErrCode = "containsGadai"
 		validation.Message = "Hindari menggunakan kata gadai."
