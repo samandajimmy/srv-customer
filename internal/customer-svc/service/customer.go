@@ -84,7 +84,7 @@ func (c *Customer) Login(payload dto.LoginRequest) (*dto.LoginResponse, error) {
 		user, err := c.userExternalRepo.FindByEmailOrPhone(payload.Email)
 		if err != nil {
 			log.Error("failed to retrieve customer not found", nlogger.Error(err))
-			return nil, c.response.GetError("E_RES_1")
+			return nil, c.response.GetError("E_AUTH_10")
 		}
 
 		// sync data external to internal
@@ -130,23 +130,21 @@ func (c *Customer) Login(payload dto.LoginRequest) (*dto.LoginResponse, error) {
 
 	// get userRefId from external DB
 	if customer.UserRefId == "" {
-		registerPayload := &dto.RegisterNewCustomer{
-			Name:           customer.FullName,
-			Email:          customer.Email,
-			PhoneNumber:    customer.Phone,
-			FcmToken:       payload.FcmToken,
-			Password:       payload.Password,
-			RegistrationId: xid.New().String(),
+		registerPayload := &dto.CustomerSynchronizeRequest{
+			Name:        customer.FullName,
+			Email:       customer.Email,
+			PhoneNumber: customer.Phone,
+			Password:    credential.Password,
+			FcmToken:    payload.FcmToken,
 		}
-		//
-		resultRegister, err := c.syncInternalToExternal(registerPayload)
+		resultSync, err := c.syncInternalToExternal(registerPayload)
 
 		if err != nil {
 			log.Errorf("failed to sync to external. error: %v", err)
 			return nil, ncore.TraceError(err)
 		}
 		// set userRefId
-		customer.UserRefId = resultRegister.Customer.ID
+		customer.UserRefId = nval.ParseStringFallback(resultSync.UserAiid, "")
 		// update customer
 		err = c.customerRepo.UpdateByPhone(customer)
 		if err != nil {
@@ -331,7 +329,7 @@ func ValidatePassword(password string) *dto.ValidatePassword {
 		return &validation
 	}
 
-	if strings.Contains(password, "gadai") {
+	if strings.Contains(strings.ToLower(password), "gadai") {
 		validation.IsValid = false
 		validation.ErrCode = "containsGadai"
 		validation.Message = "Hindari menggunakan kata gadai."
@@ -739,9 +737,13 @@ func (c *Customer) RegisterStepOne(payload dto.RegisterStepOne) (*dto.RegisterSt
 
 	// validate email
 	emailExist, err := c.customerRepo.FindByEmail(payload.Email)
-	if !errors.Is(err, sql.ErrNoRows) {
-		log.Errorf("failed when query check email. error: %v", err)
-		return nil, ncore.TraceError(err)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			emailExist = nil
+		} else {
+			log.Error("failed when query check email.", nlogger.Error(err))
+			return nil, ncore.TraceError(err)
+		}
 	}
 	if emailExist != nil {
 		log.Debugf("Email already registered")
@@ -750,9 +752,13 @@ func (c *Customer) RegisterStepOne(payload dto.RegisterStepOne) (*dto.RegisterSt
 
 	// validate phone
 	phoneExist, err := c.customerRepo.FindByPhone(payload.PhoneNumber)
-	if !errors.Is(err, sql.ErrNoRows) {
-		log.Errorf("error while retrieve by phone: %s", payload.PhoneNumber)
-		return nil, c.response.GetError("E_REG_1")
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			phoneExist = nil
+		} else {
+			log.Error("failed when query check phone.", nlogger.Error(err))
+			return nil, ncore.TraceError(err)
+		}
 	}
 	if phoneExist != nil {
 		log.Debugf("Phone already registered")
@@ -796,9 +802,13 @@ func (c *Customer) RegisterStepTwo(payload dto.RegisterStepTwo) (*dto.RegisterSt
 	}
 	// validate phone
 	phoneExist, err := c.customerRepo.FindByPhone(payload.PhoneNumber)
-	if !errors.Is(err, sql.ErrNoRows) {
-		log.Errorf("error while retrieve by phone: %s", payload.PhoneNumber)
-		return nil, c.response.GetError("E_REG_1")
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			phoneExist = nil
+		} else {
+			log.Error("failed when query check phone.", nlogger.Error(err))
+			return nil, ncore.TraceError(err)
+		}
 	}
 	if phoneExist != nil {
 		log.Debugf("Phone already registered")
@@ -814,7 +824,17 @@ func (c *Customer) RegisterStepTwo(payload dto.RegisterStepTwo) (*dto.RegisterSt
 	// Extract response from server
 	data, err := nclient.GetResponseData(resp)
 
-	// wrong otp handle
+	// handle Expired OTP
+	if data.ResponseCode == "12" {
+		log.Errorf("Expired OTP. Phone Number : %s", payload.PhoneNumber)
+		return nil, c.response.GetError("E_OTP_4")
+	}
+	// handle Wrong OTP
+	if data.ResponseCode == "14" {
+		log.Errorf("Wrong OTP. Phone Number : %s", payload.PhoneNumber)
+		return nil, c.response.GetError("E_OTP_1")
+	}
+
 	if data.ResponseCode != "00" {
 		log.Errorf("Wrong OTP. Phone Number : %s", payload.PhoneNumber)
 		return nil, c.response.GetError("E_OTP_1")
@@ -843,6 +863,21 @@ func (c *Customer) RegisterResendOTP(payload dto.RegisterResendOTP) (*dto.Regist
 	request := dto.SendOTPRequest{
 		PhoneNumber: payload.PhoneNumber,
 		RequestType: constant.RequestTypeRegister,
+	}
+
+	// validate phone
+	phoneExist, err := c.customerRepo.FindByPhone(payload.PhoneNumber)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			phoneExist = nil
+		} else {
+			log.Error("failed when query check phone.", nlogger.Error(err))
+			return nil, ncore.TraceError(err)
+		}
+	}
+	if phoneExist != nil {
+		log.Debugf("Phone already registered")
+		return nil, c.response.GetError("E_REG_3")
 	}
 
 	// Send OTP To Phone Number
@@ -1049,59 +1084,46 @@ func (c *Customer) syncExternalToInternal(user *model.User) (*model.Customer, er
 	return customer, nil
 }
 
-func (c *Customer) syncInternalToExternal(payload *dto.RegisterNewCustomer) (*dto.LoginResponse, error) {
-	// prepare userRegister
-	userRegister := &model.UserRegister{
-		Id:        payload.RegistrationId,
-		NoHp:      payload.PhoneNumber,
-		CreatedAt: time.Now(),
-	}
-	// execute insert data to userRegister repo
-	err := c.userRegisterExternalRepo.Insert(userRegister)
-	if err != nil {
-		log.Errorf("failed to insert user register external. %s", nlogger.Error(err))
-		return nil, err
-	}
+func (c *Customer) syncInternalToExternal(payload *dto.CustomerSynchronizeRequest) (*dto.UserVO, error) {
 
 	// call register pds api
 	registerCustomer := dto.RegisterNewCustomer{
-		Name:           payload.Name,
-		Email:          payload.Email,
-		PhoneNumber:    payload.PhoneNumber,
-		Password:       payload.Password,
-		FcmToken:       payload.FcmToken,
-		RegistrationId: payload.RegistrationId,
-		Agen:           payload.Agen,
-		Version:        payload.Version,
+		Name:        payload.Name,
+		Email:       payload.Email,
+		PhoneNumber: payload.PhoneNumber,
+		Password:    payload.Password,
+		FcmToken:    payload.FcmToken,
 	}
-	register, err := c.pdsAPIService.Register(registerCustomer)
+	// sync
+	sync, err := c.pdsAPIService.SynchronizeCustomer(registerCustomer)
 	if err != nil {
-		log.Errorf("Cannot Register err: %v", err)
+		log.Error("Error when SynchronizeCustomer.", nlogger.Error(err))
 		return nil, ncore.TraceError(err)
 	}
 
 	// set response data
-	var LoginResponse dto.LoginResponse
-	resp, err := nclient.GetResponseDataPdsAPI(register)
+	resp, err := nclient.GetResponseDataPdsAPI(sync)
 	if err != nil {
-		log.Errorf("Cannot parsing response login response. err: %v", err)
+		log.Error("Cannot parsing from SynchronizeCustomer response.", nlogger.Error(err))
 		return nil, ncore.TraceError(err)
 	}
 
 	// handle status error
 	if resp.Status != "success" {
-		log.Errorf("Error when Register PDS API. Err %s", resp.Data)
+		log.Error("Get Error from SynchronizeCustomer.", nlogger.Error(err))
 		return nil, ncore.NewError(resp.Message)
 	}
+
 	// parsing response
-	err = json.Unmarshal(resp.Data, &LoginResponse)
+	var user dto.UserVO
+	err = json.Unmarshal(resp.Data, &user)
 	if err != nil {
 		log.Errorf("Cannot unmarshall data login pds. err: %v", err)
 		return nil, ncore.TraceError(err)
 	}
 
 	// set result
-	result := &LoginResponse
+	result := &user
 
 	return result, nil
 }
