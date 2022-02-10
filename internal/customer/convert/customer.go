@@ -3,13 +3,12 @@ package convert
 import (
 	"database/sql"
 	"encoding/json"
-	"strings"
-
 	"github.com/rs/xid"
-	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer-svc/constant"
-	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer-svc/dto"
-	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer-svc/model"
+	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/constant"
+	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/model"
+	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/dto"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nval"
+	"strings"
 )
 
 func ModelUserToCustomer(user *model.User) (*model.Customer, error) {

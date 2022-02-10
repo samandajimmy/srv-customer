@@ -2,9 +2,8 @@ package convert
 
 import (
 	"database/sql"
-
-	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer-svc/dto"
-	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer-svc/model"
+	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/model"
+	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/dto"
 )
 
 func ModifierModelToDTO(model model.Modifier) dto.Modifier {
