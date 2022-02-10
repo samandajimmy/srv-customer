@@ -1,26 +1,22 @@
-package handler
+package customer
 
 import (
 	"errors"
 	"fmt"
+	"github.com/gorilla/mux"
 	"github.com/nbs-go/nlogger"
-	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer-svc/contract"
-	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer-svc/dto"
-	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer-svc/service"
+	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/dto"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/ncore"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nhttp"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nvalidate"
 )
 
-func NewCustomer(customerService contract.CustomerService) *Customer {
-	return &Customer{
-		customerService: customerService,
-	}
+type Customer struct {
+	*Handler
 }
 
-type Customer struct {
-	router          *nhttp.Router
-	customerService contract.CustomerService
+func NewCustomer(h *Handler) *Customer {
+	return &Customer{h}
 }
 
 func (h *Customer) PostLogin(rx *nhttp.Request) (*nhttp.Response, error) {
@@ -40,8 +36,12 @@ func (h *Customer) PostLogin(rx *nhttp.Request) (*nhttp.Response, error) {
 		return nhttp.UnprocessableEntity(data), nil
 	}
 
+	// Init service
+	svc := h.NewService(rx.Context())
+	defer svc.Close()
+
 	// Call service
-	resp, err := h.customerService.Login(payload)
+	resp, err := svc.Login(payload)
 	if err != nil {
 		log.Errorf("Error when processing service. err: %v", err)
 		return nil, err
@@ -67,8 +67,12 @@ func (h *Customer) PostRegister(rx *nhttp.Request) (*nhttp.Response, error) {
 		return nhttp.UnprocessableEntity(data), nil
 	}
 
+	// Init service
+	svc := h.NewService(rx.Context())
+	defer svc.Close()
+
 	// Check is force update password
-	validatePassword := service.ValidatePassword(payload.Password)
+	validatePassword := svc.ValidatePassword(payload.Password)
 	if validatePassword.IsValid == false {
 		err := errors.New(fmt.Sprintf("password: %s.", validatePassword.Message))
 		data := nvalidate.Message(err.Error())
@@ -76,10 +80,10 @@ func (h *Customer) PostRegister(rx *nhttp.Request) (*nhttp.Response, error) {
 	}
 
 	// Call service
-	resp, err := h.customerService.Register(payload)
+	resp, err := svc.Register(payload)
 	if err != nil {
 		log.Errorf("Error when processing service.", nlogger.Error(err))
-		return nil, ncore.TraceError(err)
+		return nil, ncore.TraceError("error", err)
 	}
 
 	return nhttp.Success().SetData(resp), nil
@@ -102,8 +106,12 @@ func (h *Customer) SendOTP(rx *nhttp.Request) (*nhttp.Response, error) {
 		return nhttp.UnprocessableEntity(data), nil
 	}
 
+	// Init service
+	svc := h.NewService(rx.Context())
+	defer svc.Close()
+
 	// Call service
-	resp, err := h.customerService.RegisterStepOne(payload)
+	resp, err := svc.RegisterStepOne(payload)
 	if err != nil {
 		log.Errorf("Error when processing service. err: %v", err)
 		return nil, err
@@ -129,8 +137,12 @@ func (h *Customer) VerifyOTP(rx *nhttp.Request) (*nhttp.Response, error) {
 		return nhttp.UnprocessableEntity(data), nil
 	}
 
+	// Init service
+	svc := h.NewService(rx.Context())
+	defer svc.Close()
+
 	// Call service
-	resp, err := h.customerService.RegisterStepTwo(payload)
+	resp, err := svc.RegisterStepTwo(payload)
 	if err != nil {
 		log.Errorf("Error when processing service. err: %v", err)
 		return nil, err
@@ -156,12 +168,28 @@ func (h *Customer) ResendOTP(rx *nhttp.Request) (*nhttp.Response, error) {
 		return nhttp.UnprocessableEntity(data), nil
 	}
 
+	// Init service
+	svc := h.NewService(rx.Context())
+	defer svc.Close()
+
 	// Call service
-	resp, err := h.customerService.RegisterResendOTP(payload)
+	resp, err := svc.RegisterResendOTP(payload)
 	if err != nil {
 		log.Errorf("Error when processing service. err: %v", err)
 		return nil, err
 	}
 
 	return nhttp.Success().SetData(resp), nil
+}
+
+func (h *Customer) GetProfile(rx *nhttp.Request) (*nhttp.Response, error) {
+	// Get xid
+	id := mux.Vars(rx.Request)["id"]
+	if id == "" {
+		err := errors.New("id is not found on params")
+		log.Errorf("id is not found on params. err: %v", err)
+		return nil, nhttp.BadRequestError.Wrap(err)
+	}
+
+	return nil, nil
 }
