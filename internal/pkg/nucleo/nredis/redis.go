@@ -42,7 +42,7 @@ func DialClient(network string, host string, port string, password string) (*red
 		Dial: func() (redis.Conn, error) {
 			conn, err := redis.Dial(network, address, redis.DialPassword(password))
 			if err != nil {
-				return nil, ncore.TraceError(err)
+				return nil, ncore.TraceError("cannot dial redis", err)
 			}
 			return conn, nil
 		},
@@ -54,8 +54,7 @@ func DialClient(network string, host string, port string, password string) (*red
 func (c *Redis) Ping() (string, error) {
 	result, err := redis.String(c.redis.Do("PING"))
 	if err != nil {
-		log.Errorf("Cannot ping redis. err: %s", err)
-		return "", ncore.TraceError(err)
+		return "", ncore.TraceError("cannot connect redis", err)
 	}
 	return result, nil
 }
@@ -82,7 +81,7 @@ func (c *Redis) SetThenGet(key string, value string, expire int64) (string, erro
 	_, err := c.redis.Do("SET", key, value)
 	if err != nil {
 		log.Errorf("Failed to set value. err: %s", err)
-		return "", ncore.TraceError(err)
+		return "", ncore.TraceError("", err)
 	}
 
 	// Set expire
@@ -90,7 +89,7 @@ func (c *Redis) SetThenGet(key string, value string, expire int64) (string, erro
 
 	if err != nil {
 		log.Errorf("Failed to set expire. err: %s", err)
-		return "", ncore.TraceError(err)
+		return "", ncore.TraceError("Failed to set expire", err)
 	}
 
 	// Get value
@@ -101,7 +100,7 @@ func (c *Redis) SetThenGet(key string, value string, expire int64) (string, erro
 		return "", nil
 	} else if err != nil {
 		log.Errorf("Cannot get value from key. err: %s", err)
-		return "", ncore.TraceError(err)
+		return "", ncore.TraceError("Cannot get value from key", err)
 	}
 
 	return result, nil

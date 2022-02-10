@@ -2,7 +2,6 @@ package ncore
 
 import (
 	"fmt"
-	"runtime"
 )
 
 const (
@@ -114,38 +113,6 @@ func (r Response) Wrap(sourceErr error, args ...interface{}) *Response {
 type ErrorOptions struct {
 	SourceError error
 	Metadata    map[string]interface{}
-}
-
-func Trace(skip int) string {
-	_, file, line, ok := runtime.Caller(skip + 1)
-	if !ok {
-		return "<?>:<?>"
-	}
-	return fmt.Sprintf("%s:%d", file, line)
-}
-
-func TraceError(err error) error {
-	if err == nil {
-		return nil
-	}
-
-	// Check if err is Response
-	respErr, ok := err.(*Response)
-	if !ok {
-		respErr = &Response{
-			Success:     false,
-			Code:        InternalError.Code,
-			Message:     InternalError.Message,
-			Metadata:    nil,
-			SourceError: err,
-			Traces:      []string{Trace(1)},
-		}
-		return respErr
-	}
-
-	// Append trace
-	respErr.Traces = append(respErr.Traces, Trace(1))
-	return respErr
 }
 
 func (r Response) SetMessage(message string, args ...interface{}) Response {

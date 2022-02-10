@@ -58,7 +58,7 @@ func (c *Nclient) PostData(endpoint string, body map[string]interface{}, header 
 	request, err := http.NewRequest("POST", baseUrlWithEndpoint, payload)
 	if err != nil {
 		log.Errorf("Error when make new request. err: %s", err)
-		return result, ncore.TraceError(err)
+		return result, ncore.TraceError("Error when make new request", err)
 	}
 
 	// Set header
@@ -70,7 +70,7 @@ func (c *Nclient) PostData(endpoint string, body map[string]interface{}, header 
 	resp, err := c.Client.Do(request)
 	if err != nil {
 		log.Errorf("Error when request client. err: %s", err)
-		return result, ncore.TraceError(err)
+		return result, ncore.TraceError("Error when request client", err)
 	}
 
 	if resp.StatusCode != http.StatusOK {

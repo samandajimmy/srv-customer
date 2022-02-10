@@ -9,4 +9,5 @@ const (
 	MetadataKey        = "metadata"
 	HttpStatusRespKey  = "http_status"
 	RequestMetadataKey = "request_metadata"
+	RequestIdKey       = "requestId"
 )

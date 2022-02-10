@@ -23,7 +23,7 @@ func (s ServerConfig) Validate() error {
 	err := s.LoadFromEnv()
 
 	if err != nil {
-		return ncore.TraceError(err)
+		return ncore.TraceError("error when load from env", err)
 	}
 
 	return validation.ValidateStruct(&s,
