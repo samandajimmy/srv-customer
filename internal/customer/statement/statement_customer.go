@@ -5,7 +5,7 @@ import (
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nsql"
 )
 
-type CustomerStatement struct {
+type Customer struct {
 	Insert             *sqlx.NamedStmt
 	UpdateByPhone      *sqlx.NamedStmt
 	FindById           *sqlx.Stmt
@@ -14,7 +14,7 @@ type CustomerStatement struct {
 	FindByEmailOrPhone *sqlx.Stmt
 }
 
-func NewCustomerStatement(db *nsql.DB) *CustomerStatement {
+func NewCustomer(db *nsql.DatabaseContext) *Customer {
 	tableName := `Customer`
 	columns := `"xid","metadata","createdAt","updatedAt","modifiedBy","version","fullName","phone","email","identityType","identityNumber","userRefId","photos","profile","cif","sid","referralCode","status"`
 	namedColumns := `:xid,:metadata,:createdAt,:updatedAt,:modifiedBy,:version,:fullName,:phone,:email,:identityType,:identityNumber,:userRefId,:photos,:profile,:cif,:sid,:referralCode,:status`
@@ -22,7 +22,7 @@ func NewCustomerStatement(db *nsql.DB) *CustomerStatement {
 
 	columnsWithId := `"id",` + columns
 
-	return &CustomerStatement{
+	return &Customer{
 		Insert:      db.PrepareNamedFmt(`INSERT INTO "%s" (%s) VALUES (%s) RETURNING id`, tableName, columns, namedColumns),
 		FindById:    db.PrepareFmt(`SELECT "id", %s FROM "%s" WHERE "id" = $1`, columns, tableName),
 		FindByPhone: db.PrepareFmt(`SELECT "id", %s FROM "%s" WHERE "phone" = $1`, columns, tableName),

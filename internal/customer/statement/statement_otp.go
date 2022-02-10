@@ -5,16 +5,16 @@ import (
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nsql"
 )
 
-type OTPStatement struct {
+type OTP struct {
 	Insert *sqlx.NamedStmt
 }
 
-func NewOTPStatement(db *nsql.DB) *OTPStatement {
+func NewOTP(db *nsql.DatabaseContext) *OTP {
 	tableName := "OTP"
 	columns := `"updatedAt","customerId","content","type","data","status"`
 	namedColumns := `:updatedAt, :customerId, :content, :type, :data, :status`
 
-	return &OTPStatement{
+	return &OTP{
 		Insert: db.PrepareNamedFmt(`INSERT INTO "%s" (%s) VALUES (%s)`, tableName, columns, namedColumns),
 	}
 }
