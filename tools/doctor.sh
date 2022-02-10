@@ -2,22 +2,24 @@
 
 ERR_COUNT=0
 
+echo "\
+  +--------------------------------------------------+
+  | doctor.sh: Check dev tools for local development |
+  |                                                  |
+  | Author: Saggaf Arsyad <saggaf.arsyad@gmail.com>  |
+  +--------------------------------------------------+
+"
+
 main() {
-  # Check Programming Runtimes
-  check_cmd "go"
-  check_cmd "python3"
-
-  # Check Database Migration tools
-  check_cmd "usql" 
+  check_cmd "usql"
   check_cmd "flyway"
+  check_cmd "docker"
 
-  check_script "${MIGRATION_INIT_SERVER_CMD}"
-  check_script "${MIGRATION_INIT_CONFIG_CMD}"
-  check_script "${MIGRATION_DOWN_CMD}"
-  check_script "${MIGRATION_CREATE_DB}"
+  check_script ${MIGRATION_INIT_CONFIG_CMD}
+  check_script ${MIGRATION_DOWN_CMD}
+  check_script ${MIGRATION_CREATE_DB}
 
   check_optional_cmd "brew"
-  check_optional_cmd "docker"
 
   echo
 
@@ -31,11 +33,11 @@ main() {
 
 check_cmd() {
   # Get arguments
-  CMD_NAME=$1
+  local CMD_NAME=$1
 
   echo -e "Checking command ${CMD_NAME}: \c"
 
-  if ! [[ -x "$(command -v "${CMD_NAME}")" ]]; then
+  if ! [[ -x "$(command -v ${CMD_NAME})" ]]; then
     ERR_COUNT=$((ERR_COUNT+1))
     echo "NOT FOUND"
 
@@ -50,7 +52,7 @@ check_optional_cmd() {
 
   echo -e "Checking optional command ${CMD_NAME}: \c"
 
-  if ! [[ -x "$(command -v "${CMD_NAME}")" ]]; then
+  if ! [[ -x "$(command -v ${CMD_NAME})" ]]; then
     echo "NOT FOUND"
 
   else

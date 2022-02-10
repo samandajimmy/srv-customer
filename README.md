@@ -77,3 +77,4 @@ make serve
 ## Contributors
 
 - Saggaf Arsyad <saggaf@nusantarabetastudio.com>
+- Dinan <dinan@nusantarabetastudio.com>

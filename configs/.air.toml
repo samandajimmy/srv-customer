@@ -1,0 +1,8 @@
+root = "/usr/src/app"
+tmp_dir = ".tmp"
+
+[build]
+# disable optimization, disable inlining for faster compilation
+cmd = "CGO_ENABLED=0 go build -a -mod=vendor -gcflags='all=-N -l' -o bin/${SERVICE_SLUG} ${MAIN_DIR:-.}"
+full_bin = "dlv --listen=:2345 --accept-multiclient --log --headless=true --continue --api-version=2 exec bin/${SERVICE_SLUG}"
+include_ext = ["go", "tpl", "tmpl", "html"]
