@@ -1,7 +1,7 @@
 package dto
 
 import (
-	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer-svc/constant"
+	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/constant"
 )
 
 type Subject struct {

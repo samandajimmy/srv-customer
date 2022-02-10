@@ -1,7 +1,7 @@
 package dto
 
 import (
-	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer-svc/model"
+	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/model"
 )
 
 type NotificationPayload struct {
