@@ -1,37 +1,18 @@
-package repository
+package customer
 
 import (
 	"fmt"
-
-	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer-svc/contract"
-	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer-svc/model"
-	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer-svc/repository/statement"
+	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/model"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/ncore"
-	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nsql"
 )
 
-type UserExternal struct {
-	db   *nsql.DB
-	stmt *statement.UserStatement
-}
-
-func (a *UserExternal) HasInitialized() bool {
-	return true
-}
-
-func (a *UserExternal) Init(dataSources DataSourceMap, _ contract.RepositoryMap) error {
-	a.db = dataSources.DBExternal
-	a.stmt = statement.NewUserStatement(a.db)
-	return nil
-}
-
-func (a *UserExternal) FindByEmailOrPhone(email string) (*model.User, error) {
+func (rc *RepositoryContext) FindUserExternalByEmailOrPhone(email string) (*model.User, error) {
 	var row model.User
-	err := a.stmt.FindByEmailOrPhone.Get(&row, email, email)
+	err := rc.stmt.User.FindByEmailOrPhone.GetContext(rc.ctx, &row, email, email)
 	return &row, err
 }
 
-func (a *UserExternal) FindAddressByCustomerId(id int64) (*model.AddressExternal, error) {
+func (rc *RepositoryContext) FindUserExternalAddressByCustomerID(id int64) (*model.AddressExternal, error) {
 
 	from := `user`
 	columns := `user.user_AIID, user.alamat, user.kodepos, kel.nama_kelurahan as kelurahan, kec.nama_kecamatan as kecamatan, kab.nama_kabupaten as kabupaten, prov.nama_provinsi as provinsi, `
@@ -43,11 +24,11 @@ func (a *UserExternal) FindAddressByCustomerId(id int64) (*model.AddressExternal
 
 	q := fmt.Sprintf("SELECT %s FROM %s %s WHERE user.user_AIID = %v", columns, from, joinTables, id)
 	// Execute query
-	q = a.db.Conn.Rebind(q)
+	q = rc.conn.Rebind(q)
 	var row []model.AddressExternal
-	err := a.db.Conn.Select(&row, q)
+	err := rc.conn.SelectContext(rc.ctx, &row, q)
 	if err != nil {
-		return nil, ncore.TraceError(err)
+		return nil, ncore.TraceError("error when find user external", err)
 	}
 	return &row[0], nil
 }
