@@ -25,7 +25,7 @@ main() {
 }
 
 prepare_query() {
-    CREATE_DB_QUERY="CREATE DATABASE ${DB_NAME} ENCODING = 'UTF8' TABLESPACE = pg_default CONNECTION LIMIT = -1;"
+    CREATE_DB_QUERY="CREATE DATABASE "\"${DB_NAME}\"" ENCODING = 'UTF8' TABLESPACE = pg_default CONNECTION LIMIT = -1"
 }
 
 # ---------
@@ -42,8 +42,8 @@ load_env() {
     if [[ -n ${ENV_KEY_PREFIX} ]]; then
         echo "  > ENV_KEY_PREFIX is set: ${ENV_KEY_PREFIX}"
         DB_DRIVER=$(get_env_with_prefix "DB_DRIVER")
-        DB_MIGRATION_HOST=$(get_env_with_prefix "DB_MIGRATION_HOST")
-        DB_MIGRATION_PORT=$(get_env_with_prefix "DB_MIGRATION_PORT")
+        MIGRATION_DB_HOST=$(get_env_with_prefix "MIGRATION_DB_HOST")
+        MIGRATION_DB_PORT=$(get_env_with_prefix "MIGRATION_DB_PORT")
         DB_NAME=$(get_env_with_prefix "DB_NAME")
         DB_USER=$(get_env_with_prefix "DB_USER")
         DB_PASS=$(get_env_with_prefix "DB_PASS")
@@ -57,7 +57,7 @@ init_usql_dsn() {
     fi
 
     # Init DSN
-    DSN="${DB_DRIVER}://${DB_USER}:${DB_PASS}@${DB_MIGRATION_HOST}:${DB_MIGRATION_PORT}/${DB_NAME}"
+    DSN="${DB_DRIVER}://${DB_USER}:${DB_PASS}@${MIGRATION_DB_HOST}:${MIGRATION_DB_PORT}"
 
     # If SSL Mode set to false, then set option
     if [[ -z $SSL_MODE || $SSL_MODE == "false" ]]; then
