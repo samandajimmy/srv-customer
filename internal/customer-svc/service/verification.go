@@ -6,10 +6,10 @@ import (
 	"time"
 
 	"github.com/nbs-go/nlogger"
-	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer-svc/constant"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer-svc/contract"
-	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer-svc/convert"
-	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer-svc/dto"
+	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/constant"
+	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/convert"
+	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/dto"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/ncore"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/ntime"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nval"
@@ -54,7 +54,7 @@ func (s *Verification) VerifyEmailCustomer(payload dto.VerificationPayload) (str
 			return alreadyVerfiedView, s.response.GetError("E_RES_1")
 		}
 		log.Errorf("failed to retrieve verfication. error: %v", err)
-		return alreadyVerfiedView, ncore.TraceError(err)
+		return alreadyVerfiedView, ncore.TraceError("error", err)
 	}
 
 	// Get customer
@@ -65,7 +65,7 @@ func (s *Verification) VerifyEmailCustomer(payload dto.VerificationPayload) (str
 			return alreadyVerfiedView, s.response.GetError("E_RES_1")
 		}
 		log.Errorf("failed to retrieve customer. error: %v", err)
-		return alreadyVerfiedView, ncore.TraceError(err)
+		return alreadyVerfiedView, ncore.TraceError("error", err)
 	}
 
 	// If email already verified
@@ -96,7 +96,7 @@ func (s *Verification) VerifyEmailCustomer(payload dto.VerificationPayload) (str
 	err = s.verificationRepo.UpdateByCustomerID(ver)
 	if err != nil {
 		log.Errorf("Error when update verification. %v", err)
-		return alreadyVerfiedView, ncore.TraceError(err)
+		return alreadyVerfiedView, ncore.TraceError("error", err)
 	}
 
 	// Load view email verification success

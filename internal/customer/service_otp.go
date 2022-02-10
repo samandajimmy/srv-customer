@@ -1,46 +1,18 @@
-package service
+package customer
 
 import (
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/constant"
-
-	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer-svc/contract"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/dto"
-	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nclient"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/ncore"
 )
 
-type OTP struct {
-	client       *nclient.Nclient
-	pdsAPI       *contract.CorePDSConfig
-	cacheService contract.CacheService
-	cacheKey     string
-	response     *ncore.ResponseMap
-}
-
-func (c *OTP) HasInitialized() bool {
-	return true
-}
-
-func (c *OTP) Init(app *contract.PdsApp) error {
-	c.pdsAPI = &app.Config.CorePDS
-	c.client = nclient.NewNucleoClient(
-		c.pdsAPI.CoreOauthUsername,
-		c.pdsAPI.CoreClientId,
-		c.pdsAPI.CoreApiUrl,
-	)
-	c.cacheService = app.Services.Cache
-	c.cacheKey = fmt.Sprintf("%s:%s", constant.Prefix, "token_switching")
-	c.response = app.Responses
-	return nil
-}
-
-func (c *OTP) GetToken() (string, error) {
-
-	// Get token if is exist on redis
-	token, err := c.cacheService.Get(c.cacheKey)
+func (s *Service) GetToken() (string, error) {
+	key := fmt.Sprintf("%s:%s", constant.Prefix, "token_switching")
+	// Get token if is exists on redis
+	token, err := s.CacheGet(key)
 	if err != nil {
 		return "", err
 	}
@@ -49,25 +21,25 @@ func (c *OTP) GetToken() (string, error) {
 		return token, nil
 	}
 
-	// Initialise result
+	// Initialise resuzlt
 	var result string
 
 	// Set payload
 	reqBody := map[string]interface{}{
-		"username":   c.pdsAPI.CoreOauthUsername,
-		"password":   c.pdsAPI.CoreOauthPassword,
-		"grant_type": c.pdsAPI.CoreOauthGrantType,
+		"username":   s.config.CoreOauthUsername,
+		"password":   s.config.CoreOauthPassword,
+		"grant_type": s.config.CoreOauthGrantType,
 	}
 
 	// Set header
 	reqHeader := map[string]string{
-		"Authorization": "Basic " + c.pdsAPI.CoreAuthorization,
+		"Authorization": "Basic " + s.config.CoreAuthorization,
 		"Accept":        "application/json",
 		"Content-Type":  "application/x-www-form-urlencoded",
 	}
 
 	// Send OTP Rest Switching
-	resp, err := c.client.PostData("/oauth/token", reqBody, reqHeader)
+	resp, err := s.ClientPostData("/oauth/token", reqBody, reqHeader)
 	if err != nil {
 		log.Errorf("Error when request oauth token")
 		return result, ncore.TraceError("error", err)
@@ -82,8 +54,9 @@ func (c *OTP) GetToken() (string, error) {
 		return result, err
 	}
 
+	cacheKey := fmt.Sprintf("%s:%s", constant.Prefix, "token_switching")
 	// Store token to redis
-	result, err = c.cacheService.SetThenGet(c.cacheKey, data.AccessToken, data.ExpiresIn)
+	result, err = s.CacheSetThenGet(cacheKey, data.AccessToken, data.ExpiresIn)
 	if err != nil {
 		return "", err
 	}
@@ -91,10 +64,10 @@ func (c *OTP) GetToken() (string, error) {
 	return result, nil
 }
 
-func (c *OTP) SendOTP(payload dto.SendOTPRequest) (*http.Response, error) {
+func (s *Service) SendOTP(payload dto.SendOTPRequest) (*http.Response, error) {
 	var result *http.Response
 
-	token, err := c.GetToken()
+	token, err := s.GetToken()
 	if err != nil {
 		log.Errorf("Error when trying to get Access Token. err: %s", err)
 		return result, ncore.TraceError("error", err)
@@ -103,7 +76,7 @@ func (c *OTP) SendOTP(payload dto.SendOTPRequest) (*http.Response, error) {
 	// Set payload
 	reqBody := map[string]interface{}{
 		"channelId":   "6017",
-		"clientId":    c.pdsAPI.CoreClientId,
+		"clientId":    s.config.CoreClientId,
 		"noHp":        payload.PhoneNumber,
 		"requestType": payload.RequestType,
 	}
@@ -116,7 +89,7 @@ func (c *OTP) SendOTP(payload dto.SendOTPRequest) (*http.Response, error) {
 	}
 
 	// Send OTP Rest Switching
-	resp, err := c.client.PostData("/otp/send", reqBody, reqHeader)
+	resp, err := s.ClientPostData("/otp/send", reqBody, reqHeader)
 	if err != nil {
 		log.Errorf("Error when send otp to phone number")
 		return resp, ncore.TraceError("error", err)
@@ -128,10 +101,10 @@ func (c *OTP) SendOTP(payload dto.SendOTPRequest) (*http.Response, error) {
 	return result, nil
 }
 
-func (c *OTP) VerifyOTP(payload dto.VerifyOTPRequest) (*http.Response, error) {
+func (s *Service) VerifyOTP(payload dto.VerifyOTPRequest) (*http.Response, error) {
 	var result *http.Response
 
-	token, err := c.GetToken()
+	token, err := s.GetToken()
 	if err != nil {
 		log.Errorf("Error when trying to get Access Token. err: %s", err)
 		return result, ncore.TraceError("Error when trying to get Access Token", err)
@@ -140,7 +113,7 @@ func (c *OTP) VerifyOTP(payload dto.VerifyOTPRequest) (*http.Response, error) {
 	// Set payload
 	reqBody := map[string]interface{}{
 		"channelId":   "6017",
-		"clientId":    c.pdsAPI.CoreClientId,
+		"clientId":    s.config.CoreClientId,
 		"noHp":        payload.PhoneNumber,
 		"requestType": payload.RequestType,
 		"token":       payload.Token,
@@ -154,7 +127,7 @@ func (c *OTP) VerifyOTP(payload dto.VerifyOTPRequest) (*http.Response, error) {
 	}
 
 	// Send OTP Rest Switching
-	resp, err := c.client.PostData("/otp/check", reqBody, reqHeader)
+	resp, err := s.ClientPostData("/otp/check", reqBody, reqHeader)
 	if err != nil {
 		log.Errorf("Error when verify otp request")
 		return resp, ncore.TraceError("err when verify otp", err)

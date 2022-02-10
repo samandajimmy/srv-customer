@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/model"
 	"strings"
 	"time"
 
@@ -14,11 +15,10 @@ import (
 	"github.com/lestrrat-go/jwx/jwt"
 	"github.com/nbs-go/nlogger"
 	"github.com/rs/xid"
-	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer-svc/constant"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer-svc/contract"
-	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer-svc/convert"
-	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer-svc/dto"
-	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer-svc/model"
+	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/constant"
+	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/convert"
+	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/dto"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nclient"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/ncore"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/ntime"
@@ -96,7 +96,7 @@ func (c *Customer) Login(payload dto.LoginRequest) (*dto.LoginResponse, error) {
 
 	} else if err != nil {
 		log.Errorf("failed to retrieve customer. error: %v", err)
-		return nil, ncore.TraceError(err)
+		return nil, ncore.TraceError("error", err)
 	}
 
 	// Get credential customer
@@ -107,7 +107,7 @@ func (c *Customer) Login(payload dto.LoginRequest) (*dto.LoginResponse, error) {
 			return nil, c.response.GetError("E_AUTH_8")
 		}
 		log.Errorf("failed to retrieve credential. error: %v", err)
-		return nil, ncore.TraceError(err)
+		return nil, ncore.TraceError("error", err)
 	}
 
 	// Check if account isn't blocked
@@ -141,7 +141,7 @@ func (c *Customer) Login(payload dto.LoginRequest) (*dto.LoginResponse, error) {
 
 		if err != nil {
 			log.Errorf("failed to sync to external. error: %v", err)
-			return nil, ncore.TraceError(err)
+			return nil, ncore.TraceError("error", err)
 		}
 		// set userRefId
 		customer.UserRefId = nval.ParseStringFallback(resultSync.UserAiid, "")
@@ -149,7 +149,7 @@ func (c *Customer) Login(payload dto.LoginRequest) (*dto.LoginResponse, error) {
 		err = c.customerRepo.UpdateByPhone(customer)
 		if err != nil {
 			log.Errorf("failed to update userRefId. error: %v", err)
-			return nil, ncore.TraceError(err)
+			return nil, ncore.TraceError("error", err)
 		}
 	}
 
@@ -205,7 +205,7 @@ func (c *Customer) Login(payload dto.LoginRequest) (*dto.LoginResponse, error) {
 	err = json.Unmarshal(customer.Profile, &profile)
 	if err != nil {
 		log.Errorf("Error when unmarshalling profile: %v", err)
-		return nil, ncore.TraceError(err)
+		return nil, ncore.TraceError("error", err)
 	}
 
 	// TODO get tabungan emas service / get tabungan emas from financial table
@@ -294,6 +294,25 @@ func (c *Customer) SetTokenAuthentication(customer *model.Customer, agen string,
 	return tokenString, nil
 }
 
+func (c *Customer) ValidateToken(token string) error {
+	// Parsing Token
+	t, err := jwt.ParseString(token, jwt.WithVerify(jwa.ES256, c.clientConfig.JWTKey))
+	if err != nil {
+		return err
+	}
+
+	if err = jwt.Validate(t); err != nil {
+		return err
+	}
+
+	err = jwt.Validate(t, jwt.WithIssuer("https://www.pegadaian.co.id"))
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func ValidatePassword(password string) *dto.ValidatePassword {
 	var validation dto.ValidatePassword
 
@@ -351,7 +370,7 @@ func (c *Customer) HandleWrongPassword(credential *model.Credential, customer *m
 	err := json.Unmarshal(credential.Metadata, &Metadata)
 	if err != nil {
 		log.Errorf("Cannot unmarshaling metadata credential. err: %v", err)
-		return ncore.TraceError(err)
+		return ncore.TraceError("error", err)
 	}
 	// Parse time from metadata string to time
 	tryLoginAt, _ := time.Parse(time.RFC3339, Metadata.TryLoginAt)
@@ -479,7 +498,7 @@ func (c *Customer) HandleWrongPassword(credential *model.Credential, customer *m
 	err = c.credentialRepo.UpdateByCustomerID(credential)
 	if err != nil {
 		log.Errorf("Error when update credential when password is invalid.")
-		return ncore.TraceError(err)
+		return ncore.TraceError("error", err)
 	}
 
 	return resp
@@ -544,7 +563,7 @@ func (c *Customer) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCu
 		}
 		profile, err := json.Marshal(customerProfile)
 		if err != nil {
-			return nil, ncore.TraceError(err)
+			return nil, ncore.TraceError("error", err)
 		}
 
 		insertCustomer := &model.Customer{
@@ -567,7 +586,7 @@ func (c *Customer) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCu
 		lastInsertId, err := c.customerRepo.Insert(insertCustomer)
 		if err != nil {
 			log.Errorf("Error when persist customer : %s", payload.Name)
-			return nil, ncore.TraceError(err)
+			return nil, ncore.TraceError("error", err)
 		}
 		customerId = lastInsertId
 		customer = insertCustomer
@@ -651,7 +670,7 @@ func (c *Customer) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCu
 	err = c.OTPRepo.Insert(insertOTP)
 	if err != nil {
 		log.Errorf("Error when persist OTP. Err: %s", err)
-		return nil, ncore.TraceError(err)
+		return nil, ncore.TraceError("error", err)
 	}
 
 	// insert session
@@ -680,7 +699,7 @@ func (c *Customer) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCu
 	}
 	res, err := c.Login(payloadLogin)
 	if err != nil {
-		return nil, ncore.TraceError(err)
+		return nil, ncore.TraceError("error", err)
 	}
 
 	// Send Notification Register
@@ -742,7 +761,7 @@ func (c *Customer) RegisterStepOne(payload dto.RegisterStepOne) (*dto.RegisterSt
 			emailExist = nil
 		} else {
 			log.Error("failed when query check email.", nlogger.Error(err))
-			return nil, ncore.TraceError(err)
+			return nil, ncore.TraceError("error", err)
 		}
 	}
 	if emailExist != nil {
@@ -757,7 +776,7 @@ func (c *Customer) RegisterStepOne(payload dto.RegisterStepOne) (*dto.RegisterSt
 			phoneExist = nil
 		} else {
 			log.Error("failed when query check phone.", nlogger.Error(err))
-			return nil, ncore.TraceError(err)
+			return nil, ncore.TraceError("error", err)
 		}
 	}
 	if phoneExist != nil {
@@ -774,7 +793,7 @@ func (c *Customer) RegisterStepOne(payload dto.RegisterStepOne) (*dto.RegisterSt
 	// Send OTP To Phone Number
 	resp, err := c.otpService.SendOTP(request)
 	if err != nil {
-		return nil, ncore.TraceError(err)
+		return nil, ncore.TraceError("error", err)
 	}
 
 	// Extract response from server
@@ -807,7 +826,7 @@ func (c *Customer) RegisterStepTwo(payload dto.RegisterStepTwo) (*dto.RegisterSt
 			phoneExist = nil
 		} else {
 			log.Error("failed when query check phone.", nlogger.Error(err))
-			return nil, ncore.TraceError(err)
+			return nil, ncore.TraceError("", err)
 		}
 	}
 	if phoneExist != nil {
@@ -818,7 +837,7 @@ func (c *Customer) RegisterStepTwo(payload dto.RegisterStepTwo) (*dto.RegisterSt
 	// Verify OTP To Phone Number
 	resp, err := c.otpService.VerifyOTP(request)
 	if err != nil {
-		return nil, ncore.TraceError(err)
+		return nil, ncore.TraceError("error", err)
 	}
 
 	// Extract response from server
@@ -850,7 +869,7 @@ func (c *Customer) RegisterStepTwo(payload dto.RegisterStepTwo) (*dto.RegisterSt
 	_, err = c.verificationOTPRepo.Insert(insert)
 	if err != nil {
 		log.Errorf("Error when persist verificationOTP. Phone Number: %s", payload.PhoneNumber)
-		return nil, ncore.TraceError(err)
+		return nil, ncore.TraceError("error", err)
 	}
 
 	return &dto.RegisterStepTwoResponse{
@@ -872,7 +891,7 @@ func (c *Customer) RegisterResendOTP(payload dto.RegisterResendOTP) (*dto.Regist
 			phoneExist = nil
 		} else {
 			log.Error("failed when query check phone.", nlogger.Error(err))
-			return nil, ncore.TraceError(err)
+			return nil, ncore.TraceError("error", err)
 		}
 	}
 	if phoneExist != nil {
@@ -883,7 +902,7 @@ func (c *Customer) RegisterResendOTP(payload dto.RegisterResendOTP) (*dto.Regist
 	// Send OTP To Phone Number
 	resp, err := c.otpService.SendOTP(request)
 	if err != nil {
-		return nil, ncore.TraceError(err)
+		return nil, ncore.TraceError("error", err)
 	}
 
 	// Extract response from server
@@ -1098,14 +1117,14 @@ func (c *Customer) syncInternalToExternal(payload *dto.CustomerSynchronizeReques
 	sync, err := c.pdsAPIService.SynchronizeCustomer(registerCustomer)
 	if err != nil {
 		log.Error("Error when SynchronizeCustomer.", nlogger.Error(err))
-		return nil, ncore.TraceError(err)
+		return nil, ncore.TraceError("error", err)
 	}
 
 	// set response data
 	resp, err := nclient.GetResponseDataPdsAPI(sync)
 	if err != nil {
 		log.Error("Cannot parsing from SynchronizeCustomer response.", nlogger.Error(err))
-		return nil, ncore.TraceError(err)
+		return nil, ncore.TraceError("error", err)
 	}
 
 	// handle status error
@@ -1119,7 +1138,7 @@ func (c *Customer) syncInternalToExternal(payload *dto.CustomerSynchronizeReques
 	err = json.Unmarshal(resp.Data, &user)
 	if err != nil {
 		log.Errorf("Cannot unmarshall data login pds. err: %v", err)
-		return nil, ncore.TraceError(err)
+		return nil, ncore.TraceError("error", err)
 	}
 
 	// set result
