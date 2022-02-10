@@ -1,6 +1,8 @@
 package contract
 
-import "repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer-svc/model"
+import (
+	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/model"
+)
 
 type VerificationOTPRepository interface {
 	Insert(row *model.VerificationOTP) (int64, error)

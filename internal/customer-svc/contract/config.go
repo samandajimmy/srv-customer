@@ -4,17 +4,18 @@ import (
 	"encoding/hex"
 	"fmt"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
+	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nsql"
+
 	"net/http"
 	"os"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nhttp"
-	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nsql"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nval"
 )
 
 type Config struct {
 	Server         nhttp.ServerConfig
-	Client         ClientConfig
 	DataSources    DataSourcesConfig
+	Client         ClientConfig
 	CORS           nhttp.CORSConfig
 	SMTP           SMTPConfig
 	CorePDS        CorePDSConfig
@@ -47,27 +48,21 @@ func (c *Config) LoadFromEnv() {
 
 	// Set config data resource internal
 	c.DataSources.DBInternal = nsql.Config{
-		Driver:          os.Getenv("INTERNAL_DB_DRIVER"),
-		Host:            os.Getenv("INTERNAL_DB_HOST"),
-		Port:            os.Getenv("INTERNAL_DB_PORT"),
-		Username:        os.Getenv("INTERNAL_DB_USER"),
-		Password:        os.Getenv("INTERNAL_DB_PASS"),
-		Database:        os.Getenv("INTERNAL_DB_NAME"),
-		MaxIdleConn:     nsql.NewInt(10),
-		MaxOpenConn:     nsql.NewInt(10),
-		MaxConnLifetime: nsql.NewInt(1),
+		Driver:   os.Getenv("INTERNAL_DB_DRIVER"),
+		Host:     os.Getenv("INTERNAL_DB_HOST"),
+		Port:     os.Getenv("INTERNAL_DB_PORT"),
+		Username: os.Getenv("INTERNAL_DB_USER"),
+		Password: os.Getenv("INTERNAL_DB_PASS"),
+		Database: os.Getenv("INTERNAL_DB_NAME"),
 	}
 	// DB EXTERNAL
 	c.DataSources.DBExternal = nsql.Config{
-		Driver:          os.Getenv("EXTERNAL_DB_DRIVER"),
-		Host:            os.Getenv("EXTERNAL_DB_HOST"),
-		Port:            os.Getenv("EXTERNAL_DB_PORT"),
-		Username:        os.Getenv("EXTERNAL_DB_USER"),
-		Password:        os.Getenv("EXTERNAL_DB_PASS"),
-		Database:        os.Getenv("EXTERNAL_DB_NAME"),
-		MaxIdleConn:     nsql.NewInt(10),
-		MaxOpenConn:     nsql.NewInt(10),
-		MaxConnLifetime: nsql.NewInt(1),
+		Driver:   os.Getenv("EXTERNAL_DB_DRIVER"),
+		Host:     os.Getenv("EXTERNAL_DB_HOST"),
+		Port:     os.Getenv("EXTERNAL_DB_PORT"),
+		Username: os.Getenv("EXTERNAL_DB_USER"),
+		Password: os.Getenv("EXTERNAL_DB_PASS"),
+		Database: os.Getenv("EXTERNAL_DB_NAME"),
 	}
 
 	// If password is hex

@@ -38,7 +38,7 @@ type ServerConfig struct {
 	BaseUrl    url.URL `envconfig:"SERVER_HTTP_BASE_URL"`
 	Secure     bool    `envconfig:"SERVER_LISTEN_SECURE"`
 	TrustProxy string  `envconfig:"SERVER_TRUST_PROXY"`
-	Debug      bool    `envconfig:"DEBUG"`
+	Debug      string  `envconfig:"LOG_LEVEL"`
 }
 
 type SMTPConfig struct {

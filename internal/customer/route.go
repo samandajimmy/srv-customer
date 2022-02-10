@@ -36,10 +36,17 @@ func setUpRoute(router *nhttp.Router, handlers *HandlerMap) {
 }
 
 func InitRouter(workDir string, config *Config, handlers *HandlerMap) http.Handler {
+	var debug bool
+	if config.Debug != "" {
+		debug = true
+	} else {
+		debug = false
+	}
+
 	// Init router
 	router := nhttp.NewRouter(nhttp.RouterOptions{
 		LogRequest: true,
-		Debug:      config.Debug,
+		Debug:      debug,
 		TrustProxy: nval.ParseBooleanFallback(config.TrustProxy, false),
 	})
 
