@@ -58,6 +58,8 @@ github.com/nbs-go/nlogger v1.2.0 h1:/Hq0q7eFMCErE9u8a1DqtPEEdIO41fiWjvNAwMwdkms=
 github.com/nbs-go/nlogger v1.2.0/go.mod h1:sWM7094Zu08K6HhkQiEHyIsEDidssNX3RDs99e30wSY=
 github.com/nbs-go/nlogger v1.4.3 h1:YXWCDvtDiaemZwBXK7OhXiOq9jkL1+gPpF5Kg5u8oas=
 github.com/nbs-go/nlogger v1.4.3/go.mod h1:sWM7094Zu08K6HhkQiEHyIsEDidssNX3RDs99e30wSY=
+github.com/nbs-go/nsql v0.1.1 h1:rLAyuMadt/JiM4Qh1+LVQ/Tiic+EQgCgvOyHwICA05Q=
+github.com/nbs-go/nsql v0.1.1/go.mod h1:LIXTjLkKeArePk13tpoqK3w1iVOrlITRnTqeHmNMwOw=
 github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
 github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
@@ -78,6 +80,7 @@ golang.org/x/sys v0.0.0-20190215142949-d0b11bdaac8a/go.mod h1:STP8DvDyc/dI5b8T5h
 golang.org/x/sys v0.0.0-20191026070338-33540a1f6037/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/term v0.0.0-20201117132131-f5c789dd3221/go.mod h1:Nr5EML6q2oocZ2LXRh80K7BxOlk5/8JxuGnuhpl+muw=
 golang.org/x/text v0.3.0/go.mod h1:NqM8EUOU14njkJ3fqMW+pc6Ldnwhi/IjpwHt7yyuwOQ=
+gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405 h1:yhCVgyC4o1eVCa2tZl7eS0r+SDo693bJlVdllGtEeKM=
 gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
 gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c h1:Hei/4ADfdWqJk1ZMxUNpqntNwaWcugrBjAiHlqqRiVk=
 gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c/go.mod h1:JHkPIbrfpd72SG/EVd6muEfDQjcINNoR0C8j2r3qZ4Q=

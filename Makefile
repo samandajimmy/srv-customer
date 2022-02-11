@@ -19,10 +19,20 @@ PROJECT_DOCKERFILE_DIR ?= ${PROJECT_ROOT}/deployments/pds-svc
 OUTPUT_DIR := ${PROJECT_ROOT}/bin
 DOCTOR_CMD := ${PROJECT_ROOT}/scripts/doctor.sh
 
+# ---------------
+# Command Aliases
+# ---------------
+GO_CMD:=go
+GO_BUILD:=${GO_CMD} build
+GO_MOD:=${GO_CMD} mod
+GO_CLEAN:=${GO_CMD} clean
+GO_GET:=${GO_CMD} get
+DOCKER_CMD:=docker
+
 # ---
 # API
 # ---
-BINARY_NAME:=customer-svc
+BINARY_NAME:=customer
 PROJECT_MAIN_PKG=cmd/${BINARY_NAME}
 PROJECT_ENV_FILES:=$(addprefix ${PROJECT_ROOT}/,${PROJECT_CONFIG} ${PROJECT_RESPONSES})
 PROJECT_ENV_FILES_RELEASE:=$(addprefix ${PROJECT_ROOT}/,${PROJECT_CONFIG_RELEASE} ${PROJECT_RESPONSES})

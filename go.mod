@@ -16,6 +16,7 @@ require (
 	github.com/lib/pq v1.9.0
 	github.com/matoous/go-nanoid/v2 v2.0.0
 	github.com/nbs-go/nlogger v1.4.3
+	github.com/nbs-go/nsql v0.1.1
 	github.com/rs/xid v1.3.0
 	gopkg.in/yaml.v2 v2.2.8
 )
