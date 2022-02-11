@@ -5,6 +5,12 @@ import (
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nsql"
 )
 
+var AccessSessionSchema = nsql.NewSchema(
+	"AccessSession",
+	append(CommonColumns, "xid", "customerId", "expiredAt", "notificationToken", "notificationProvider"),
+	nsql.WithAlias("as"),
+)
+
 type AccessSession struct {
 	Insert *sqlx.NamedStmt
 	Update *sqlx.NamedStmt
@@ -12,12 +18,9 @@ type AccessSession struct {
 
 func NewAccessSession(db *nsql.DatabaseContext) *AccessSession {
 
-	tableName := `AccessSession`
-	columns := `"xid", "metadata", "createdAt", "updatedAt", "modifiedBy", "version", "customerId", "expiredAt", "notificationToken", "notificationProvider"`
-	namedColumns := `:xid,:metadata,:createdAt,:updatedAt,:modifiedBy,:version,:customerId,:expiredAt,:notificationToken,:notificationProvider`
-	updatedNamedColumns := `"xid" = :xid, "metadata" = :metadata, "updatedAt" = :updatedAt, "modifiedBy" = :modifiedBy, "version" = :version, "customerId" = :customerId, "expiredAt" = :expiredAt, "notificationToken" = :notificationToken, "notificationProvider" = :notificationProvider`
 	return &AccessSession{
-		Insert: db.PrepareNamedFmt(`INSERT INTO "%s" (%s) VALUES (%s)`, tableName, columns, namedColumns),
-		Update: db.PrepareNamedFmt(`UPDATE "%s" SET %s WHERE id = :id`, tableName, updatedNamedColumns),
+		Insert: db.PrepareNamedFmt(`INSERT INTO "%s" (%s) VALUES (%s)`,
+			AccessSessionSchema.TableName, AccessSessionSchema.InsertColumns(), AccessSessionSchema.InsertNamedColumns()),
+		Update: db.PrepareNamedFmt(`UPDATE "%s" SET %s WHERE id = :id AND "version" = :currentVersion`, AccessSessionSchema.TableName, AccessSessionSchema.UpdateNamedColumns()),
 	}
 }

@@ -14,3 +14,8 @@ type AccessSession struct {
 	Metadata             json.RawMessage `db:"metadata"`
 	ItemMetadata
 }
+
+type UpdateAccessSession struct {
+	*AccessSession
+	CurrentVersion int64 `db:"currentVersion"`
+}

@@ -20,15 +20,18 @@ type Service struct {
 }
 
 func (h Handler) NewService(ctx context.Context) *Service {
-	return &Service{
-		config:       h.config,
+
+	svc := Service{
+		config:       h.Config,
 		responses:    h.Responses,
-		redis:        h.redis,
-		repo:         h.repo.WithContext(ctx),
-		repoExternal: h.repoExternal.WithContext(ctx),
+		redis:        h.Redis,
+		repo:         h.Repo.WithContext(ctx),
+		repoExternal: h.RepoExternal.WithContext(ctx),
 		ctx:          ctx,
-		log:          nlogger.Get().NewChild(nlogger.Context(ctx)),
+		log:          nlogger.NewChild(nlogger.WithNamespace("service"), nlogger.Context(ctx)),
 	}
+
+	return &svc
 }
 
 func (s *Service) GetOrderBy(sortBy string, sortDirection string, rules []string) (string, string) {
@@ -50,9 +53,10 @@ func (s *Service) Close() {
 	if err != nil {
 		s.log.Error("Failed to close connection", nlogger.Error(err))
 	}
+	// Close database external connection to free pool
 	err = s.repoExternal.conn.Close()
 	if err != nil {
-		s.log.Error("Failed to close connection", nlogger.Error(err))
+		s.log.Error("Failed to close external connection", nlogger.Error(err))
 	}
 
 }

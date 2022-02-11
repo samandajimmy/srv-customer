@@ -29,27 +29,27 @@ func NewHandler(core *ncore.Core, config *Config) (*Handler, error) {
 	)
 
 	h := Handler{
-		startedAt:    time.Now(),
+		StartedAt:    time.Now(),
 		Core:         core,
-		config:       config,
-		repo:         repoInternal,
-		repoExternal: repoExternal,
-		redis:        redis,
+		Config:       config,
+		Redis:        redis,
+		Repo:         repoInternal,
+		RepoExternal: repoExternal,
 	}
 
 	return &h, nil
 }
 
 type Handler struct {
-	// Service
-	*ncore.Core
-	config       *Config
-	repo         *Repository         // pgsql
-	repoExternal *RepositoryExternal // mysql
+	// Repo
+	Repo         *Repository         // pgsql
+	RepoExternal *RepositoryExternal // mysql
 	// Redis
-	redis *nredis.Redis
+	Redis *nredis.Redis
 	// Metadata
-	startedAt time.Time
+	*ncore.Core
+	StartedAt time.Time
+	Config    *Config
 }
 
 type HandlerMap struct {
