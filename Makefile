@@ -200,7 +200,7 @@ serve: --dev-build ${DEBUG_ENV_FILES}
 	@-echo "  > Starting Server...\n"
 	@LOG_LEVEL=debug;LOG_FORMAT=console; ${DEBUG_BIN} -dir=${PROJECT_ROOT}
 
-## serve: Serve locally with live reloading and attach container stdout. For development purpose only
+## serve-dbg: Serve locally with live reloading and attach container stdout. For development purpose only
 .PHONY: serve-dbg
 serve-dbg:
 	@-echo "  > Press CTRL+C to end"
