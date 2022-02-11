@@ -14,7 +14,6 @@ type DatabaseContext struct {
 
 // Prepare prepare sql statements or exit app if fails or error
 func (s *DatabaseContext) Prepare(query string) *sqlx.Stmt {
-	query = s.conn.Rebind(query)
 	stmt, err := s.conn.PreparexContext(s.ctx, query)
 	if err != nil {
 		panic(fmt.Errorf("nsql: error while preparing statment [%s] (%s)", query, err))
@@ -25,21 +24,17 @@ func (s *DatabaseContext) Prepare(query string) *sqlx.Stmt {
 // PrepareFmt prepare sql statements from string format or exit app if fails or error
 func (s *DatabaseContext) PrepareFmt(queryFmt string, args ...interface{}) *sqlx.Stmt {
 	query := fmt.Sprintf(queryFmt, args...)
-	query = s.conn.Rebind(query)
 	return s.Prepare(query)
 }
 
 // PrepareNamedFmt prepare sql statements from string format with named bindvars or exit app if fails or error
 func (s *DatabaseContext) PrepareNamedFmt(queryFmt string, args ...interface{}) *sqlx.NamedStmt {
 	query := fmt.Sprintf(queryFmt, args...)
-	query = s.conn.Rebind(query)
 	return s.PrepareNamed(query)
 }
 
 // PrepareNamed prepare sql statements with named bindvars or exit app if fails or error
 func (s *DatabaseContext) PrepareNamed(query string) *sqlx.NamedStmt {
-	query = s.conn.Rebind(query)
-
 	stmt, err := s.conn.PrepareNamedContext(s.ctx, query)
 	if err != nil {
 		panic(fmt.Errorf("nsql: error while preparing statment [%s] (%s)", query, err))
@@ -53,4 +48,18 @@ func (s *DatabaseContext) PrepareTemplate(q string, values map[string]string) *s
 		q = strings.ReplaceAll(q, ":"+a, v)
 	}
 	return s.Prepare(q)
+}
+
+// PrepareFmt prepare sql statements from string format and rebind variable or exit app if fails or error
+func (s *DatabaseContext) PrepareFmtRebind(queryFmt string, args ...interface{}) *sqlx.Stmt {
+	query := fmt.Sprintf(queryFmt, args...)
+	query = s.conn.Rebind(query)
+	return s.Prepare(query)
+}
+
+// PrepareNamedFmt prepare sql statements from string format with named bindvars or exit app if fails or error
+func (s *DatabaseContext) PrepareNamedFmtRebind(queryFmt string, args ...interface{}) *sqlx.NamedStmt {
+	query := fmt.Sprintf(queryFmt, args...)
+	query = s.conn.Rebind(query)
+	return s.PrepareNamed(query)
 }
