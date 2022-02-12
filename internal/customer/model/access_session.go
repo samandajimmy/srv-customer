@@ -6,6 +6,7 @@ import (
 )
 
 type AccessSession struct {
+	Id                   int64           `db:"id"`
 	Xid                  string          `db:"xid"`
 	CustomerId           int64           `db:"customerId"`
 	ExpiredAt            time.Time       `db:"expiredAt"`

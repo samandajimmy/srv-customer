@@ -6,6 +6,7 @@ import (
 )
 
 type Credential struct {
+	Id                  string          `db:"id"`
 	Xid                 string          `db:"xid"`
 	CustomerId          int64           `db:"customerId"`
 	Password            string          `db:"password"`

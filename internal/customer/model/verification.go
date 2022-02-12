@@ -6,6 +6,7 @@ import (
 )
 
 type Verification struct {
+	Id                              int64           `db:"id"`
 	Xid                             string          `db:"xid"`
 	CustomerId                      int64           `db:"customerId"`
 	KycVerifiedStatus               int64           `db:"kycVerifiedStatus"`

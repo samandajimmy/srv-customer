@@ -5,7 +5,7 @@ import (
 )
 
 type Customer struct {
-	Id             int64           `db:"id,omitempty"`
+	Id             int64           `db:"id"`
 	CustomerXID    string          `db:"xid"`
 	FullName       string          `db:"fullName"`
 	Phone          string          `db:"phone"`
