@@ -1,6 +1,8 @@
 package customer
 
 import (
+	"net/http"
+	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nclient"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/ncore"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nredis"
 	"time"
@@ -28,11 +30,17 @@ func NewHandler(core *ncore.Core, config *Config) (*Handler, error) {
 		redisConfig.RedisPass,
 	)
 
+	// Init Client
+	client := &nclient.Nclient{
+		Client: http.Client{},
+	}
+
 	h := Handler{
 		StartedAt:    time.Now(),
 		Core:         core,
 		Config:       config,
 		Redis:        redis,
+		Client:       client,
 		Repo:         repoInternal,
 		RepoExternal: repoExternal,
 	}
@@ -46,6 +54,8 @@ type Handler struct {
 	RepoExternal *RepositoryExternal // mysql
 	// Redis
 	Redis *nredis.Redis
+	// Client
+	Client *nclient.Nclient
 	// Metadata
 	*ncore.Core
 	StartedAt time.Time

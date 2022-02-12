@@ -78,7 +78,7 @@ func (s *Service) SendOTP(payload dto.SendOTPRequest) (*http.Response, error) {
 	// Set payload
 	reqBody := map[string]interface{}{
 		"channelId":   "6017",
-		"clientId":    s.config.CoreClientId,
+		"clientId":    s.config.CoreClientID,
 		"noHp":        payload.PhoneNumber,
 		"requestType": payload.RequestType,
 	}
@@ -115,7 +115,7 @@ func (s *Service) VerifyOTP(payload dto.VerifyOTPRequest) (*http.Response, error
 	// Set payload
 	reqBody := map[string]interface{}{
 		"channelId":   "6017",
-		"clientId":    s.config.CoreClientId,
+		"clientId":    s.config.CoreClientID,
 		"noHp":        payload.PhoneNumber,
 		"requestType": payload.RequestType,
 		"token":       payload.Token,

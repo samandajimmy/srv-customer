@@ -70,3 +70,11 @@ const (
 const (
 	NotificationProviderFCM = iota + 1
 )
+
+const (
+	CacheTokenSwitching = "token_switching"
+)
+
+const (
+	RestSwitchingInvalidToken = "invalid_token"
+)

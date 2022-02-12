@@ -15,7 +15,7 @@ type Config struct {
 	EmailConfig
 	ClientConfig
 	RedisConfig
-	CorePDSConfig
+	CoreSwitchingConfig
 	ClientEndpointConfig
 	CORS nhttp.CORSConfig
 }
@@ -60,13 +60,13 @@ type ClientConfig struct {
 	JWTKey       string `envconfig:"JWT_KEY"`
 }
 
-type CorePDSConfig struct {
-	CoreApiUrl         string `envconfig:"CORE_API_URL"`
+type CoreSwitchingConfig struct {
+	CoreApiURL         string `envconfig:"CORE_API_URL"`
 	CoreOauthUsername  string `envconfig:"CORE_OAUTH_USERNAME"`
 	CoreOauthPassword  string `envconfig:"CORE_OAUTH_PASSWORD"`
 	CoreOauthGrantType string `envconfig:"CORE_OAUTH_GRANT_TYPE"`
 	CoreAuthorization  string `envconfig:"CORE_AUTHORIZATION"`
-	CoreClientId       string `envconfig:"CORE_CLIENT_ID"`
+	CoreClientID       string `envconfig:"CORE_CLIENT_ID"`
 }
 
 type RedisConfig struct {

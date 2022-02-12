@@ -3,10 +3,9 @@ package customer
 import (
 	"context"
 	"github.com/nbs-go/nlogger"
+	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nclient"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/ncore"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nredis"
-	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nval"
-	"strings"
 )
 
 type Service struct {
@@ -17,14 +16,16 @@ type Service struct {
 	log          nlogger.Logger
 	responses    *ncore.ResponseMap
 	redis        *nredis.Redis
+	client       *nclient.Nclient
 }
 
 func (h Handler) NewService(ctx context.Context) *Service {
 
 	svc := Service{
 		config:       h.Config,
-		responses:    h.Responses,
+		client:       h.Client,
 		redis:        h.Redis,
+		responses:    h.Responses,
 		repo:         h.Repo.WithContext(ctx),
 		repoExternal: h.RepoExternal.WithContext(ctx),
 		ctx:          ctx,
@@ -32,19 +33,6 @@ func (h Handler) NewService(ctx context.Context) *Service {
 	}
 
 	return &svc
-}
-
-func (s *Service) GetOrderBy(sortBy string, sortDirection string, rules []string) (string, string) {
-	if nval.InArrayString(sortBy, rules) {
-		// Normalize direction
-		sortDirection = strings.ToUpper(sortDirection)
-		if sd := sortDirection; sd != `ASC` && sd != `DESC` {
-			sortDirection = `ASC`
-		}
-		return sortBy, sortDirection
-	}
-
-	return `createdAt`, `DESC`
 }
 
 func (s *Service) Close() {
@@ -58,5 +46,4 @@ func (s *Service) Close() {
 	if err != nil {
 		s.log.Error("Failed to close external connection", nlogger.Error(err))
 	}
-
 }

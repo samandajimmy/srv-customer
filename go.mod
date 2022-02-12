@@ -10,6 +10,7 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/handlers v1.5.1
 	github.com/gorilla/mux v1.8.0
+	github.com/imdario/mergo v0.3.12
 	github.com/jmoiron/sqlx v1.3.4
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/lestrrat-go/jwx v1.2.13
@@ -18,7 +19,7 @@ require (
 	github.com/nbs-go/nlogger v1.4.3
 	github.com/nbs-go/nsql v0.1.1
 	github.com/rs/xid v1.3.0
-	gopkg.in/yaml.v2 v2.2.8
+	gopkg.in/yaml.v2 v2.3.0
 )
 
 require (
