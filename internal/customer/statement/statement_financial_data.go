@@ -2,8 +2,13 @@ package statement
 
 import (
 	"github.com/jmoiron/sqlx"
+	q "github.com/nbs-go/nsql/pq/query"
+	"github.com/nbs-go/nsql/schema"
+	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/model"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nsql"
 )
+
+var FinancialDataSchema = schema.New(schema.FromModelRef(model.FinancialData{}))
 
 type FinancialData struct {
 	FindByCustomerID *sqlx.Stmt
@@ -13,17 +18,21 @@ type FinancialData struct {
 }
 
 func NewFinancialData(db *nsql.DatabaseContext) *FinancialData {
-
-	tableName := `FinancialData`
-	getColumns := `"xid", "metadata", "createdAt", "updatedAt", "modifiedBy", "version", "customerId", "mainAccountNumber", "accountNumber", "goldSavingStatus", "goldCardApplicationNumber", "goldCardAccountNumber", "balance"`
-	columns := `"xid", "metadata", "createdAt", "updatedAt", "modifiedBy", "version", "customerId", "mainAccountNumber", "accountNumber", "goldSavingStatus", "goldCardApplicationNumber", "goldCardAccountNumber", "balance" `
-	namedColumns := `:xid, :metadata, :createdAt, :updatedAt, :modifiedBy, :version, :customerId, :mainAccountNumber, :accountNumber, :goldSavingStatus, :goldCardApplicationNumber, :goldCardAccountNumber, :balance`
-	updatedNamedColumns := `"xid" = :xid, "metadata" = :metadata, "updatedAt" = :updatedAt, "modifiedBy" = :modifiedBy, "version" = :version, "mainAccountNumber" = :mainAccountNumber, "accountNumber" = :accountNumber, "goldSavingStatus" = :goldSavingStatus, "goldCardApplicationNumber" = :goldCardApplicationNumber, "goldCardAccountNumber" = :goldCardAccountNumber, "balance" = :balance`
-
 	return &FinancialData{
-		FindByCustomerID: db.PrepareFmt(`SELECT %s FROM "%s" WHERE "customerId" = $1`, getColumns, tableName),
-		Insert:           db.PrepareNamedFmt(`INSERT INTO "%s" (%s) VALUES (%s)`, tableName, columns, namedColumns),
-		Update:           db.PrepareNamedFmt(`UPDATE "%s" SET %s WHERE "customerId" = :customerId`, tableName, updatedNamedColumns),
-		DeleteByID:       db.PrepareFmt(`DELETE FROM "%s" WHERE "id" = $1`, tableName),
+		FindByCustomerID: db.PrepareFmtRebind(q.Select(q.Column("*")).
+			Where(q.Equal(q.Column("customerId"))).
+			From(FinancialDataSchema).
+			Build()),
+		Insert: db.PrepareNamedFmtRebind(q.
+			Insert(FinancialDataSchema, "*").
+			Build()),
+		Update: db.PrepareNamedFmtRebind(q.Update(FinancialDataSchema, "*").
+			Where(q.Equal(q.Column("customerId"))).
+			Build()),
+		DeleteByID: db.PrepareFmtRebind(q.
+			Delete(FinancialDataSchema).
+			Where(q.Equal(q.Column(FinancialDataSchema.PrimaryKey()))).
+			Build(),
+		),
 	}
 }

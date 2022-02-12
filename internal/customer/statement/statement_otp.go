@@ -2,19 +2,23 @@ package statement
 
 import (
 	"github.com/jmoiron/sqlx"
+	q "github.com/nbs-go/nsql/pq/query"
+	"github.com/nbs-go/nsql/schema"
+	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/model"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nsql"
 )
+
+var OTPSchema = schema.New(schema.FromModelRef(model.OTP{}))
 
 type OTP struct {
 	Insert *sqlx.NamedStmt
 }
 
 func NewOTP(db *nsql.DatabaseContext) *OTP {
-	tableName := "OTP"
-	columns := `"updatedAt","customerId","content","type","data","status"`
-	namedColumns := `:updatedAt, :customerId, :content, :type, :data, :status`
-
 	return &OTP{
-		Insert: db.PrepareNamedFmt(`INSERT INTO "%s" (%s) VALUES (%s)`, tableName, columns, namedColumns),
+		Insert: db.PrepareNamedFmtRebind(q.
+			Insert(OTPSchema, "*").
+			Build(),
+		),
 	}
 }

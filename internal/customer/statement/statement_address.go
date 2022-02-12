@@ -2,8 +2,13 @@ package statement
 
 import (
 	"github.com/jmoiron/sqlx"
+	q "github.com/nbs-go/nsql/pq/query"
+	"github.com/nbs-go/nsql/schema"
+	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/model"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nsql"
 )
+
+var AddressSchema = schema.New(schema.FromModelRef(model.Address{}))
 
 type Address struct {
 	FindByCustomerId        *sqlx.Stmt
@@ -13,17 +18,24 @@ type Address struct {
 }
 
 func NewAddress(db *nsql.DatabaseContext) *Address {
-
-	tableName := `Address`
-	getColumns := `"xid", "metadata", "createdAt", "updatedAt", "modifiedBy", "version", "customerId", "purpose", "provinceId", "provinceName", "cityId", "cityName", "districtId", "districtName", "subDistrictId", "subDistrictName", "line", "postalCode", "isPrimary"`
-	columns := `"xid", "metadata", "createdAt", "updatedAt", "modifiedBy", "version", "customerId", "purpose", "provinceId", "provinceName", "cityId", "cityName", "districtId", "districtName", "subDistrictId", "subDistrictName", "line", "postalCode", "isPrimary"`
-	namedColumns := `:xid, :metadata, :createdAt, :updatedAt, :modifiedBy, :version, :customerId, :purpose, :provinceId, :provinceName, :cityId, :cityName, :districtId, :districtName, :subDistrictId, :subDistrictName, :line, :postalCode, :isPrimary`
-	updatedNamedColumns := `"xid" = :xid, "metadata" = :metadata, "updatedAt" = :updatedAt, "modifiedBy" = :modifiedBy, "version" = :version, "customerId" = :customerId, "purpose" = :purpose, "provinceId" = :provinceId, "provinceName" = :provinceName, "cityId" = :cityId, "cityName" = :cityName, "districtId" = :districtId, "districtName" = :districtName, "subDistrictId" = :subDistrictId, "subDistrictName" = :subDistrictName, "line" = :line, "postalCode" = :postalCode, "isPrimary" = :isPrimary`
-
 	return &Address{
-		FindByCustomerId:        db.PrepareFmt(`SELECT %s FROM "%s" WHERE "customerId" = $1`, getColumns, tableName),
-		Insert:                  db.PrepareNamedFmt(`INSERT INTO "%s" (%s) VALUES (%s)`, tableName, columns, namedColumns),
-		Update:                  db.PrepareNamedFmt(`UPDATE "%s" SET %s WHERE id = :id`, tableName, updatedNamedColumns),
-		FindPrimaryByCustomerId: db.PrepareFmt(`SELECT %s FROM "%s" WHERE "isPrimary" = true AND "customerId" = $1 LIMIT 1`, columns, tableName),
+		FindByCustomerId: db.PrepareFmtRebind(q.
+			Select(q.Column("*")).
+			From(AddressSchema).
+			Where(q.Equal(q.Column("customerId"))).
+			Build(),
+		),
+		Insert: db.PrepareNamedFmtRebind(q.Insert(AddressSchema, "*").Build()),
+		Update: db.PrepareNamedFmtRebind(q.Update(AddressSchema, "*").Build()),
+		FindPrimaryByCustomerId: db.PrepareFmtRebind(q.
+			Select(q.Column("*")).
+			From(AddressSchema).
+			Where(
+				q.Equal(q.Column("isPrimary")),
+				q.Equal(q.Column("customerId")),
+			).
+			Limit(1).
+			Build(),
+		),
 	}
 }

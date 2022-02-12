@@ -8,8 +8,6 @@ import (
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/statement"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/ncore"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nsql"
-
-	"strings"
 )
 
 func NewRepository(config *DatabaseConfig) (*Repository, error) {
@@ -102,42 +100,4 @@ func (rc *RepositoryContext) ReleaseTx(tx *sqlx.Tx, err *error) {
 	if errCommit != nil {
 		panic(fmt.Errorf("failed to commit database transaction\n  > %w", errCommit))
 	}
-}
-
-func (rc *RepositoryContext) PrepareWhere(filters map[string]interface{}) (string, []interface{}) {
-	// Prepare where
-	var args []interface{}
-	var whereQuery []string
-
-	// Initiate where from filters
-	for key, value := range filters {
-		// Check if filters is found
-		switch cv := value.(type) {
-		case string:
-			// Set if value is string
-			if cv != "" {
-				q := fmt.Sprintf(`"%s" = ?`, key)
-				whereQuery = append(whereQuery, q)
-				args = append(args, value)
-			}
-		case int, int8, int16, int32, int64, bool:
-			// Set if value is int
-			q := fmt.Sprintf(`"%s" = ?`, key)
-			whereQuery = append(whereQuery, q)
-			args = append(args, value)
-		default:
-			// Don't set
-		}
-	}
-
-	where := ""
-	if len(whereQuery) > 0 {
-		where = "WHERE " + strings.Join(whereQuery, " AND ")
-	}
-
-	return where, args
-}
-
-func (rc *RepositoryContext) GetOrderByQuery(sortBy string, sortDirection string) string {
-	return fmt.Sprintf(`%s %s`, sortBy, sortDirection)
 }

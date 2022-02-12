@@ -2,8 +2,14 @@ package statement
 
 import (
 	"github.com/jmoiron/sqlx"
+	q "github.com/nbs-go/nsql/pq/query"
+	opt "github.com/nbs-go/nsql/query/option"
+	"github.com/nbs-go/nsql/schema"
+	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/model"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nsql"
 )
+
+var AuditLoginSchema = schema.New(schema.FromModelRef(model.AuditLogin{}))
 
 type AuditLogin struct {
 	Insert             *sqlx.NamedStmt
@@ -12,14 +18,17 @@ type AuditLogin struct {
 }
 
 func NewAuditLogin(db *nsql.DatabaseContext) *AuditLogin {
-	tableName := "AuditLogin"
-	columns := `"customerId", "channelId", "deviceId", ip, latitude, longitude, timestamp, timezone, "brand", "osVersion", browser, "useBiometric","metadata","createdAt","updatedAt","modifiedBy","version"`
-	namedColumns := `:customerId, :channelId, :deviceId, :ip, :latitude, :longitude, :timestamp, :timezone, :brand, :osVersion, :browser, :useBiometric,:metadata,:createdAt,:updatedAt,:modifiedBy,:version`
-	updateColumns := `"customerId" = :customerId, "channelId" = :channelId, "deviceId" = :deviceId, "ip" = :id, "latitude" = :latitude, "longitude" = :longitude, "timestamp" = :timestamp, "timezone" = :timezone, "brand" = :brand, "osVersion" = :osVersion, "browser" = :browser, "useBiometric" = :useBiometric`
-
 	return &AuditLogin{
-		Insert:             db.PrepareNamedFmt(`INSERT INTO "%s" (%s) VALUES (%s)`, tableName, columns, namedColumns),
-		UpdateByCustomerId: db.PrepareNamedFmt(`UPDATE "%s" SET %s WHERE "customerId" = :customerId`, tableName, updateColumns),
-		CountLogin:         db.PrepareFmt(`SELECT COUNT(id) as count FROM "%s" WHERE "customerId" = $1`, tableName),
+		Insert: db.PrepareNamedFmtRebind(q.Insert(AuditLoginSchema, "*").Build()),
+		UpdateByCustomerId: db.PrepareNamedFmtRebind(q.
+			Update(AuditLoginSchema, "*").
+			Where(q.Equal(q.Column("customerId"))).
+			Build(),
+		),
+		CountLogin: db.PrepareFmtRebind(q.
+			Select(q.Count("id", opt.Schema(AuditLoginSchema), opt.As("count"))).
+			From(AuditLoginSchema).
+			Build(),
+		),
 	}
 }

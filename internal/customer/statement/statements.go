@@ -3,6 +3,8 @@ package statement
 import "repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nsql"
 
 type Statements struct {
+	// Customer
+
 	AccessSession   *AccessSession
 	Address         *Address
 	AuditLogin      *AuditLogin
@@ -10,11 +12,13 @@ type Statements struct {
 	Customer        *Customer
 	FinancialData   *FinancialData
 	OTP             *OTP
-	User            *User
-	UserPin         *UserPin
-	UserRegister    *UserRegister
 	Verification    *Verification
 	VerificationOTP *VerificationOTP
+
+	// External
+
+	User    *User
+	UserPin *UserPin
 }
 
 func New(db *nsql.DatabaseContext) *Statements {
@@ -33,8 +37,7 @@ func New(db *nsql.DatabaseContext) *Statements {
 
 func NewExternal(db *nsql.DatabaseContext) *Statements {
 	return &Statements{
-		User:         NewUser(db),
-		UserPin:      NewUserPin(db),
-		UserRegister: NewUserRegister(db),
+		User:    NewUser(db),
+		UserPin: NewUserPin(db),
 	}
 }

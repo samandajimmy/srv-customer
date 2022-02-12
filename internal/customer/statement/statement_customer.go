@@ -1,9 +1,15 @@
 package statement
 
 import (
+	"fmt"
 	"github.com/jmoiron/sqlx"
+	q "github.com/nbs-go/nsql/pq/query"
+	"github.com/nbs-go/nsql/schema"
+	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/model"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nsql"
 )
+
+var CustomerSchema = schema.New(schema.FromModelRef(model.Customer{}))
 
 type Customer struct {
 	Insert             *sqlx.NamedStmt
@@ -15,21 +21,36 @@ type Customer struct {
 }
 
 func NewCustomer(db *nsql.DatabaseContext) *Customer {
-	tableName := `Customer`
-	columns := `"xid","metadata","createdAt","updatedAt","modifiedBy","version","fullName","phone","email","identityType","identityNumber","userRefId","photos","profile","cif","sid","referralCode","status"`
-	namedColumns := `:xid,:metadata,:createdAt,:updatedAt,:modifiedBy,:version,:fullName,:phone,:email,:identityType,:identityNumber,:userRefId,:photos,:profile,:cif,:sid,:referralCode,:status`
-	updateColumns := `"xid" = :xid, "metadata" = :metadata, "createdAt" = :createdAt, "updatedAt" = :updatedAt, "modifiedBy" = :modifiedBy, "version" = :version, "fullName" = :fullName, "phone" = :phone, "email" = :email, "identityType" = :identityType, "identityNumber" = :identityNumber, "userRefId" = :userRefId, "photos" = :photos, "profile" = :profile, "cif" = :cif, "sid" = :sid, "referralCode" = :referralCode, "status" = :status`
-
-	columnsWithId := `"id",` + columns
-
 	return &Customer{
-		Insert:      db.PrepareNamedFmt(`INSERT INTO "%s" (%s) VALUES (%s) RETURNING id`, tableName, columns, namedColumns),
-		FindById:    db.PrepareFmt(`SELECT "id", %s FROM "%s" WHERE "id" = $1`, columns, tableName),
-		FindByPhone: db.PrepareFmt(`SELECT "id", %s FROM "%s" WHERE "phone" = $1`, columns, tableName),
-		FindByEmail: db.PrepareFmt(`SELECT "id", %s FROM "%s" WHERE "email" = $1`, columns, tableName),
-		FindByEmailOrPhone: db.PrepareFmt(
-			`SELECT %s FROM "%s" WHERE (phone = $1) OR (email = $1)`, columnsWithId, tableName,
+		Insert: db.PrepareNamedFmtRebind(fmt.Sprintf(`%s ON CONFLICT DO NOTHING RETURNING "id"`, q.
+			Insert(CustomerSchema, "*").
+			Build())),
+		FindById: db.PrepareFmtRebind(q.Select(q.Column("*")).
+			From(CustomerSchema).
+			Where(q.Equal(q.Column(CustomerSchema.PrimaryKey()))).
+			Build()),
+		FindByPhone: db.PrepareFmtRebind(q.Select(q.Column("*")).
+			From(CustomerSchema).
+			Where(q.Equal(q.Column("phone"))).
+			Build()),
+		FindByEmail: db.PrepareFmtRebind(q.Select(q.Column("*")).
+			From(CustomerSchema).
+			Where(q.Equal(q.Column("email"))).
+			Build()),
+		FindByEmailOrPhone: db.PrepareFmtRebind(q.
+			Select(q.Column("*")).
+			From(CustomerSchema).
+			Where(
+				q.Or(
+					q.Equal(q.Column("phone")),
+					q.Equal(q.Column("email")),
+				),
+			).
+			Build(),
 		),
-		UpdateByPhone: db.PrepareNamedFmt(`UPDATE "%s" SET %s WHERE "phone" = :phone`, tableName, updateColumns),
+		UpdateByPhone: db.PrepareNamedFmtRebind(q.
+			Update(CustomerSchema, "*").
+			Where(q.Equal(q.Column("phone"))).
+			Build()),
 	}
 }

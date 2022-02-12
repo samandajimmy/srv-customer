@@ -2,8 +2,13 @@ package statement
 
 import (
 	"github.com/jmoiron/sqlx"
+	q "github.com/nbs-go/nsql/pq/query"
+	"github.com/nbs-go/nsql/schema"
+	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/model"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nsql"
 )
+
+var CredentialSchema = schema.New(schema.FromModelRef(model.Credential{}))
 
 type Credential struct {
 	FindByCustomerID *sqlx.Stmt
@@ -13,16 +18,23 @@ type Credential struct {
 }
 
 func NewCredential(db *nsql.DatabaseContext) *Credential {
-	tableName := "Credential"
-	getColumns := `"xid","metadata","createdAt","updatedAt","modifiedBy","version","customerId","password","nextPasswordResetAt","pin","pinCif","pinUpdatedAt","pinLastAccessAt","pinCounter","pinBlockedStatus","isLocked","loginFailCount","wrongPasswordCount","blockedAt","blockedUntilAt","biometricLogin","biometricDeviceId"`
-	columns := `"xid", "metadata", "createdAt", "updatedAt", "modifiedBy", "version", "customerId", "password", "nextPasswordResetAt", "pin", "pinCif", "pinUpdatedAt", "pinLastAccessAt", "pinCounter", "pinBlockedStatus", "isLocked", "loginFailCount", "wrongPasswordCount", "blockedAt", "blockedUntilAt", "biometricLogin", "biometricDeviceId"`
-	namedColumns := ":xid,:metadata,:createdAt,:updatedAt,:modifiedBy,:version,:customerId,:password,:nextPasswordResetAt,:pin,:pinCif,:pinUpdatedAt,:pinLastAccessAt,:pinCounter,:pinBlockedStatus,:isLocked,:loginFailCount,:wrongPasswordCount,:blockedAt,:blockedUntilAt,:biometricLogin,:biometricDeviceId"
-	updatedNamedColumns := `"xid" = :xid, "metadata" = :metadata, "updatedAt" = :updatedAt, "modifiedBy" = :modifiedBy, "version" = :version, "customerId" = :customerId, "password" = :password, "nextPasswordResetAt" = :nextPasswordResetAt, "pin" = :pin, "pinCif" = :pinCif, "pinUpdatedAt" = :pinUpdatedAt, "pinLastAccessAt" = :pinLastAccessAt, "pinCounter" = :pinCounter, "pinBlockedStatus" = :pinBlockedStatus, "isLocked" = :isLocked, "loginFailCount" = :loginFailCount, "wrongPasswordCount" = :wrongPasswordCount, "blockedAt" = :blockedAt, "blockedUntilAt" = :blockedUntilAt, "biometricLogin" = :biometricLogin, "biometricDeviceId" = :biometricDeviceId`
-
 	return &Credential{
-		FindByCustomerID: db.PrepareFmt(`SELECT %s FROM "%s" WHERE "customerId" = $1`, getColumns, tableName),
-		Insert:           db.PrepareNamedFmt(`INSERT INTO "%s" (%s) VALUES (%s)`, tableName, columns, namedColumns),
-		Update:           db.PrepareNamedFmt(`UPDATE "%s" SET %s WHERE "customerId" = :customerId`, tableName, updatedNamedColumns),
-		DeleteByID:       db.PrepareFmt(`DELETE FROM "%s" WHERE "id" = $1`, tableName),
+		FindByCustomerID: db.PrepareFmtRebind(q.
+			Select(q.Column("*")).
+			From(CredentialSchema).
+			Where(q.Equal(q.Column("customerId"))).
+			Build(),
+		),
+		Insert: db.PrepareNamedFmtRebind(q.
+			Insert(CredentialSchema, "*").
+			Build()),
+		Update: db.PrepareNamedFmtRebind(q.
+			Update(CredentialSchema, "*").
+			Where(q.Equal(q.Column("customerId"))).
+			Build()),
+		DeleteByID: db.PrepareFmtRebind(q.
+			Delete(CredentialSchema).
+			Where(q.Equal(q.Column(CredentialSchema.PrimaryKey()))).
+			Build()),
 	}
 }

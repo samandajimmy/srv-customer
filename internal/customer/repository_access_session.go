@@ -15,11 +15,8 @@ func (rc *RepositoryContext) CreateAccessSession(accessSession *model.AccessSess
 	return nil
 }
 
-func (rc *RepositoryContext) UpdateAccessSession(accessSession *model.AccessSession, currentVersion int64) error {
-	result, err := rc.stmt.AccessSession.Update.ExecContext(rc.ctx, &model.UpdateAccessSession{
-		AccessSession:  accessSession,
-		CurrentVersion: currentVersion,
-	})
+func (rc *RepositoryContext) UpdateAccessSession(accessSession *model.AccessSession) error {
+	result, err := rc.stmt.AccessSession.Update.ExecContext(rc.ctx, accessSession)
 
 	if err != nil {
 		return ncore.TraceError("failed to update access session", err)

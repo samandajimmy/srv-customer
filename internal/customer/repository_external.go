@@ -42,7 +42,7 @@ func (r *RepositoryExternal) WithContext(ctx context.Context) *RepositoryContext
 	// If db is not connected, then initialize connection
 	isConnected, _ := r.db.IsConnected(ctx)
 	if !isConnected {
-		log.Debugf("initialize connection to database...")
+		log.Debugf("initialize connection to database external...")
 		err := r.db.InitContext(ctx)
 		if err != nil {
 			log.Error("failed to initiate connection to db", nlogger.Error(err))
