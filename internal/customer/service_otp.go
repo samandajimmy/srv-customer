@@ -3,6 +3,7 @@ package customer
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/nbs-go/nlogger"
 	"net/http"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/constant"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/dto"
@@ -21,7 +22,7 @@ func (s *Service) GetToken() (string, error) {
 		return token, nil
 	}
 
-	// Initialise resuzlt
+	// Initialise result
 	var result string
 
 	// Set payload
@@ -41,7 +42,7 @@ func (s *Service) GetToken() (string, error) {
 	// Send OTP Rest Switching
 	resp, err := s.ClientPostData("/oauth/token", reqBody, reqHeader)
 	if err != nil {
-		log.Errorf("Error when request oauth token")
+		s.log.Error("Error when request oauth token", nlogger.Error(err))
 		return result, ncore.TraceError("error", err)
 	}
 	defer resp.Body.Close()
@@ -50,15 +51,16 @@ func (s *Service) GetToken() (string, error) {
 	var data dto.TokenResponse
 	err = json.NewDecoder(resp.Body).Decode(&data)
 	if err != nil {
-		log.Errorf("Error when decode response data get token.")
-		return result, err
+		s.log.Error("Error when decode response data get token.", nlogger.Error(err))
+		return result, ncore.TraceError("failed to decode response data get token", err)
 	}
 
 	cacheKey := fmt.Sprintf("%s:%s", constant.Prefix, "token_switching")
 	// Store token to redis
 	result, err = s.CacheSetThenGet(cacheKey, data.AccessToken, data.ExpiresIn)
 	if err != nil {
-		return "", err
+		s.log.Errorf("Error when store access token to redis", nlogger.Error(err))
+		return "", ncore.TraceError("failed to store access token to redis", err)
 	}
 
 	return result, nil
@@ -69,8 +71,8 @@ func (s *Service) SendOTP(payload dto.SendOTPRequest) (*http.Response, error) {
 
 	token, err := s.GetToken()
 	if err != nil {
-		log.Errorf("Error when trying to get Access Token. err: %s", err)
-		return result, ncore.TraceError("error", err)
+		s.log.Errorf("Error when trying to get Access Token. err: %s", nlogger.Error(err))
+		return result, ncore.TraceError("failed to get access token", err)
 	}
 
 	// Set payload
@@ -91,8 +93,8 @@ func (s *Service) SendOTP(payload dto.SendOTPRequest) (*http.Response, error) {
 	// Send OTP Rest Switching
 	resp, err := s.ClientPostData("/otp/send", reqBody, reqHeader)
 	if err != nil {
-		log.Errorf("Error when send otp to phone number")
-		return resp, ncore.TraceError("error", err)
+		s.log.Error("Error when send otp to phone number", nlogger.Error(err))
+		return resp, ncore.TraceError("failed to send otp", err)
 	}
 
 	// Set result
@@ -106,8 +108,8 @@ func (s *Service) VerifyOTP(payload dto.VerifyOTPRequest) (*http.Response, error
 
 	token, err := s.GetToken()
 	if err != nil {
-		log.Errorf("Error when trying to get Access Token. err: %s", err)
-		return result, ncore.TraceError("Error when trying to get Access Token", err)
+		s.log.Errorf("Error when trying to get Access Token. err: %s", err)
+		return result, ncore.TraceError("failed to get access token", err)
 	}
 
 	// Set payload
@@ -129,8 +131,8 @@ func (s *Service) VerifyOTP(payload dto.VerifyOTPRequest) (*http.Response, error
 	// Send OTP Rest Switching
 	resp, err := s.ClientPostData("/otp/check", reqBody, reqHeader)
 	if err != nil {
-		log.Errorf("Error when verify otp request")
-		return resp, ncore.TraceError("err when verify otp", err)
+		s.log.Error("Error when verify otp request", nlogger.Error(err))
+		return resp, ncore.TraceError("failed to send verify otp", err)
 	}
 
 	// Set result
