@@ -17,6 +17,7 @@ type Service struct {
 	responses    *ncore.ResponseMap
 	redis        *nredis.Redis
 	client       *nclient.Nclient
+	pdsClient    *nclient.Nclient
 }
 
 func (h Handler) NewService(ctx context.Context) *Service {
@@ -24,6 +25,7 @@ func (h Handler) NewService(ctx context.Context) *Service {
 	svc := Service{
 		config:       h.Config,
 		client:       h.Client,
+		pdsClient:    h.PdsApiClient,
 		redis:        h.Redis,
 		responses:    h.Responses,
 		repo:         h.Repo.WithContext(ctx),

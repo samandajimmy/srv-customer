@@ -1,12 +1,11 @@
 package customer
 
 import (
-	"net/http"
+	"github.com/nbs-go/nlogger"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/dto"
 )
 
-func (s *Service) SynchronizeCustomer(payload dto.RegisterNewCustomer) (*http.Response, error) {
-	var result *http.Response
+func (s *Service) SynchronizeCustomer(payload dto.RegisterNewCustomer) (*ResponsePdsAPI, error) {
 	// Set payload
 	reqBody := map[string]interface{}{
 		"nama":      payload.Name,
@@ -22,15 +21,21 @@ func (s *Service) SynchronizeCustomer(payload dto.RegisterNewCustomer) (*http.Re
 		"Content-Type": "application/x-www-form-urlencoded",
 	}
 
-	// Send email
-	resp, err := s.ClientPostData("/synchronize/customer", reqBody, reqHeader)
+	// Set payload
+	postDataPayload := PostDataPayload{
+		Url:    "/synchronize/customer",
+		Data:   reqBody,
+		Header: &reqHeader,
+	}
+
+	resp, err := s.PdsPostData(postDataPayload)
 	if err != nil {
-		log.Errorf("Error when registration new submit. %v", err)
-		return resp, err
+		s.log.Error("error found when sync customer to PDS API", nlogger.Error(err), nlogger.Context(s.ctx))
+		return nil, err
 	}
 
 	// Set result
-	result = resp
+	result := resp
 
 	return result, nil
 }

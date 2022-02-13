@@ -30,9 +30,19 @@ func NewHandler(core *ncore.Core, config *Config) (*Handler, error) {
 		redisConfig.RedisPass,
 	)
 
-	// Init Client
+	httpClient := http.Client{
+		Timeout: time.Minute * 1,
+	}
+
+	// Init base client
 	client := &nclient.Nclient{
-		Client: http.Client{},
+		Client: httpClient,
+	}
+
+	// Init PDS API client config
+	pdsApiClient := &nclient.Nclient{
+		Client:  httpClient,
+		BaseUrl: config.PdsApiServiceUrl,
 	}
 
 	h := Handler{
@@ -41,6 +51,7 @@ func NewHandler(core *ncore.Core, config *Config) (*Handler, error) {
 		Config:       config,
 		Redis:        redis,
 		Client:       client,
+		PdsApiClient: pdsApiClient,
 		Repo:         repoInternal,
 		RepoExternal: repoExternal,
 	}
@@ -55,7 +66,8 @@ type Handler struct {
 	// Redis
 	Redis *nredis.Redis
 	// Client
-	Client *nclient.Nclient
+	Client       *nclient.Nclient
+	PdsApiClient *nclient.Nclient
 	// Metadata
 	*ncore.Core
 	StartedAt time.Time

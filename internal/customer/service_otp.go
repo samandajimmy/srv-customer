@@ -13,7 +13,7 @@ func (s *Service) SendOTP(payload dto.SendOTPRequest) (*ResponseSwitchingSuccess
 		"requestType": payload.RequestType,
 	}
 
-	sp := SwitchingPostDataPayload{
+	sp := PostDataPayload{
 		Url:  "/otp/send",
 		Data: reqBody,
 	}
@@ -39,7 +39,7 @@ func (s *Service) VerifyOTP(payload dto.VerifyOTPRequest) (*ResponseSwitchingSuc
 		"token":       payload.Token,
 	}
 
-	sp := SwitchingPostDataPayload{
+	sp := PostDataPayload{
 		Url:  "/otp/check",
 		Data: reqBody,
 	}
