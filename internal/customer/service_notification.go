@@ -2,9 +2,11 @@ package customer
 
 import (
 	"fmt"
+	"github.com/nbs-go/nlogger"
 	"math/rand"
 	"net/http"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/constant"
+	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/model"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/dto"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/ncore"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nval"
@@ -28,6 +30,7 @@ func (s *Service) SendNotification(payload dto.NotificationPayload) (*http.Respo
 		"Content-Type": "application/json",
 	}
 
+	// TODO: Refactor endpoint & payload data for [Notification Service]
 	// Send Notification
 	resp, err := s.ClientPostData("/push-notification", reqBody, reqHeader)
 	if err != nil {
@@ -76,11 +79,14 @@ func (s *Service) SendEmail(payload dto.EmailPayload) (*http.Response, error) {
 }
 
 func (s *Service) SendNotificationRegister(data dto.NotificationRegister) error {
+	customer := data.Customer.(*model.Customer)
+	verification := data.Verification.(*model.Verification)
+
 	// Send Email Verification
 	dataEmailVerification := &dto.EmailVerification{
-		FullName:        data.Customer.FullName,
-		Email:           data.Customer.Email,
-		VerificationUrl: fmt.Sprintf("%sauth/verify_email?t=%s", s.config.GetHttpBaseUrl(), data.Verification.EmailVerificationToken),
+		FullName:        customer.FullName,
+		Email:           customer.Email,
+		VerificationUrl: fmt.Sprintf("%sauth/verify_email?t=%s", s.config.GetHttpBaseUrl(), verification.EmailVerificationToken),
 	}
 	htmlMessage, err := nval.TemplateFile(dataEmailVerification, "email_verification.html")
 	if err != nil {
@@ -89,12 +95,12 @@ func (s *Service) SendNotificationRegister(data dto.NotificationRegister) error 
 
 	// set payload email service
 	emailPayload := dto.EmailPayload{
-		Subject: fmt.Sprintf("Verifikasi Email %s", data.Customer.FullName),
+		Subject: fmt.Sprintf("Verifikasi Email %s", customer.FullName),
 		From: dto.FromEmailPayload{
 			Name:  s.config.EmailConfig.PdsEmailFromName,
 			Email: s.config.EmailConfig.PdsEmailFrom,
 		},
-		To:         data.Customer.Email,
+		To:         customer.Email,
 		Message:    htmlMessage,
 		Attachment: "",
 		MimeType:   "",
@@ -108,26 +114,28 @@ func (s *Service) SendNotificationRegister(data dto.NotificationRegister) error 
 	id, _ := nval.ParseString(rand.Intn(100)) // TODO: insert data to notification
 	var dataWelcomeMessage = map[string]string{
 		"title": "Verifikasi Email",
-		"body":  fmt.Sprintf(`Hai %v, Selamat datang di Pegadaian Digital Service`, data.Customer.FullName),
+		"body":  fmt.Sprintf(`Hai %v, Selamat datang di Pegadaian Digital Service`, customer.FullName),
 		"type":  constant.TypeProfile,
 		"id":    id,
 	}
 	welcomeMessage := dto.NotificationPayload{
 		Title: "Verifikasi Email",
-		Body:  fmt.Sprintf(`Hai %v, Selamat datang di Pegadaian Digital Service`, data.Customer.FullName),
+		Body:  fmt.Sprintf(`Hai %v, Selamat datang di Pegadaian Digital Service`, customer.FullName),
 		Image: "",
 		Token: data.Payload.FcmToken,
 		Data:  dataWelcomeMessage,
 	}
 	_, err = s.SendNotification(welcomeMessage)
 	if err != nil {
-		log.Debugf("Error when send notification message: %s, phone : %s", data.RegisterOTP.RegistrationId, data.Customer.Phone)
+		s.log.Debugf("Error when send notification message.", nlogger.Error(err), nlogger.Context(s.ctx))
 	}
 
 	return nil
 }
 
 func (s *Service) SendNotificationBlock(data dto.NotificationBlock) error {
+
+	customer := data.Customer.(*model.Customer)
 
 	baseUrl := s.config.GetHttpBaseUrl()
 	// Send Email Block
@@ -145,12 +153,12 @@ func (s *Service) SendNotificationBlock(data dto.NotificationBlock) error {
 
 	// set payload email service
 	emailPayload := dto.EmailPayload{
-		Subject: fmt.Sprintf("Notifikasi Keamanan Pegadaian Digital %s", data.Customer.FullName),
+		Subject: fmt.Sprintf("Notifikasi Keamanan Pegadaian Digital %s", customer.FullName),
 		From: dto.FromEmailPayload{
 			Name:  s.config.EmailConfig.PdsEmailFromName,
 			Email: s.config.EmailConfig.PdsEmailFrom,
 		},
-		To:         data.Customer.Email,
+		To:         customer.Email,
 		Message:    htmlMessage,
 		Attachment: "",
 		MimeType:   "",
