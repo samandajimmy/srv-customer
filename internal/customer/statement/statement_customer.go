@@ -14,6 +14,7 @@ var CustomerSchema = schema.New(schema.FromModelRef(model.Customer{}))
 type Customer struct {
 	Insert             *sqlx.NamedStmt
 	UpdateByPhone      *sqlx.NamedStmt
+	FindByRefId        *sqlx.Stmt
 	FindById           *sqlx.Stmt
 	FindByPhone        *sqlx.Stmt
 	FindByEmail        *sqlx.Stmt
@@ -28,6 +29,10 @@ func NewCustomer(db *nsql.DatabaseContext) *Customer {
 		FindById: db.PrepareFmtRebind(q.Select(q.Column("*")).
 			From(CustomerSchema).
 			Where(q.Equal(q.Column(CustomerSchema.PrimaryKey()))).
+			Build()),
+		FindByRefId: db.PrepareFmtRebind(q.Select(q.Column("*")).
+			From(CustomerSchema).
+			Where(q.Equal(q.Column("userRefId"))).
 			Build()),
 		FindByPhone: db.PrepareFmtRebind(q.Select(q.Column("*")).
 			From(CustomerSchema).

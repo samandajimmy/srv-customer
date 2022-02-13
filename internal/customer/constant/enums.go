@@ -1,5 +1,7 @@
 package constant
 
+import "github.com/lestrrat-go/jwx/jwa"
+
 /// Control Status
 
 type ControlStatus = int8
@@ -78,4 +80,9 @@ const (
 
 const (
 	RestSwitchingInvalidToken = "invalid_token"
+)
+
+const (
+	JWTSignature = jwa.HS256
+	JWTIssuer    = "https://www.pegadaian.co.id"
 )

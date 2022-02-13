@@ -31,7 +31,7 @@ func NewHandler(core *ncore.Core, config *Config) (*Handler, error) {
 	)
 
 	httpClient := http.Client{
-		Timeout: time.Minute * 1,
+		Timeout: time.Minute,
 	}
 
 	// Init base client

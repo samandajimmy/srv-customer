@@ -85,6 +85,11 @@ E_AUTH_10:
   metadata:
     http_status: 400
 
+E_AUTH_11:
+  success: false
+  message: Invalid Token
+  metadata:
+    http_status: 401
 
 E_OTP_1:
   success: false
@@ -127,3 +132,4 @@ E_REG_3:
   message: No Handphone sudah terdaftar
   metadata:
     http_status: 400
+
