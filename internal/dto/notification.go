@@ -1,9 +1,5 @@
 package dto
 
-import (
-	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/model"
-)
-
 type NotificationPayload struct {
 	Title string            `json:"title"`
 	Body  string            `json:"body"`
@@ -13,14 +9,14 @@ type NotificationPayload struct {
 }
 
 type NotificationRegister struct {
-	Customer     *model.Customer
-	Verification *model.Verification
-	RegisterOTP  *model.VerificationOTP
+	Customer     interface{} // *model.Customer
+	Verification interface{} // *model.Verification
+	RegisterOTP  interface{} // *model.VerificationOTP
 	Payload      RegisterNewCustomer
 }
 
 type NotificationBlock struct {
-	Customer     *model.Customer
+	Customer     interface{} // *model.Customer
 	Message      string
 	LastTryLogin string
 }

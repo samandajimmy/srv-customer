@@ -3,7 +3,6 @@ package dto
 import (
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/go-ozzo/ozzo-validation/v4/is"
-	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/model"
 )
 
 type ValidatePassword struct {
@@ -63,11 +62,6 @@ type RegisterStepTwoResponse struct {
 	RegisterId string `json:"register_id"`
 }
 
-type LoginResponse struct {
-	Customer *CustomerVO `json:"user"`
-	JwtToken string      `json:"token"`
-}
-
 type CustomerSynchronizeRequest struct {
 	Name        string `json:"nama"`
 	Email       string `json:"email"`
@@ -81,10 +75,10 @@ type CustomerSynchronizeResponse struct {
 }
 
 type LoginVO struct {
-	Customer              *model.Customer
-	Address               *model.Address
-	Profile               CustomerProfileVO
-	Verification          *model.Verification
+	Customer              interface{}
+	Address               interface{}
+	Profile               interface{}
+	Verification          interface{}
 	IsFirstLogin          bool
 	IsForceUpdatePassword bool
 	Token                 string
@@ -102,6 +96,21 @@ type EmailPayload struct {
 type FromEmailPayload struct {
 	Name  string `json:"name"`
 	Email string `json:"email"`
+}
+
+type LoginUserVO struct {
+	CustomerVO
+	IsFirstLogin          bool `json:"isFirstLogin"`
+	IsForceUpdatePassword bool `json:"isForceUpdatePassword"`
+}
+
+type LoginResponse struct {
+	User     *LoginUserVO `json:"user"`
+	JwtToken string       `json:"token"`
+}
+
+type ProfileResponse struct {
+	CustomerVO
 }
 
 type CustomerVO struct {
@@ -148,8 +157,6 @@ type CustomerVO struct {
 	GoldCardAccountNumber     interface{}             `json:"goldCardAccountNumber"`
 	KodeCabang                string                  `json:"kodeCabang"`
 	TabunganEmas              *CustomerTabunganEmasVO `json:"tabunganEmas"`
-	IsFirstLogin              bool                    `json:"isFirstLogin"`
-	IsForceUpdatePassword     bool                    `json:"isForceUpdatePassword"`
 }
 
 type UserVO struct {
