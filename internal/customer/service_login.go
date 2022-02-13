@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/lestrrat-go/jwx/jwa"
 	"github.com/lestrrat-go/jwx/jwt"
 	"github.com/nbs-go/nlogger"
 	"regexp"
@@ -152,14 +151,6 @@ func (s *Service) Login(payload dto.LoginRequest) (*dto.LoginResponse, error) {
 		return nil, s.responses.GetError("E_AUTH_1")
 	}
 
-	// Unmarshall profile
-	var profile dto.CustomerProfileVO
-	err = json.Unmarshal(customer.Profile, &profile)
-	if err != nil {
-		s.log.Error("error found when unmarshalling profile", nlogger.Error(err), nlogger.Context(ctx))
-		return nil, ncore.TraceError("error when unmarshal customer profile", err)
-	}
-
 	// TODO get tabungan emas service / get tabungan emas from financial table
 
 	// Check is force update password
@@ -187,10 +178,10 @@ func (s *Service) Login(payload dto.LoginRequest) (*dto.LoginResponse, error) {
 		return nil, s.responses.GetError("E_AUTH_8")
 	}
 
-	return s.composeLoginResponse(dto.LoginVO{
+	return composeLoginResponse(dto.LoginVO{
 		Customer:              customer,
 		Address:               address,
-		Profile:               profile,
+		Profile:               customer.Profile,
 		Verification:          verification,
 		IsFirstLogin:          isFirstLogin,
 		IsForceUpdatePassword: isForceUpdatePassword,
@@ -341,57 +332,64 @@ func (s *Service) syncExternalToInternal(user *model.User) (*model.Customer, err
 	return customer, nil
 }
 
-func (s *Service) composeLoginResponse(data dto.LoginVO) (*dto.LoginResponse, error) {
+func composeLoginResponse(data dto.LoginVO) (*dto.LoginResponse, error) {
+	// Cast to model
+	customer := data.Customer.(*model.Customer)
+	profile := data.Profile.(model.CustomerProfile)
+	verification := data.Verification.(*model.Verification)
+	address := data.Address.(*model.Address)
 
 	return &dto.LoginResponse{
-		Customer: &dto.CustomerVO{
-			ID:                        nval.ParseStringFallback(data.Customer.Id, ""),
-			Cif:                       data.Customer.Cif,
-			IsKYC:                     nval.ParseStringFallback(data.Verification.KycVerifiedStatus, "0"),
-			Nama:                      data.Customer.FullName,
-			NamaIbu:                   data.Profile.MaidenName,
-			NoKTP:                     data.Customer.IdentityNumber,
-			Email:                     data.Customer.Email,
-			JenisKelamin:              data.Profile.Gender,
-			TempatLahir:               data.Profile.PlaceOfBirth,
-			TglLahir:                  data.Profile.DateOfBirth,
-			Alamat:                    data.Address.Line.String,
-			IDProvinsi:                data.Address.ProvinceId.String,
-			IDKabupaten:               data.Address.CityId.String,
-			IDKecamatan:               data.Address.DistrictId.String,
-			IDKelurahan:               data.Address.SubDistrictId.String,
-			Kelurahan:                 data.Address.DistrictName.String,
-			Provinsi:                  data.Address.ProvinceName.String,
-			Kabupaten:                 data.Address.CityName.String,
-			Kecamatan:                 data.Address.DistrictName.String,
-			KodePos:                   data.Address.PostalCode.String,
-			NoHP:                      data.Customer.Phone,
-			Avatar:                    "",
-			FotoKTP:                   data.Profile.IdentityPhotoFile,
-			IsEmailVerified:           nval.ParseStringFallback(data.Verification.EmailVerifiedStatus, "0"),
-			Kewarganegaraan:           data.Profile.Nationality,
-			JenisIdentitas:            fmt.Sprintf("%v", data.Customer.IdentityType),
-			NoIdentitas:               data.Customer.IdentityNumber,
-			TglExpiredIdentitas:       "",
-			NoNPWP:                    data.Profile.NPWPNumber,
-			FotoNPWP:                  data.Profile.NPWPPhotoFile,
-			NoSid:                     data.Customer.Sid,
-			FotoSid:                   data.Profile.SidPhotoFile,
-			StatusKawin:               data.Profile.MarriageStatus,
-			Norek:                     "",
-			Saldo:                     "",
-			AktifasiTransFinansial:    nval.ParseStringFallback(data.Verification.FinancialTransactionStatus, ""),
-			IsDukcapilVerified:        nval.ParseStringFallback(data.Verification.DukcapilVerifiedStatus, "0"),
-			IsOpenTe:                  "",
-			ReferralCode:              "",
-			GoldCardApplicationNumber: "",
-			GoldCardAccountNumber:     "",
-			KodeCabang:                "",
-			TabunganEmas: &dto.CustomerTabunganEmasVO{
-				TotalSaldoBlokir:  "",
-				TotalSaldoSeluruh: "",
-				TotalSaldoEfektif: "",
-				PrimaryRekening:   "",
+		User: &dto.LoginUserVO{
+			CustomerVO: dto.CustomerVO{
+				ID:                        nval.ParseStringFallback(customer.Id, ""),
+				IsKYC:                     nval.ParseStringFallback(verification.KycVerifiedStatus, "0"),
+				Cif:                       customer.Cif,
+				Nama:                      customer.FullName,
+				NamaIbu:                   profile.MaidenName,
+				NoKTP:                     customer.IdentityNumber,
+				Email:                     customer.Email,
+				JenisKelamin:              profile.Gender,
+				TempatLahir:               profile.PlaceOfBirth,
+				TglLahir:                  profile.DateOfBirth,
+				Alamat:                    address.Line.String,
+				IDProvinsi:                address.ProvinceId.String,
+				IDKabupaten:               address.CityId.String,
+				IDKecamatan:               address.DistrictId.String,
+				IDKelurahan:               address.SubDistrictId.String,
+				Kelurahan:                 address.DistrictName.String,
+				Provinsi:                  address.ProvinceName.String,
+				Kabupaten:                 address.CityName.String,
+				Kecamatan:                 address.DistrictName.String,
+				KodePos:                   address.PostalCode.String,
+				NoHP:                      customer.Phone,
+				FotoKTP:                   profile.IdentityPhotoFile,
+				IsEmailVerified:           nval.ParseStringFallback(verification.EmailVerifiedStatus, "0"),
+				Kewarganegaraan:           profile.Nationality,
+				JenisIdentitas:            fmt.Sprintf("%v", customer.IdentityType),
+				NoIdentitas:               customer.IdentityNumber,
+				Avatar:                    "",
+				TglExpiredIdentitas:       "",
+				NoNPWP:                    profile.NPWPNumber,
+				FotoNPWP:                  profile.NPWPPhotoFile,
+				NoSid:                     customer.Sid,
+				FotoSid:                   profile.SidPhotoFile,
+				StatusKawin:               profile.MarriageStatus,
+				Norek:                     "",
+				Saldo:                     "",
+				AktifasiTransFinansial:    nval.ParseStringFallback(verification.FinancialTransactionStatus, ""),
+				IsDukcapilVerified:        nval.ParseStringFallback(verification.DukcapilVerifiedStatus, "0"),
+				IsOpenTe:                  "",
+				ReferralCode:              "",
+				GoldCardApplicationNumber: "",
+				GoldCardAccountNumber:     "",
+				KodeCabang:                "",
+				TabunganEmas: &dto.CustomerTabunganEmasVO{
+					TotalSaldoBlokir:  "",
+					TotalSaldoSeluruh: "",
+					TotalSaldoEfektif: "",
+					PrimaryRekening:   "",
+				},
 			},
 			IsFirstLogin:          data.IsFirstLogin,
 			IsForceUpdatePassword: data.IsForceUpdatePassword,
