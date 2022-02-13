@@ -22,6 +22,15 @@ func (rc *RepositoryContext) FindCustomerByID(id int64) (*model.Customer, error)
 	return &row, nil
 }
 
+func (rc *RepositoryContext) FindCustomerByRefID(id int64) (*model.Customer, error) {
+	var row model.Customer
+	err := rc.stmt.Customer.FindByRefId.GetContext(rc.ctx, &row, id)
+	if err != nil {
+		return nil, err
+	}
+	return &row, nil
+}
+
 func (rc *RepositoryContext) FindCustomerByPhone(phone string) (*model.Customer, error) {
 	var row model.Customer
 	err := rc.stmt.Customer.FindByPhone.GetContext(rc.ctx, &row, phone)
