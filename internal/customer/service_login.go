@@ -436,7 +436,7 @@ func (s *Service) setTokenAuthentication(customer *model.Customer, agen string, 
 		Claim("version", version).
 		IssuedAt(now).
 		Expiration(now.Add(time.Second * time.Duration(s.config.ClientConfig.JWTExpiry))).
-		Issuer("https://www.pegadaian.co.id").
+		Issuer(constant.JWTIssuer).
 		Build()
 	if err != nil {
 		s.log.Error("error found when generate JWT", nlogger.Error(err), nlogger.Context(s.ctx))
@@ -447,7 +447,7 @@ func (s *Service) setTokenAuthentication(customer *model.Customer, agen string, 
 	jwtKeyBytes := []byte(jwtKey)
 
 	// sign token
-	signed, err := jwt.Sign(token, jwa.HS256, jwtKeyBytes)
+	signed, err := jwt.Sign(token, constant.JWTSignature, jwtKeyBytes)
 	if err != nil {
 		s.log.Error("failed to sign token", nlogger.Error(err), nlogger.Context(s.ctx))
 		return "", ncore.TraceError("failed to sign token", err)
