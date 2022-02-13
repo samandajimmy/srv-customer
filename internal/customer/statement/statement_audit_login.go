@@ -28,6 +28,7 @@ func NewAuditLogin(db *nsql.DatabaseContext) *AuditLogin {
 		CountLogin: db.PrepareFmtRebind(q.
 			Select(q.Count("id", opt.Schema(AuditLoginSchema), opt.As("count"))).
 			From(AuditLoginSchema).
+			Where(q.Equal(q.Column("customerId"))).
 			Build(),
 		),
 	}
