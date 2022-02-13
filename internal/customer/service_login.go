@@ -14,7 +14,6 @@ import (
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/convert"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/model"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/dto"
-	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nclient"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/ncore"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/ntime"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nval"
@@ -23,6 +22,7 @@ import (
 )
 
 func (s *Service) Login(payload dto.LoginRequest) (*dto.LoginResponse, error) {
+	ctx := s.ctx
 	// Check if user exists
 	t := time.Now()
 	customer, err := s.repo.FindCustomerByEmail(payload.Email)
@@ -30,30 +30,30 @@ func (s *Service) Login(payload dto.LoginRequest) (*dto.LoginResponse, error) {
 		// If data not found on internal database check on external database.
 		user, err := s.repoExternal.FindUserExternalByEmailOrPhone(payload.Email)
 		if err != nil {
-			s.log.Error("error when find user external by email or phone", nlogger.Error(err))
+			s.log.Debug("Phone or email is not registered")
 			return nil, s.responses.GetError("E_AUTH_10")
 		}
 
 		// sync data external to internal
 		customer, err = s.syncExternalToInternal(user)
 		if err != nil {
-			s.log.Error("error while sync data External to Internal", nlogger.Error(err))
-			return nil, err
+			s.log.Error("error while sync data External to Internal", nlogger.Error(err), nlogger.Context(ctx))
+			return nil, ncore.TraceError("error sync data", err)
 		}
 
 	} else if err != nil {
-		s.log.Errorf("failed to retrieve customer. error: %v", err)
-		return nil, ncore.TraceError("error", err)
+		s.log.Error("failed to retrieve customer", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, ncore.TraceError("error find customer by email", err)
 	}
 
 	// Get credential customer
 	credential, err := s.repo.FindCredentialByCustomerID(customer.Id)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			s.log.Error("failed to retrieve credential not found", nlogger.Error(err))
+			s.log.Error("failed to retrieve credential not found", nlogger.Error(err), nlogger.Context(ctx))
 			return nil, s.responses.GetError("E_AUTH_8")
 		}
-		s.log.Errorf("failed to retrieve credential. error: %v", err)
+		s.log.Errorf("failed to retrieve credential", nlogger.Error(err), nlogger.Context(ctx))
 		return nil, ncore.TraceError("error", err)
 	}
 
@@ -71,8 +71,8 @@ func (s *Service) Login(payload dto.LoginRequest) (*dto.LoginResponse, error) {
 	// Counter wrong password count
 	passwordRequest := fmt.Sprintf("%x", md5.Sum([]byte(payload.Password)))
 	if credential.Password != passwordRequest {
-		err := s.HandleWrongPassword(credential, customer)
-		return nil, ncore.TraceError("wrong password", err)
+		err := s.handleWrongPassword(credential, customer)
+		return nil, err
 	}
 
 	// get userRefId from external DB
@@ -84,31 +84,36 @@ func (s *Service) Login(payload dto.LoginRequest) (*dto.LoginResponse, error) {
 			Password:    credential.Password,
 			FcmToken:    payload.FcmToken,
 		}
+		// sync data from customer service to PDS API
 		resultSync, err := s.syncInternalToExternal(registerPayload)
-
 		if err != nil {
-			s.log.Errorf("failed to sync to external. error: %v", err)
-			return nil, ncore.TraceError("error", err)
+			s.log.Error("error found when sync to pds api", nlogger.Error(err), nlogger.Context(ctx))
+			return nil, ncore.TraceError("error found when sync to pds api", err)
 		}
 		// set userRefId
 		customer.UserRefId = nval.ParseStringFallback(resultSync.UserAiid, "")
 		// update customer
 		err = s.repo.UpdateCustomerByPhone(customer)
 		if err != nil {
-			s.log.Errorf("failed to update userRefId. error: %v", err)
-			return nil, ncore.TraceError("error", err)
+			s.log.Error("failed to update userRefId", nlogger.Error(err), nlogger.Context(ctx))
+			return nil, ncore.TraceError("update customer by phone", err)
 		}
 	}
 
 	// Get token from cache
 	var token string
-	cacheTokenKey := fmt.Sprintf("%v:%v:%v", constant.Prefix, "token_jwt", customer.UserRefId)
-	token, err = s.SetTokenAuthentication(customer, payload.Agen, payload.Version, cacheTokenKey)
+	cacheTokenKey := fmt.Sprintf("%v:%v:%v", constant.Prefix, constant.CacheTokenJWT, customer.UserRefId)
+	token, err = s.setTokenAuthentication(customer, payload.Agen, payload.Version, cacheTokenKey)
+	if err != nil {
+		s.log.Error("error found when get access token from cache", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, ncore.TraceError("failed to get token from cache", err)
+	}
 
 	// Check account is first login or not
 	countAuditLog, err := s.repo.CountAuditLogin(customer.Id)
 	if err != nil {
-		return nil, s.responses.GetError("E_AUTH_1")
+		s.log.Error("error found when count audit login", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, ncore.TraceError("error when count audit login", err)
 	}
 
 	// Set is first login is true or false.
@@ -143,7 +148,7 @@ func (s *Service) Login(payload dto.LoginRequest) (*dto.LoginResponse, error) {
 	// Persist audit login
 	err = s.repo.CreateAuditLogin(&auditLogin)
 	if err != nil {
-		s.log.Errorf("Error when insert audit login error: %v", err)
+		s.log.Error("error found when create audit login", nlogger.Error(err), nlogger.Context(ctx))
 		return nil, s.responses.GetError("E_AUTH_1")
 	}
 
@@ -151,14 +156,14 @@ func (s *Service) Login(payload dto.LoginRequest) (*dto.LoginResponse, error) {
 	var profile dto.CustomerProfileVO
 	err = json.Unmarshal(customer.Profile, &profile)
 	if err != nil {
-		s.log.Errorf("Error when unmarshalling profile: %v", err)
-		return nil, ncore.TraceError("error", err)
+		s.log.Error("error found when unmarshalling profile", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, ncore.TraceError("error when unmarshal customer profile", err)
 	}
 
 	// TODO get tabungan emas service / get tabungan emas from financial table
 
 	// Check is force update password
-	validatePassword := s.ValidatePassword(payload.Password)
+	validatePassword := s.validatePassword(payload.Password)
 	isForceUpdatePassword := false
 	if validatePassword.IsValid != true {
 		isForceUpdatePassword = true
@@ -167,20 +172,18 @@ func (s *Service) Login(payload dto.LoginRequest) (*dto.LoginResponse, error) {
 	// Get data address
 	address, err := s.repo.FindAddressByCustomerId(customer.Id)
 	if errors.Is(err, sql.ErrNoRows) {
-		s.log.Error("failed to retrieve address not found", nlogger.Error(err))
 		address = &model.Address{}
 	} else if err != nil {
-		s.log.Errorf("Error when retrieve address error: %v", err)
+		s.log.Error("error found when get customer address", nlogger.Error(err), nlogger.Context(ctx))
 		return nil, s.responses.GetError("E_AUTH_8")
 	}
 
 	// Get data verification
 	verification, err := s.repo.FindVerificationByCustomerID(customer.Id)
 	if errors.Is(err, sql.ErrNoRows) {
-		s.log.Error("failed to retrieve verification not found", nlogger.Error(err))
 		verification = &model.Verification{}
 	} else if err != nil {
-		s.log.Errorf("Error when retrieve verification error: %v", err)
+		s.log.Errorf("error found when get data verification", nlogger.Error(err), nlogger.Context(ctx))
 		return nil, s.responses.GetError("E_AUTH_8")
 	}
 
@@ -195,151 +198,9 @@ func (s *Service) Login(payload dto.LoginRequest) (*dto.LoginResponse, error) {
 	})
 }
 
-func (s *Service) HandleWrongPassword(credential *model.Credential, customer *model.Customer) error {
-	var resp error
-	t := time.Now()
-
-	// Unmarshalling metadata credential to get tryLoginAt
-	var Metadata dto.MetadataCredential
-	err := json.Unmarshal(credential.Metadata, &Metadata)
-	if err != nil {
-		log.Errorf("Cannot unmarshaling metadata credential. err: %v", err)
-		return ncore.TraceError("error", err)
-	}
-	// Parse time from metadata string to time
-	tryLoginAt, _ := time.Parse(time.RFC3339, Metadata.TryLoginAt)
-	now := ntime.ChangeTimezone(t, constant.WIB)
-
-	// If user is not trying to login after 1 day, set wrongPassword to 0
-	if now.After(tryLoginAt.Add(time.Hour * time.Duration(24))) {
-		credential.WrongPasswordCount = 0
-	}
-
-	// If now is after than blockedUntilAt set wrong password to 0 and unblock account
-	blockedUntil := ntime.ChangeTimezone(credential.BlockedUntilAt.Time, constant.WIB)
-	if credential.WrongPasswordCount == constant.MaxWrongPassword && now.After(blockedUntil) {
-		credential.BlockedAt = sql.NullTime{}
-		credential.BlockedUntilAt = sql.NullTime{}
-		credential.WrongPasswordCount = 0
-	}
-
-	wrongCount := credential.WrongPasswordCount + 1
-
-	switch wrongCount {
-	case constant.Warn2XWrongPassword:
-		resp = s.responses.GetError("E_AUTH_6")
-		credential.WrongPasswordCount = wrongCount
-	case constant.Warn4XWrongPassword:
-		resp = s.responses.GetError("E_AUTH_7")
-		credential.WrongPasswordCount = wrongCount
-	case constant.MinWrongPassword:
-
-		// Set block account
-		hour := 1 // Block for 1 hours
-		duration := time.Hour * time.Duration(hour)
-		addDuration := t.Add(duration)
-		credential.BlockedAt = sql.NullTime{
-			Time:  t,
-			Valid: true,
-		}
-		credential.BlockedUntilAt = sql.NullTime{
-			Time:  addDuration,
-			Valid: true,
-		}
-		credential.WrongPasswordCount = wrongCount
-
-		// Set response if blocked for 1 hour
-		message := "Akun dikunci hingga %v WIB karena gagal login %v kali. Hubungi call center jika ini bukan kamu"
-		timeBlocked := ntime.ChangeTimezone(credential.BlockedUntilAt.Time, constant.WIB).Format("02-Jan-2006 15:04:05")
-		setResponse := ncore.Success.HttpStatus(401).SetMessage(message, timeBlocked, credential.WrongPasswordCount)
-		resp = &setResponse
-
-		// Send OTP To Phone Number
-		request := dto.SendOTPRequest{
-			PhoneNumber: customer.Phone,
-			RequestType: constant.RequestTypeBlockOneHour,
-		}
-		_, err := s.SendOTP(request)
-		if err != nil {
-			log.Debugf("Error when sending otp block one hour. err: %v", err)
-		}
-
-		// Send Notification Blocked Login One Hour
-		// TODO Refactor
-		err = s.SendNotificationBlock(dto.NotificationBlock{
-			Customer:     customer,
-			Message:      fmt.Sprintf(message, timeBlocked, credential.WrongPasswordCount),
-			LastTryLogin: ntime.NewTimeWIB(tryLoginAt).Format("02-Jan-2006 15:04:05"),
-		})
-
-		break
-	case constant.MaxWrongPassword:
-		// Set block account
-		hour := 24 // Block for 24 hours
-		duration := time.Hour * time.Duration(hour)
-		addDuration := t.Add(duration)
-		credential.BlockedAt = sql.NullTime{
-			Time:  t,
-			Valid: true,
-		}
-		credential.BlockedUntilAt = sql.NullTime{
-			Time:  addDuration,
-			Valid: true,
-		}
-		credential.WrongPasswordCount = wrongCount
-
-		// Set response if blocked for 24 hour
-		message := "Akun dikunci hingga %v WIB karena gagal login %v kali. Hubungi call center jika ini bukan kamu"
-		timeBlocked := ntime.ChangeTimezone(credential.BlockedUntilAt.Time, constant.WIB).Format("02-Jan-2006 15:04:05")
-		setResponse := ncore.Success.HttpStatus(401).SetMessage(message, timeBlocked, credential.WrongPasswordCount)
-		resp = &setResponse
-
-		// Send OTP To Phone Number
-		request := dto.SendOTPRequest{
-			PhoneNumber: customer.Phone,
-			RequestType: constant.RequestTypeBlockOneDay,
-		}
-		_, err := s.SendOTP(request)
-		if err != nil {
-			log.Debugf("Error when sending otp block one hour. err: %v", err)
-		}
-
-		// Send Notification Blocked Login One Day
-		err = s.SendNotificationBlock(dto.NotificationBlock{
-			Customer:     customer,
-			Message:      fmt.Sprintf(message, timeBlocked, credential.WrongPasswordCount),
-			LastTryLogin: ntime.NewTimeWIB(tryLoginAt).Format("02-Jan-2006 15:04:05"),
-		})
-		break
-	default:
-		resp = s.responses.GetError("E_AUTH_8")
-		credential.WrongPasswordCount = wrongCount
-		break
-	}
-
-	// Handle notification error
-	if err != nil {
-		log.Debugf("Error when sending notification block: %v", err)
-	}
-
-	// Set trying login at to metadata
-	var Format dto.MetadataCredential
-	Format.TryLoginAt = t.Format(time.RFC3339)
-	Format.PinCreatedAt = Metadata.PinCreatedAt
-	Format.PinBlockedAt = Metadata.PinBlockedAt
-	MetadataCredential, _ := json.Marshal(&Format)
-	credential.Metadata = MetadataCredential
-
-	err = s.repo.UpdateCredential(credential)
-	if err != nil {
-		s.log.Error("error when update credential.", nlogger.Error(err))
-		return ncore.TraceError("error when update credential.", err)
-	}
-
-	return resp
-}
-
 func (s *Service) syncInternalToExternal(payload *dto.CustomerSynchronizeRequest) (*dto.UserVO, error) {
+	// Get context
+	ctx := s.ctx
 
 	// call register pds api
 	registerCustomer := dto.RegisterNewCustomer{
@@ -350,17 +211,10 @@ func (s *Service) syncInternalToExternal(payload *dto.CustomerSynchronizeRequest
 		FcmToken:    payload.FcmToken,
 	}
 	// sync
-	sync, err := s.SynchronizeCustomer(registerCustomer)
+	resp, err := s.SynchronizeCustomer(registerCustomer)
 	if err != nil {
-		log.Error("Error when SynchronizeCustomer.", nlogger.Error(err))
-		return nil, ncore.TraceError("error", err)
-	}
-
-	// set response data
-	resp, err := nclient.GetResponseDataPdsAPI(sync)
-	if err != nil {
-		log.Error("Cannot parsing from SynchronizeCustomer response.", nlogger.Error(err))
-		return nil, ncore.TraceError("error", err)
+		log.Error("error found when sync data customer via API PDS", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, ncore.TraceError("failed to sync data via API PDS", err)
 	}
 
 	// handle status error
@@ -387,7 +241,7 @@ func (s *Service) syncExternalToInternal(user *model.User) (*model.Customer, err
 	// prepare customer
 	customer, err := convert.ModelUserToCustomer(user)
 	if err != nil {
-		log.Error("failed to convert to model customer", nlogger.Error(err))
+		s.log.Error("failed to convert to model customer", nlogger.Error(err), nlogger.Context(s.ctx))
 		return nil, err
 	}
 
@@ -396,7 +250,7 @@ func (s *Service) syncExternalToInternal(user *model.User) (*model.Customer, err
 	if errors.Is(err, sql.ErrNoRows) {
 		userPin = &model.UserPin{}
 	} else if err != nil {
-		s.log.Error("failed retrieve user pin from external database", nlogger.Error(err))
+		s.log.Error("failed retrieve user pin from external database", nlogger.Error(err), nlogger.Context(s.ctx))
 		return nil, err
 	}
 
@@ -405,41 +259,42 @@ func (s *Service) syncExternalToInternal(user *model.User) (*model.Customer, err
 	if errors.Is(err, sql.ErrNoRows) {
 		addressExternal = &model.AddressExternal{}
 	} else if err != nil {
-		s.log.Error("failed retrieve address from external database", nlogger.Error(err))
+		s.log.Error("failed retrieve address from external database", nlogger.Error(err), nlogger.Context(s.ctx))
 		return nil, err
 	}
 
 	// Prepare credential
 	credential, err := convert.ModelUserToCredential(user, userPin)
 	if err != nil {
-		s.log.Error("failed convert to credential model", nlogger.Error(err))
+		s.log.Error("failed convert to credential model", nlogger.Error(err), nlogger.Context(s.ctx))
 		return nil, err
 	}
 
 	// Prepare financial data
 	financialData, err := convert.ModelUserToFinancialData(user)
 	if err != nil {
-		s.log.Error("failed convert to financial data", nlogger.Error(err))
+		s.log.Error("failed convert to financial data", nlogger.Error(err), nlogger.Context(s.ctx))
 		return nil, err
 	}
 
 	// Prepare verification
 	verification, err := convert.ModelUserToVerification(user)
 	if err != nil {
-		s.log.Error("failed convert to verification", nlogger.Error(err))
+		s.log.Error("failed convert to verification", nlogger.Error(err), nlogger.Context(s.ctx))
 		return nil, err
 	}
 
 	// Prepare address
 	address, err := convert.ModelUserToAddress(user, addressExternal)
 	if err != nil {
-		s.log.Error("failed convert address", nlogger.Error(err))
+		s.log.Error("failed convert address", nlogger.Error(err), nlogger.Context(s.ctx))
 		return nil, err
 	}
 
 	// Persist customer data
 	customerId, err := s.repo.CreateCustomer(customer)
 	if err != nil {
+		s.log.Error("failed to persist customer", nlogger.Error(err), nlogger.Context(s.ctx))
 		return nil, err
 	}
 
@@ -452,34 +307,34 @@ func (s *Service) syncExternalToInternal(user *model.User) (*model.Customer, err
 	// persist credential
 	err = s.repo.InsertOrUpdateCredential(credential)
 	if err != nil {
-		s.log.Error("failed persist to credential", nlogger.Error(err))
+		s.log.Error("failed persist to credential", nlogger.Error(err), nlogger.Context(s.ctx))
 		return nil, err
 	}
 
 	// persist financial data
 	err = s.repo.InsertOrUpdateFinancialData(financialData)
 	if err != nil {
-		s.log.Error("failed persist to financial data", nlogger.Error(err))
+		s.log.Error("failed persist to financial data", nlogger.Error(err), nlogger.Context(s.ctx))
 		return nil, err
 	}
 
 	// persist verification
 	err = s.repo.InsertOrUpdateVerification(verification)
 	if err != nil {
-		s.log.Errorf("failed persist verification err: %v", nlogger.Error(err))
+		s.log.Error("failed persist verification.", nlogger.Error(err), nlogger.Context(s.ctx))
 		return nil, err
 	}
 
 	// persist address
 	err = s.repo.InsertOrUpdateAddress(address)
 	if err != nil {
-		s.log.Error("failed persist address", nlogger.Error(err))
+		s.log.Error("failed persist address", nlogger.Error(err), nlogger.Context(s.ctx))
 		return nil, err
 	}
 
 	customer, err = s.repo.FindCustomerByID(customerId)
 	if err != nil {
-		s.log.Error("failed to retrieve customer not found", nlogger.Error(err))
+		s.log.Error("failed to retrieve customer not found", nlogger.Error(err), nlogger.Context(s.ctx))
 		return nil, s.responses.GetError("E_RES_1")
 	}
 
@@ -545,16 +400,21 @@ func (s *Service) composeLoginResponse(data dto.LoginVO) (*dto.LoginResponse, er
 	}, nil
 }
 
-func (s *Service) SetTokenAuthentication(customer *model.Customer, agen string, version string, cacheTokenKey string) (string, error) {
+func (s *Service) setTokenAuthentication(customer *model.Customer, agen string, version string, cacheTokenKey string) (string, error) {
 
 	var accessToken string
-	accessToken, _ = s.CacheGet(cacheTokenKey)
+	accessToken, err := s.CacheGet(cacheTokenKey)
+	if err != nil {
+		s.log.Error("error found when get cache", nlogger.Error(err), nlogger.Context(s.ctx))
+		return "", err
+	}
 	if accessToken == "" {
 		// Generate access token
 		accessToken = nval.Bin2Hex(nval.RandStringBytes(78))
 		// Set token to cache
 		cacheToken, err := s.CacheSetThenGet(cacheTokenKey, accessToken, s.config.ClientConfig.JWTExpiry)
 		if err != nil {
+			s.log.Error("error found when set token to cache", nlogger.Error(err), nlogger.Context(s.ctx))
 			return "", err
 		}
 		// Set access token
@@ -579,19 +439,25 @@ func (s *Service) SetTokenAuthentication(customer *model.Customer, agen string, 
 		Issuer("https://www.pegadaian.co.id").
 		Build()
 	if err != nil {
+		s.log.Error("error found when generate JWT", nlogger.Error(err), nlogger.Context(s.ctx))
 		return "", err
 	}
 
-	// Sign token
-	signed, err := jwt.Sign(token, jwa.HS256, []byte(s.config.ClientConfig.JWTKey))
+	jwtKey := s.config.ClientConfig.JWTKey
+	jwtKeyBytes := []byte(jwtKey)
+
+	// sign token
+	signed, err := jwt.Sign(token, jwa.HS256, jwtKeyBytes)
 	if err != nil {
-		return "", err
+		s.log.Error("failed to sign token", nlogger.Error(err), nlogger.Context(s.ctx))
+		return "", ncore.TraceError("failed to sign token", err)
 	}
 	tokenString := string(signed)
+
 	return tokenString, nil
 }
 
-func (s *Service) ValidatePassword(password string) *dto.ValidatePassword {
+func (s *Service) validatePassword(password string) *dto.ValidatePassword {
 	var validation dto.ValidatePassword
 
 	lowerCase, _ := regexp.Compile(`[a-z]+`)
@@ -637,6 +503,150 @@ func (s *Service) ValidatePassword(password string) *dto.ValidatePassword {
 	validation.ErrCode = ""
 
 	return &validation
+}
+
+func (s *Service) handleWrongPassword(credential *model.Credential, customer *model.Customer) error {
+	var resp error
+	t := time.Now()
+
+	// Unmarshalling metadata credential to get tryLoginAt
+	var Metadata dto.MetadataCredential
+	err := json.Unmarshal(credential.Metadata, &Metadata)
+	if err != nil {
+		s.log.Error("error found when unmarshal metadata credential", nlogger.Error(err), nlogger.Context(s.ctx))
+		return ncore.TraceError("error found when unmarshal metadata credential", err)
+	}
+	// Parse time from metadata string to time
+	tryLoginAt, _ := time.Parse(time.RFC3339, Metadata.TryLoginAt)
+	now := ntime.ChangeTimezone(t, constant.WIB)
+
+	// If user is not trying to login after 1 day, set wrongPassword to 0
+	if now.After(tryLoginAt.Add(time.Hour * time.Duration(24))) {
+		credential.WrongPasswordCount = 0
+	}
+
+	// If now is after than blockedUntilAt set wrong password to 0 and unblock account
+	blockedUntil := ntime.ChangeTimezone(credential.BlockedUntilAt.Time, constant.WIB)
+	if credential.WrongPasswordCount == constant.MaxWrongPassword && now.After(blockedUntil) {
+		credential.BlockedAt = sql.NullTime{}
+		credential.BlockedUntilAt = sql.NullTime{}
+		credential.WrongPasswordCount = 0
+	}
+
+	wrongCount := credential.WrongPasswordCount + 1
+
+	switch wrongCount {
+	case constant.Warn2XWrongPassword:
+		resp = s.responses.GetError("E_AUTH_6")
+		credential.WrongPasswordCount = wrongCount
+	case constant.Warn4XWrongPassword:
+		resp = s.responses.GetError("E_AUTH_7")
+		credential.WrongPasswordCount = wrongCount
+	case constant.MinWrongPassword:
+
+		// Set block account
+		hour := 1 // Block for 1 hours
+		duration := time.Hour * time.Duration(hour)
+		addDuration := t.Add(duration)
+		credential.BlockedAt = sql.NullTime{
+			Time:  t,
+			Valid: true,
+		}
+		credential.BlockedUntilAt = sql.NullTime{
+			Time:  addDuration,
+			Valid: true,
+		}
+		credential.WrongPasswordCount = wrongCount
+
+		// Set response if blocked for 1 hour
+		message := "Akun dikunci hingga %v WIB karena gagal login %v kali. Hubungi call center jika ini bukan kamu"
+		timeBlocked := ntime.ChangeTimezone(credential.BlockedUntilAt.Time, constant.WIB).Format("02-Jan-2006 15:04:05")
+		setResponse := ncore.Success.HttpStatus(401).SetMessage(message, timeBlocked, credential.WrongPasswordCount)
+		resp = &setResponse
+
+		// Send OTP To Phone Number
+		request := dto.SendOTPRequest{
+			PhoneNumber: customer.Phone,
+			RequestType: constant.RequestTypeBlockOneHour,
+		}
+		_, err := s.SendOTP(request)
+		if err != nil {
+			s.log.Debug("error found when sending otp block one hour", nlogger.Error(err), nlogger.Context(s.ctx))
+		}
+
+		// Send Notification Blocked Login One Hour
+		// TODO Refactor
+		err = s.SendNotificationBlock(dto.NotificationBlock{
+			Customer:     customer,
+			Message:      fmt.Sprintf(message, timeBlocked, credential.WrongPasswordCount),
+			LastTryLogin: ntime.NewTimeWIB(tryLoginAt).Format("02-Jan-2006 15:04:05"),
+		})
+
+		break
+	case constant.MaxWrongPassword:
+		// Set block account
+		hour := 24 // Block for 24 hours
+		duration := time.Hour * time.Duration(hour)
+		addDuration := t.Add(duration)
+		credential.BlockedAt = sql.NullTime{
+			Time:  t,
+			Valid: true,
+		}
+		credential.BlockedUntilAt = sql.NullTime{
+			Time:  addDuration,
+			Valid: true,
+		}
+		credential.WrongPasswordCount = wrongCount
+
+		// Set response if blocked for 24 hour
+		message := "Akun dikunci hingga %v WIB karena gagal login %v kali. Hubungi call center jika ini bukan kamu"
+		timeBlocked := ntime.ChangeTimezone(credential.BlockedUntilAt.Time, constant.WIB).Format("02-Jan-2006 15:04:05")
+		setResponse := ncore.Success.HttpStatus(401).SetMessage(message, timeBlocked, credential.WrongPasswordCount)
+		resp = &setResponse
+
+		// Send OTP To Phone Number
+		request := dto.SendOTPRequest{
+			PhoneNumber: customer.Phone,
+			RequestType: constant.RequestTypeBlockOneDay,
+		}
+		_, err := s.SendOTP(request)
+		if err != nil {
+			s.log.Debug("Error when sending otp block one hour", nlogger.Error(err), nlogger.Context(s.ctx))
+		}
+
+		// Send Notification Blocked Login One Day
+		err = s.SendNotificationBlock(dto.NotificationBlock{
+			Customer:     customer,
+			Message:      fmt.Sprintf(message, timeBlocked, credential.WrongPasswordCount),
+			LastTryLogin: ntime.NewTimeWIB(tryLoginAt).Format("02-Jan-2006 15:04:05"),
+		})
+		break
+	default:
+		resp = s.responses.GetError("E_AUTH_8")
+		credential.WrongPasswordCount = wrongCount
+		break
+	}
+
+	// Handle notification error
+	if err != nil {
+		s.log.Debug("Error when sending notification block", nlogger.Error(err), nlogger.Context(s.ctx))
+	}
+
+	// Set trying login at to metadata
+	var Format dto.MetadataCredential
+	Format.TryLoginAt = t.Format(time.RFC3339)
+	Format.PinCreatedAt = Metadata.PinCreatedAt
+	Format.PinBlockedAt = Metadata.PinBlockedAt
+	MetadataCredential, _ := json.Marshal(&Format)
+	credential.Metadata = MetadataCredential
+
+	err = s.repo.UpdateCredential(credential)
+	if err != nil {
+		s.log.Error("error when update credential.", nlogger.Error(err))
+		return ncore.TraceError("error when update credential.", err)
+	}
+
+	return resp
 }
 
 func GetChannelByAgen(agen string) string {

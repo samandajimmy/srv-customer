@@ -73,6 +73,7 @@ const (
 
 const (
 	CacheTokenSwitching = "token_switching"
+	CacheTokenJWT       = "token_jwt"
 )
 
 const (
