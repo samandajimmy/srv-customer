@@ -64,7 +64,7 @@ func (s *Service) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCus
 			),
 		)
 
-		customerProfile := dto.CustomerProfileVO{
+		profile := dto.CustomerProfileVO{
 			MaidenName:         "",
 			Gender:             "",
 			Nationality:        "",
@@ -80,11 +80,6 @@ func (s *Service) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCus
 			CifUnlinkUpdatedAt: "",
 			SidPhotoFile:       "",
 		}
-		profile, err := json.Marshal(customerProfile)
-		if err != nil {
-			s.log.Error("error when marshal profile", nlogger.Error(err), nlogger.Context(ctx))
-			return nil, ncore.TraceError("error", err)
-		}
 
 		insertCustomer := &model.Customer{
 			CustomerXID:    customerXID,
@@ -96,7 +91,7 @@ func (s *Service) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCus
 			IdentityNumber: "",
 			UserRefId:      "",
 			Photos:         []byte("{}"),
-			Profile:        profile,
+			Profile:        model.ToCustomerProfile(profile),
 			Cif:            "",
 			Sid:            "",
 			ReferralCode:   "",

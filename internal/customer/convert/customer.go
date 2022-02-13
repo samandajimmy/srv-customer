@@ -14,7 +14,7 @@ import (
 func ModelUserToCustomer(user *model.User) (*model.Customer, error) {
 
 	// prepare profile value object
-	profileVO := dto.CustomerProfileVO{
+	profile := dto.CustomerProfileVO{
 		MaidenName:         user.NamaIbu.String,
 		Gender:             user.JenisKelamin,
 		Nationality:        user.Kewarganegaraan,
@@ -30,10 +30,7 @@ func ModelUserToCustomer(user *model.User) (*model.Customer, error) {
 		CifUnlinkUpdatedAt: nval.ParseStringFallback(user.LastUpdate.Time, ""),
 		SidPhotoFile:       user.FotoSid.String,
 	}
-	profile, err := json.Marshal(profileVO)
-	if err != nil {
-		return nil, err
-	}
+
 	photosVO := dto.CustomerPhotoVO{
 		Xid:      strings.ToUpper(xid.New().String()),
 		Filename: nval.ParseStringFallback(user.FotoUrl, ""),
@@ -72,7 +69,7 @@ func ModelUserToCustomer(user *model.User) (*model.Customer, error) {
 		IdentityNumber: user.NoKtp.String,
 		UserRefId:      nval.ParseStringFallback(user.UserAiid, ""),
 		Photos:         photoRawMessage,
-		Profile:        profile,
+		Profile:        model.ToCustomerProfile(profile),
 		Cif:            user.Cif,
 		Sid:            user.NoSid.String,
 		ReferralCode:   nval.ParseStringFallback(user.ReferralCode, ""),

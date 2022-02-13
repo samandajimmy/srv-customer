@@ -3,10 +3,13 @@ package customer
 import (
 	"errors"
 	"fmt"
-	"github.com/gorilla/mux"
+	"github.com/lestrrat-go/jwx/jwt"
 	"github.com/nbs-go/nlogger"
+	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/constant"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/dto"
+	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/ncore"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nhttp"
+	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nval"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nvalidate"
 )
 
@@ -196,13 +199,86 @@ func (h *Customer) ResendOTP(rx *nhttp.Request) (*nhttp.Response, error) {
 }
 
 func (h *Customer) GetProfile(rx *nhttp.Request) (*nhttp.Response, error) {
-	// Get xid
-	id := mux.Vars(rx.Request)["id"]
-	if id == "" {
-		err := errors.New("id is not found on params")
-		log.Errorf("id is not found on params. err: %v", err)
-		return nil, nhttp.BadRequestError.Wrap(err)
+	// Get context
+	ctx := rx.Context()
+
+	// Get token
+	tokenString, err := nhttp.ExtractBearerAuth(rx.Request)
+	if err != nil {
+		log.Error("error when extract token", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, ncore.TraceError("failed to extract token", err)
 	}
 
-	return nil, nil
+	// Init service
+	svc := h.NewService(ctx)
+	defer svc.Close()
+
+	// Get UserRefID
+	userRefId, err := svc.validateTokenAndRetrieveUserRefID(tokenString)
+	if err != nil {
+		return nil, err
+	}
+
+	// Call service
+	resp, err := svc.CustomerProfile(userRefId)
+	if err != nil {
+		log.Error("error when call customer profile service")
+		return nil, err
+	}
+
+	return nhttp.Success().SetData(resp), nil
+}
+
+func (s *Service) validateJWT(token string) (jwt.Token, error) {
+	// Parsing Token
+	t, err := jwt.ParseString(token, jwt.WithVerify(constant.JWTSignature, []byte(s.config.JWTKey)))
+	if err != nil {
+		s.log.Error("parsing jwt token", nlogger.Error(err), nlogger.Context(s.ctx))
+		return nil, err
+	}
+
+	if err = jwt.Validate(t); err != nil {
+		s.log.Error("error when validate", nlogger.Error(err), nlogger.Context(s.ctx))
+		return nil, err
+	}
+
+	err = jwt.Validate(t, jwt.WithIssuer(constant.JWTIssuer))
+	if err != nil {
+		s.log.Error("error found when validate with issuer", nlogger.Error(err), nlogger.Context(s.ctx))
+		return nil, err
+	}
+
+	return t, nil
+}
+
+func (s *Service) validateTokenAndRetrieveUserRefID(tokenString string) (int64, error) {
+	// Get Context
+	ctx := s.ctx
+
+	// validate JWT
+	token, err := s.validateJWT(tokenString)
+	if err != nil {
+		s.log.Error("error when validate JWT", nlogger.Error(err), nlogger.Context(ctx))
+		return 0, err
+	}
+
+	accessToken, _ := token.Get("access_token")
+
+	tokenId, _ := token.Get("id")
+	// session token
+	key := fmt.Sprintf("%s:%s:%s", constant.Prefix, constant.CacheTokenJWT, tokenId)
+
+	tokenFromCache, err := s.CacheGet(key)
+	if err != nil {
+		s.log.Error("error get token from cache", nlogger.Error(err), nlogger.Context(ctx))
+		return 0, err
+	}
+
+	if accessToken != tokenFromCache {
+		return 0, s.responses.GetError("E_AUTH_11")
+	}
+
+	userRefId := nval.ParseInt64Fallback(tokenId, 0)
+
+	return userRefId, nil
 }
