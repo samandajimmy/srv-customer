@@ -251,7 +251,7 @@ func (s *Service) validateJWT(token string) (jwt.Token, error) {
 	return t, nil
 }
 
-func (s *Service) validateTokenAndRetrieveUserRefID(tokenString string) (int64, error) {
+func (s *Service) validateTokenAndRetrieveUserRefID(tokenString string) (string, error) {
 	// Get Context
 	ctx := s.ctx
 
@@ -259,26 +259,27 @@ func (s *Service) validateTokenAndRetrieveUserRefID(tokenString string) (int64, 
 	token, err := s.validateJWT(tokenString)
 	if err != nil {
 		s.log.Error("error when validate JWT", nlogger.Error(err), nlogger.Context(ctx))
-		return 0, err
+		return "", err
 	}
 
 	accessToken, _ := token.Get("access_token")
 
 	tokenId, _ := token.Get("id")
+
 	// session token
 	key := fmt.Sprintf("%s:%s:%s", constant.Prefix, constant.CacheTokenJWT, tokenId)
 
 	tokenFromCache, err := s.CacheGet(key)
 	if err != nil {
 		s.log.Error("error get token from cache", nlogger.Error(err), nlogger.Context(ctx))
-		return 0, err
+		return "", err
 	}
 
 	if accessToken != tokenFromCache {
-		return 0, s.responses.GetError("E_AUTH_11")
+		return "", s.responses.GetError("E_AUTH_11")
 	}
 
-	userRefId := nval.ParseInt64Fallback(tokenId, 0)
+	userRefId := nval.ParseStringFallback(tokenId, "")
 
 	return userRefId, nil
 }

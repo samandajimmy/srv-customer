@@ -22,7 +22,7 @@ func (rc *RepositoryContext) FindCustomerByID(id int64) (*model.Customer, error)
 	return &row, nil
 }
 
-func (rc *RepositoryContext) FindCustomerByRefID(id int64) (*model.Customer, error) {
+func (rc *RepositoryContext) FindCustomerByUserRefID(id string) (*model.Customer, error) {
 	var row model.Customer
 	err := rc.stmt.Customer.FindByRefId.GetContext(rc.ctx, &row, id)
 	if err != nil {
@@ -53,6 +53,32 @@ func (rc *RepositoryContext) FindCustomerByEmailOrPhone(email string) (*model.Cu
 	var row model.Customer
 	err := rc.stmt.Customer.FindByEmailOrPhone.GetContext(rc.ctx, &row, email)
 	return &row, err
+}
+
+func (rc *RepositoryContext) FindCustomerByPhoneOrCIF(cif string) (*model.Customer, error) {
+	var row model.Customer
+	err := rc.stmt.Customer.FindByPhoneOrCIF.GetContext(rc.ctx, &row, cif, cif)
+	return &row, err
+}
+
+func (rc *RepositoryContext) ReferralCodeExists(referralCode string) (*model.Customer, error) {
+	var row model.Customer
+	err := rc.stmt.Customer.ReferralCodeExist.GetContext(rc.ctx, &row, referralCode)
+	return &row, err
+}
+
+func (rc *RepositoryContext) UpdateCustomerByCIF(customer *model.Customer, cif string) error {
+	result, err := rc.stmt.Customer.UpdateByCIF.ExecContext(rc.ctx, &model.UpdateByCIF{
+		Customer: customer,
+		Cif:      cif,
+	})
+	if err != nil {
+		return ncore.TraceError("cannot update customer by cif", err)
+	}
+	if !nsql.IsUpdated(result) {
+		return constant.ResourceNotFoundError
+	}
+	return nil
 }
 
 func (rc *RepositoryContext) UpdateCustomerByPhone(row *model.Customer) error {

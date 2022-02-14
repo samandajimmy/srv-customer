@@ -24,6 +24,12 @@ E_RES_4:
   metadata:
     http_status: 403
 
+E_RES_5:
+  success: false
+  message: Terjadi kesalahan pada sistem, silahkan coba beberapa saat lagi
+  metadata:
+    http_status: 403
+
 # Auth Error Response
 
 E_AUTH_1:

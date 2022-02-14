@@ -6,7 +6,7 @@ import (
 )
 
 // Endpoint POST /portofolio/pds/tabemas
-func (s *Service) portfolioGoldSaving(cif int64) (*ResponseSwitchingSuccess, error) {
+func (s *Service) portfolioGoldSaving(cif string) (*ResponseSwitchingSuccess, error) {
 	// Set payload
 	reqBody := map[string]interface{}{
 		"cif": cif,

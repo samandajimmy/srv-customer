@@ -76,6 +76,7 @@ const (
 const (
 	CacheTokenSwitching = "token_switching"
 	CacheTokenJWT       = "token_jwt"
+	CacheGoldSavings    = "tabemas_listaccount"
 )
 
 const (

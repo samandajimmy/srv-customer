@@ -114,49 +114,49 @@ type ProfileResponse struct {
 }
 
 type CustomerVO struct {
-	ID                        string                  `json:"id"`
-	Cif                       string                  `json:"cif"`
-	IsKYC                     string                  `json:"isKyc"`
-	Nama                      string                  `json:"nama"`
-	NamaIbu                   string                  `json:"namaIbu"`
-	NoKTP                     string                  `json:"noKtp"`
-	Email                     string                  `json:"email"`
-	JenisKelamin              string                  `json:"jenisKelamin"`
-	TempatLahir               string                  `json:"tempatLahir"`
-	TglLahir                  string                  `json:"tglLahir"`
-	Alamat                    string                  `json:"alamat"`
-	IDProvinsi                interface{}             `json:"idProvinsi"`
-	IDKabupaten               interface{}             `json:"idKabupaten"`
-	IDKecamatan               interface{}             `json:"idKecamatan"`
-	IDKelurahan               interface{}             `json:"idKelurahan"`
-	Kelurahan                 string                  `json:"kelurahan"`
-	Provinsi                  string                  `json:"provinsi"`
-	Kabupaten                 string                  `json:"kabupaten"`
-	Kecamatan                 string                  `json:"kecamatan"`
-	KodePos                   string                  `json:"kodePos"`
-	NoHP                      string                  `json:"noHp"`
-	Avatar                    string                  `json:"avatar"`
-	FotoKTP                   string                  `json:"fotoKTP"`
-	IsEmailVerified           string                  `json:"isEmailVerified"`
-	Kewarganegaraan           string                  `json:"kewarganegaraan"`
-	JenisIdentitas            string                  `json:"jenisIdentitas"`
-	NoIdentitas               string                  `json:"noIdentitas"`
-	TglExpiredIdentitas       string                  `json:"tglExpiredIdentitas"`
-	NoNPWP                    string                  `json:"noNPWP"`
-	FotoNPWP                  string                  `json:"fotoNPWP"`
-	NoSid                     interface{}             `json:"noSid"`
-	FotoSid                   interface{}             `json:"fotoSid"`
-	StatusKawin               string                  `json:"statusKawin"`
-	Norek                     string                  `json:"norek"`
-	Saldo                     string                  `json:"saldo"`
-	AktifasiTransFinansial    string                  `json:"aktifasiTransFinansial"`
-	IsDukcapilVerified        string                  `json:"isDukcapilVerified"`
-	IsOpenTe                  string                  `json:"isOpenTe"`
-	ReferralCode              interface{}             `json:"referralCode"`
-	GoldCardApplicationNumber string                  `json:"goldCardApplicationNumber"`
-	GoldCardAccountNumber     interface{}             `json:"goldCardAccountNumber"`
-	KodeCabang                string                  `json:"kodeCabang"`
-	TabunganEmas              *CustomerTabunganEmasVO `json:"tabunganEmas"`
+	ID                        string        `json:"id"`
+	Cif                       string        `json:"cif"`
+	IsKYC                     string        `json:"isKyc"`
+	Nama                      string        `json:"nama"`
+	NamaIbu                   string        `json:"namaIbu"`
+	NoKTP                     string        `json:"noKtp"`
+	Email                     string        `json:"email"`
+	JenisKelamin              string        `json:"jenisKelamin"`
+	TempatLahir               string        `json:"tempatLahir"`
+	TglLahir                  string        `json:"tglLahir"`
+	Alamat                    string        `json:"alamat"`
+	IDProvinsi                interface{}   `json:"idProvinsi"`
+	IDKabupaten               interface{}   `json:"idKabupaten"`
+	IDKecamatan               interface{}   `json:"idKecamatan"`
+	IDKelurahan               interface{}   `json:"idKelurahan"`
+	Kelurahan                 string        `json:"kelurahan"`
+	Provinsi                  string        `json:"provinsi"`
+	Kabupaten                 string        `json:"kabupaten"`
+	Kecamatan                 string        `json:"kecamatan"`
+	KodePos                   string        `json:"kodePos"`
+	NoHP                      string        `json:"noHp"`
+	Avatar                    string        `json:"avatar"`
+	FotoKTP                   string        `json:"fotoKTP"`
+	IsEmailVerified           string        `json:"isEmailVerified"`
+	Kewarganegaraan           string        `json:"kewarganegaraan"`
+	JenisIdentitas            string        `json:"jenisIdentitas"`
+	NoIdentitas               string        `json:"noIdentitas"`
+	TglExpiredIdentitas       string        `json:"tglExpiredIdentitas"`
+	NoNPWP                    string        `json:"noNPWP"`
+	FotoNPWP                  string        `json:"fotoNPWP"`
+	NoSid                     interface{}   `json:"noSid"`
+	FotoSid                   interface{}   `json:"fotoSid"`
+	StatusKawin               string        `json:"statusKawin"`
+	Norek                     string        `json:"norek"`
+	Saldo                     string        `json:"saldo"`
+	AktifasiTransFinansial    string        `json:"aktifasiTransFinansial"`
+	IsDukcapilVerified        string        `json:"isDukcapilVerified"`
+	IsOpenTe                  string        `json:"isOpenTe"`
+	ReferralCode              interface{}   `json:"referralCode"`
+	GoldCardApplicationNumber string        `json:"goldCardApplicationNumber"`
+	GoldCardAccountNumber     interface{}   `json:"goldCardAccountNumber"`
+	KodeCabang                string        `json:"kodeCabang"`
+	TabunganEmas              *GoldSavingVO `json:"tabunganEmas"`
 }
 
 type UserVO struct {
@@ -257,6 +257,26 @@ type CustomerTabunganEmasVO struct {
 	TotalSaldoSeluruh string      `json:"totalSaldoSeluruh"`
 	TotalSaldoEfektif string      `json:"totalSaldoEfektif"`
 	PrimaryRekening   interface{} `json:"primaryRekening"`
+}
+
+type GoldSavingVO struct {
+	TotalSaldoBlokir  string            `json:"totalSaldoBlokir"`
+	TotalSaldoSeluruh string            `json:"totalSaldoSeluruh"`
+	TotalSaldoEfektif string            `json:"totalSaldoEfektif"`
+	ListTabungan      []AccountSavingVO `json:"listTabungan"`
+	PrimaryRekening   *AccountSavingVO  `json:"primaryRekening"`
+}
+
+type AccountSavingVO struct {
+	Cif          string `json:"cif"`
+	KodeCabang   string `json:"kodeCabang"`
+	NamaNasabah  string `json:"namaNasabah"`
+	NoBuku       string `json:"noBuku"`
+	Norek        string `json:"norek"`
+	SaldoBlokir  string `json:"saldoBlokir"`
+	SaldoEmas    string `json:"saldoEmas"`
+	TglBuka      string `json:"tglBuka"`
+	SaldoEfektif string `json:"saldoEfektif"`
 }
 
 type LoginRequest struct {

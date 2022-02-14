@@ -26,6 +26,16 @@ type Customer struct {
 	ItemMetadata
 }
 
+type UpdateCustomer struct {
+	*Customer
+	CurrentVersion int64 `db:"currentVersion"`
+}
+
+type UpdateByCIF struct {
+	*Customer
+	Cif string `db:"cif"`
+}
+
 type CustomerDetail struct {
 	Customer
 	Address

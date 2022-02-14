@@ -174,12 +174,11 @@ func (s *Service) restSwitchingNewToken() (string, error) {
 	}
 
 	// Send OTP Rest Switching
-	resp, err := s.client.PostData("/oauth/token", reqBody, reqHeader)
+	resp, err := s.clientRestSwitching().PostData("/oauth/token", reqBody, reqHeader)
 	if err != nil {
 		s.log.Error("Error when request oauth token")
 		return result, ncore.TraceError("error", err)
 	}
-	defer resp.Body.Close()
 
 	// Decode response body from server.
 	var data dto.TokenResponse

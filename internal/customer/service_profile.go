@@ -8,12 +8,12 @@ import (
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nval"
 )
 
-func (s *Service) CustomerProfile(id int64) (*dto.ProfileResponse, error) {
+func (s *Service) CustomerProfile(id string) (*dto.ProfileResponse, error) {
 	// Get Context
 	ctx := s.ctx
 
 	// Get customer data
-	c, err := s.repo.FindCustomerByRefID(id)
+	c, err := s.repo.FindCustomerByUserRefID(id)
 	if err != nil {
 		s.log.Error("error found when get customer repo", nlogger.Error(err), nlogger.Context(ctx))
 		return nil, ncore.TraceError("error when", err)
@@ -33,7 +33,11 @@ func (s *Service) CustomerProfile(id int64) (*dto.ProfileResponse, error) {
 		return nil, ncore.TraceError("", err)
 	}
 
-	// TODO Tabungan Emas
+	// TODO
+	//goldSaving, err := s.getListAccountNumber(c.Cif, c.UserRefId)
+	//if err != nil {
+	//	return nil, ncore.TraceError("error when get list gold saving account", err)
+	//}
 
 	// Compose response
 	resp := dto.ProfileResponse{
@@ -64,11 +68,12 @@ func (s *Service) CustomerProfile(id int64) (*dto.ProfileResponse, error) {
 			FotoKTP:         "", // TODO Foto KTP
 			IsEmailVerified: nval.ParseStringFallback(v.EmailVerifiedStatus, ""),
 			JenisIdentitas:  nval.ParseStringFallback(c.IdentityType, ""),
-			TabunganEmas: &dto.CustomerTabunganEmasVO{
+			TabunganEmas: &dto.GoldSavingVO{
 				TotalSaldoBlokir:  "",
 				TotalSaldoSeluruh: "",
 				TotalSaldoEfektif: "",
-				PrimaryRekening:   "",
+				ListTabungan:      nil,
+				PrimaryRekening:   nil,
 			},
 		},
 	}

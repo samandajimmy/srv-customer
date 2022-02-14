@@ -79,3 +79,8 @@ func (rc *RepositoryContext) DeleteFinancialData(id string) error {
 	}
 	return nil
 }
+
+func (rc *RepositoryContext) UpdateGoldSavingStatus(financialData *model.FinancialData) error {
+	err := rc.InsertOrUpdateFinancialData(financialData)
+	return err
+}

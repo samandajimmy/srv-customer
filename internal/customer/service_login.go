@@ -384,11 +384,11 @@ func composeLoginResponse(data dto.LoginVO) (*dto.LoginResponse, error) {
 				GoldCardApplicationNumber: "",
 				GoldCardAccountNumber:     "",
 				KodeCabang:                "",
-				TabunganEmas: &dto.CustomerTabunganEmasVO{
+				TabunganEmas: &dto.GoldSavingVO{
 					TotalSaldoBlokir:  "",
 					TotalSaldoSeluruh: "",
 					TotalSaldoEfektif: "",
-					PrimaryRekening:   "",
+					PrimaryRekening:   nil,
 				},
 			},
 			IsFirstLogin:          data.IsFirstLogin,
