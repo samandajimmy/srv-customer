@@ -296,6 +296,39 @@ type LoginRequest struct {
 	FcmToken     string `json:"fcm_token"`
 }
 
+type UpdateProfileRequest struct {
+	Nama                    string `json:"nama"`
+	Alamat                  string `json:"alamat"`
+	NamaIbu                 string `json:"nama_ibu"`
+	Agama                   string `json:"agama"`
+	TempatLahir             string `json:"tempat_lahir"`
+	TglLahir                string `json:"tgl_lahir"`
+	JenisIdentitas          string `json:"jenis_identitas"`
+	NoKtp                   string `json:"no_ktp"`
+	IdKelurahan             string `json:"id_kelurahan"`
+	KodePos                 string `json:"kode_pos"`
+	JenisKelamin            string `json:"jenis_kelamin"`
+	Kewarganegaraan         string `json:"kewarganegaraan"`
+	TanggalExpiredIdentitas string `json:"tanggal_expired_identitas"`
+	StatusKawin             string `json:"status_kawin"`
+}
+
+func (d UpdateProfileRequest) Validate() error {
+	return validation.ValidateStruct(&d,
+		validation.Field(&d.Nama, validation.Required),
+		validation.Field(&d.Alamat, validation.Required),
+		validation.Field(&d.NamaIbu, validation.Required),
+		validation.Field(&d.TempatLahir, validation.Required),
+		validation.Field(&d.TglLahir, validation.Required),
+		validation.Field(&d.NoKtp, validation.Required),
+		validation.Field(&d.IdKelurahan, validation.Required),
+		validation.Field(&d.JenisKelamin, validation.Required),
+		validation.Field(&d.JenisIdentitas, validation.Required),
+		validation.Field(&d.Kewarganegaraan, validation.Required),
+		validation.Field(&d.Agama, validation.Required),
+	)
+}
+
 func (d RegisterNewCustomer) Validate() error {
 	return validation.ValidateStruct(&d,
 		validation.Field(&d.Name, validation.Required),
