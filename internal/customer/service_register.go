@@ -64,7 +64,7 @@ func (s *Service) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCus
 			),
 		)
 
-		profile := dto.CustomerProfileVO{
+		profile := &dto.CustomerProfileVO{
 			MaidenName:         "",
 			Gender:             "",
 			Nationality:        "",
@@ -89,12 +89,12 @@ func (s *Service) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCus
 			Status:         0,
 			IdentityType:   0,
 			IdentityNumber: "",
-			UserRefId:      "",
-			Photos:         []byte("{}"),
-			Profile:        model.ToCustomerProfile(profile),
+			UserRefId:      sql.NullString{},
 			Cif:            "",
 			Sid:            "",
 			ReferralCode:   "",
+			Profile:        model.ToCustomerProfile(profile),
+			Photos:         []byte("{}"),
 			Metadata:       []byte("{}"),
 			ItemMetadata:   metaData,
 		}

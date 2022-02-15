@@ -1,6 +1,7 @@
 package model
 
 import (
+	"database/sql"
 	"database/sql/driver"
 	"encoding/json"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/dto"
@@ -8,21 +9,21 @@ import (
 )
 
 type Customer struct {
-	Id             int64           `db:"id"`
-	CustomerXID    string          `db:"xid"`
-	FullName       string          `db:"fullName"`
-	Phone          string          `db:"phone"`
-	Email          string          `db:"email"`
-	IdentityType   int64           `db:"identityType"`
-	IdentityNumber string          `db:"identityNumber"`
-	UserRefId      string          `db:"userRefId"`
-	Photos         json.RawMessage `db:"photos"`
-	Profile        CustomerProfile `db:"profile"`
-	Cif            string          `db:"cif"`
-	Sid            string          `db:"sid"`
-	ReferralCode   string          `db:"referralCode"`
-	Status         int64           `db:"status"`
-	Metadata       json.RawMessage `db:"metadata"`
+	Id             int64            `db:"id"`
+	CustomerXID    string           `db:"xid"`
+	FullName       string           `db:"fullName"`
+	Phone          string           `db:"phone"`
+	Email          string           `db:"email"`
+	IdentityType   int64            `db:"identityType"`
+	IdentityNumber string           `db:"identityNumber"`
+	UserRefId      sql.NullString   `db:"userRefId"`
+	Photos         json.RawMessage  `db:"photos"`
+	Profile        *CustomerProfile `db:"profile"`
+	Cif            string           `db:"cif"`
+	Sid            string           `db:"sid"`
+	ReferralCode   string           `db:"referralCode"`
+	Status         int64            `db:"status"`
+	Metadata       json.RawMessage  `db:"metadata"`
 	ItemMetadata
 }
 
@@ -34,6 +35,11 @@ type UpdateCustomer struct {
 type UpdateByCIF struct {
 	*Customer
 	Cif string `db:"cif"`
+}
+
+type UpdateByID struct {
+	*Customer
+	ID int64 `db:"id"`
 }
 
 type CustomerDetail struct {
@@ -48,6 +54,8 @@ type CustomerProfile struct {
 	DateOfBirth        string `json:"dateOfBirth"`
 	PlaceOfBirth       string `json:"placeOfBirth"`
 	IdentityPhotoFile  string `json:"identityPhotoFile"`
+	IdentityExpiredAt  string `json:"IdentityExpiredAt"`
+	Religion           string `json:"religion"`
 	MarriageStatus     string `json:"marriageStatus"`
 	NPWPNumber         string `json:"npwpNumber"`
 	NPWPPhotoFile      string `json:"npwpPhotoFile"`
@@ -66,8 +74,12 @@ func (m *CustomerProfile) Value() (driver.Value, error) {
 	return json.Marshal(m)
 }
 
-func ToCustomerProfile(d dto.CustomerProfileVO) CustomerProfile {
-	return CustomerProfile{
+func ToCustomerProfile(d *dto.CustomerProfileVO) *CustomerProfile {
+	if d == nil {
+		return nil
+	}
+
+	return &CustomerProfile{
 		MaidenName:         d.MaidenName,
 		Gender:             d.Gender,
 		Nationality:        d.Nationality,

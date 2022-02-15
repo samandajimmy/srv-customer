@@ -137,7 +137,7 @@ func (s *Service) getListAccountNumber(cif string, userRefId string) (*dto.GoldS
 	}
 
 	// Set gold saving to cache
-	err = s.CacheSetGoldSavings(customer.UserRefId, accountSaving)
+	err = s.CacheSetGoldSavings(customer.UserRefId.String, accountSaving)
 	if err != nil {
 		s.log.Error("error found when set gold saving to cache", nlogger.Error(err), nlogger.Context(ctx))
 		return nil, ncore.TraceError("error when set gold saving to cache", err)

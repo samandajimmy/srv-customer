@@ -75,7 +75,7 @@ func (s *Service) Login(payload dto.LoginRequest) (*dto.LoginResponse, error) {
 	}
 
 	// get userRefId from external DB
-	if customer.UserRefId == "" {
+	if customer.UserRefId.Valid == false {
 		registerPayload := &dto.CustomerSynchronizeRequest{
 			Name:        customer.FullName,
 			Email:       customer.Email,
@@ -90,7 +90,10 @@ func (s *Service) Login(payload dto.LoginRequest) (*dto.LoginResponse, error) {
 			return nil, ncore.TraceError("error found when sync to pds api", err)
 		}
 		// set userRefId
-		customer.UserRefId = nval.ParseStringFallback(resultSync.UserAiid, "")
+		customer.UserRefId = sql.NullString{
+			Valid:  true,
+			String: nval.ParseStringFallback(resultSync.UserAiid, ""),
+		}
 		// update customer
 		err = s.repo.UpdateCustomerByPhone(customer)
 		if err != nil {
@@ -335,7 +338,7 @@ func (s *Service) syncExternalToInternal(user *model.User) (*model.Customer, err
 func composeLoginResponse(data dto.LoginVO) (*dto.LoginResponse, error) {
 	// Cast to model
 	customer := data.Customer.(*model.Customer)
-	profile := data.Profile.(model.CustomerProfile)
+	profile := data.Profile.(*model.CustomerProfile)
 	verification := data.Verification.(*model.Verification)
 	address := data.Address.(*model.Address)
 
@@ -424,7 +427,7 @@ func (s *Service) setTokenAuthentication(customer *model.Customer, agen string, 
 
 	// Generate JWT
 	token, err := jwt.NewBuilder().
-		Claim("id", customer.UserRefId).
+		Claim("id", customer.UserRefId.String).
 		Claim("email", customer.Email).
 		Claim("nama", customer.FullName).
 		Claim("no_hp", customer.Phone).

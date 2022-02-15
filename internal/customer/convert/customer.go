@@ -14,7 +14,7 @@ import (
 func ModelUserToCustomer(user *model.User) (*model.Customer, error) {
 
 	// prepare profile value object
-	profile := dto.CustomerProfileVO{
+	profile := &dto.CustomerProfileVO{
 		MaidenName:         user.NamaIbu.String,
 		Gender:             user.JenisKelamin,
 		Nationality:        user.Kewarganegaraan,
@@ -65,17 +65,19 @@ func ModelUserToCustomer(user *model.User) (*model.Customer, error) {
 		FullName:       user.Nama.String,
 		Phone:          user.NoHp.String,
 		Email:          user.Email.String,
-		IdentityType:   nval.ParseInt64Fallback(user.JenisIdentitas, 0),
 		IdentityNumber: user.NoKtp.String,
-		UserRefId:      nval.ParseStringFallback(user.UserAiid, ""),
 		Photos:         photoRawMessage,
-		Profile:        model.ToCustomerProfile(profile),
 		Cif:            user.Cif,
 		Sid:            user.NoSid.String,
-		ReferralCode:   nval.ParseStringFallback(user.ReferralCode, ""),
-		Status:         user.Status.Int64,
-		Metadata:       customerMetadataRaw,
-		ItemMetadata:   itemMetaData,
+		UserRefId: sql.NullString{
+			String: nval.ParseStringFallback(user.UserAiid, ""),
+		},
+		IdentityType: nval.ParseInt64Fallback(user.JenisIdentitas, 0),
+		Profile:      model.ToCustomerProfile(profile),
+		ReferralCode: nval.ParseStringFallback(user.ReferralCode, ""),
+		Status:       user.Status.Int64,
+		Metadata:     customerMetadataRaw,
+		ItemMetadata: itemMetaData,
 	}
 
 	return customer, nil
