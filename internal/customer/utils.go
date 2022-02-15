@@ -1,6 +1,7 @@
 package customer
 
 import (
+	"crypto/md5"
 	"fmt"
 	"strings"
 	"time"
@@ -36,4 +37,8 @@ func monthsToSeconds(month int) int {
 func hoursToSeconds(hour int64) int {
 	now := time.Now()
 	return now.Add(time.Hour * time.Duration(hour)).Second()
+}
+
+func stringToMD5(str string) string {
+	return fmt.Sprintf("%x", md5.Sum([]byte(str)))
 }

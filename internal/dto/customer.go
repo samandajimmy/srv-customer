@@ -320,6 +320,16 @@ type UpdateProfileRequest struct {
 	StatusKawin             string `json:"status_kawin"`
 }
 
+type UpdatePasswordCheckRequest struct {
+	CurrentPassword string `json:"current_password"`
+}
+
+func (d UpdatePasswordCheckRequest) Validate() error {
+	return validation.ValidateStruct(&d,
+		validation.Field(&d.CurrentPassword, validation.Required),
+	)
+}
+
 func (d UpdateProfileRequest) Validate() error {
 	return validation.ValidateStruct(&d,
 		validation.Field(&d.Nama, validation.Required),

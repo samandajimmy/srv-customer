@@ -139,3 +139,9 @@ E_REG_3:
   metadata:
     http_status: 400
 
+
+E_USR_1:
+  success: false
+  message: Password tidak sesuai
+  metadata:
+    http_status: 400

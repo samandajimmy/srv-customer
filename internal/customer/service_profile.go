@@ -141,8 +141,6 @@ func (s *Service) UpdateCustomerProfile(id string, payload dto.UpdateProfileRequ
 		address.ItemMetadata = model.NewItemMetadata(convert.ModifierDTOToModel(dto.Modifier{ID: "", Role: "", FullName: ""}))
 	}
 
-	s.log.Debugf("alamat %s", address.Line.String)
-
 	// Update customer profile repo
 	err = s.repo.UpdateCustomerProfile(customer, address)
 	if err != nil {
@@ -151,4 +149,37 @@ func (s *Service) UpdateCustomerProfile(id string, payload dto.UpdateProfileRequ
 	}
 
 	return nil
+}
+
+func (s *Service) isValidPassword(tokenString string, password string) (bool, error) {
+	// Get Context
+	ctx := s.ctx
+
+	// Get UserRefID
+	userRefId, err := s.validateTokenAndRetrieveUserRefID(tokenString)
+	if err != nil {
+		s.log.Error("error when validate token", nlogger.Error(err), nlogger.Context(ctx))
+		return false, ncore.TraceError("", err)
+	}
+
+	// Find customer
+	c, err := s.repo.FindCustomerByUserRefID(userRefId)
+	if err != nil {
+		return false, err
+	}
+
+	pw := stringToMD5(password)
+
+	// Check is valid
+	_, err = s.repo.IsValidPassword(c.Id, pw)
+	if err != nil && err != sql.ErrNoRows {
+		s.log.Error("error when check password match", nlogger.Error(err), nlogger.Context(ctx))
+		return false, ncore.TraceError("error when validate password match", err)
+	}
+
+	if err == sql.ErrNoRows {
+		return false, nil
+	}
+
+	return true, nil
 }

@@ -27,6 +27,11 @@ type Customer struct {
 	ItemMetadata
 }
 
+type ValidatePassword struct {
+	CustomerId int64  `db:"customerId"`
+	Password   string `db:"password"`
+}
+
 type UpdateCustomer struct {
 	*Customer
 	CurrentVersion int64 `db:"currentVersion"`

@@ -8,7 +8,7 @@ import (
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nsql"
 )
 
-var FinancialDataSchema = schema.New(schema.FromModelRef(model.FinancialData{}))
+var financialDataSchema = schema.New(schema.FromModelRef(model.FinancialData{}))
 
 type FinancialData struct {
 	FindByCustomerID *sqlx.Stmt
@@ -21,17 +21,17 @@ func NewFinancialData(db *nsql.DatabaseContext) *FinancialData {
 	return &FinancialData{
 		FindByCustomerID: db.PrepareFmtRebind(q.Select(q.Column("*")).
 			Where(q.Equal(q.Column("customerId"))).
-			From(FinancialDataSchema).
+			From(financialDataSchema).
 			Build()),
 		Insert: db.PrepareNamedFmtRebind(q.
-			Insert(FinancialDataSchema, "*").
+			Insert(financialDataSchema, "*").
 			Build()),
-		Update: db.PrepareNamedFmtRebind(q.Update(FinancialDataSchema, "*").
+		Update: db.PrepareNamedFmtRebind(q.Update(financialDataSchema, "*").
 			Where(q.Equal(q.Column("customerId"))).
 			Build()),
 		DeleteByID: db.PrepareFmtRebind(q.
-			Delete(FinancialDataSchema).
-			Where(q.Equal(q.Column(FinancialDataSchema.PrimaryKey()))).
+			Delete(financialDataSchema).
+			Where(q.Equal(q.Column(financialDataSchema.PrimaryKey()))).
 			Build(),
 		),
 	}

@@ -276,6 +276,51 @@ func (h *Customer) UpdateProfile(rx *nhttp.Request) (*nhttp.Response, error) {
 	return nhttp.Success().SetMessage("Update data user berhasil").SetData(false), nil
 }
 
+func (h *Customer) UpdatePasswordCheck(rx *nhttp.Request) (*nhttp.Response, error) {
+	// Get context
+	ctx := rx.Context()
+
+	// Get token
+	tokenString, err := nhttp.ExtractBearerAuth(rx.Request)
+	if err != nil {
+		log.Error("error when extract token", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, ncore.TraceError("failed to extract token", err)
+	}
+
+	// Get payload
+	var payload dto.UpdatePasswordCheckRequest
+	err = rx.ParseJSONBody(&payload)
+	if err != nil {
+		log.Error("error when parse json body", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, nhttp.BadRequestError.Wrap(err)
+	}
+
+	// Validate payload
+	err = payload.Validate()
+	if err != nil {
+		log.Error("unprocessable entity", nlogger.Error(err), nlogger.Context(ctx))
+		data := nvalidate.Message(err.Error())
+		return nhttp.UnprocessableEntity(data), nil
+	}
+
+	// Init service
+	svc := h.NewService(rx.Context())
+	defer svc.Close()
+
+	// Call service
+	valid, err := svc.isValidPassword(tokenString, payload.CurrentPassword)
+	if err != nil {
+		log.Error("error when processing service", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, err
+	}
+
+	if !valid {
+		return nil, h.Responses.GetError("E_USR_1")
+	}
+
+	return nhttp.Success().SetMessage("Password Sesuai"), nil
+}
+
 func (s *Service) validateJWT(token string) (jwt.Token, error) {
 	// Parsing Token
 	t, err := jwt.ParseString(token, jwt.WithVerify(constant.JWTSignature, []byte(s.config.JWTKey)))

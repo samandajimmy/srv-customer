@@ -67,3 +67,9 @@ func (rc *RepositoryContext) InsertOrUpdateCredential(row *model.Credential) err
 		return nil
 	}
 }
+
+func (rc *RepositoryContext) IsValidPassword(customerId int64, password string) (*model.Credential, error) {
+	var row model.Credential
+	err := rc.stmt.Credential.FindByPasswordAndCustomerID.GetContext(rc.ctx, &row, customerId, password)
+	return &row, err
+}

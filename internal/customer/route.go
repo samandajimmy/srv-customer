@@ -32,6 +32,8 @@ func setUpRoute(router *nhttp.Router, handlers *HandlerMap) {
 
 	router.Handle(http.MethodPut, "/profile", router.HandleFunc(handlers.Customer.UpdateProfile))
 
+	router.Handle(http.MethodPost, "/profile/check_password", router.HandleFunc(handlers.Customer.UpdatePasswordCheck))
+
 	// Static asset
 	staticDir := "/web/assets/"
 	router.PathPrefix(staticDir).Handler(http.StripPrefix(staticDir, http.FileServer(http.Dir("."+staticDir))))
