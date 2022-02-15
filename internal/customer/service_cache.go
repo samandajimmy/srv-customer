@@ -13,6 +13,7 @@ func (s *Service) CacheGet(key string) (string, error) {
 
 	result, err := s.redis.Get(key)
 	if err != nil {
+		s.log.Error("error when get cache %v", key, nlogger.Error(err), nlogger.Context(s.ctx))
 		return "", err
 	}
 
@@ -23,6 +24,7 @@ func (s *Service) CacheSetThenGet(key string, value string, expire int64) (strin
 
 	result, err := s.redis.SetThenGet(key, value, expire)
 	if err != nil {
+		s.log.Error("error when set cache %v", key, nlogger.Error(err), nlogger.Context(s.ctx))
 		return "", err
 	}
 
@@ -34,6 +36,7 @@ func (s *Service) CacheGetJwt(key string) string {
 
 	token, err := s.CacheGet(fullKey)
 	if err != nil {
+		s.log.Error("error when get cache jwt %v", fullKey, nlogger.Error(err), nlogger.Context(s.ctx))
 		return ""
 	}
 
@@ -80,5 +83,4 @@ func (s *Service) CacheSetGoldSavings(id string, goldSaving *dto.GoldSavingVO) e
 	}
 
 	return nil
-
 }
