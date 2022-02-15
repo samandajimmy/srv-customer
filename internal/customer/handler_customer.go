@@ -229,6 +229,53 @@ func (h *Customer) GetProfile(rx *nhttp.Request) (*nhttp.Response, error) {
 	return nhttp.Success().SetData(resp), nil
 }
 
+func (h *Customer) UpdateProfile(rx *nhttp.Request) (*nhttp.Response, error) {
+	// Get context
+	ctx := rx.Context()
+
+	// Get token
+	tokenString, err := nhttp.ExtractBearerAuth(rx.Request)
+	if err != nil {
+		log.Error("error when extract token", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, ncore.TraceError("failed to extract token", err)
+	}
+
+	// Get payload
+	var payload dto.UpdateProfileRequest
+	err = rx.ParseJSONBody(&payload)
+	if err != nil {
+		log.Error("error when parse json body", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, nhttp.BadRequestError.Wrap(err)
+	}
+
+	// Validate payload
+	err = payload.Validate()
+	if err != nil {
+		log.Error("unprocessable entity", nlogger.Error(err), nlogger.Context(ctx))
+		data := nvalidate.Message(err.Error())
+		return nhttp.UnprocessableEntity(data), nil
+	}
+
+	// Init service
+	svc := h.NewService(rx.Context())
+	defer svc.Close()
+
+	// Get UserRefID
+	userRefId, err := svc.validateTokenAndRetrieveUserRefID(tokenString)
+	if err != nil {
+		return nil, err
+	}
+
+	// Call service
+	err = svc.UpdateCustomerProfile(userRefId, payload)
+	if err != nil {
+		log.Error("error when processing service", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, err
+	}
+
+	return nhttp.Success().SetMessage("Update data user berhasil").SetData(false), nil
+}
+
 func (s *Service) validateJWT(token string) (jwt.Token, error) {
 	// Parsing Token
 	t, err := jwt.ParseString(token, jwt.WithVerify(constant.JWTSignature, []byte(s.config.JWTKey)))
@@ -266,7 +313,7 @@ func (s *Service) validateTokenAndRetrieveUserRefID(tokenString string) (string,
 
 	tokenId, _ := token.Get("id")
 
-	// session token
+	// Session token
 	key := fmt.Sprintf("%s:%s:%s", constant.Prefix, constant.CacheTokenJWT, tokenId)
 
 	tokenFromCache, err := s.CacheGet(key)

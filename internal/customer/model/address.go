@@ -10,13 +10,13 @@ type Address struct {
 	Xid             string          `db:"xid"`
 	CustomerId      int64           `db:"customerId"`
 	Purpose         int64           `db:"purpose"`
-	ProvinceId      sql.NullString  `db:"provinceId"`
+	ProvinceId      sql.NullInt64   `db:"provinceId"`
 	ProvinceName    sql.NullString  `db:"provinceName"`
-	CityId          sql.NullString  `db:"cityId"`
+	CityId          sql.NullInt64   `db:"cityId"`
 	CityName        sql.NullString  `db:"cityName"`
-	DistrictId      sql.NullString  `db:"districtId"`
+	DistrictId      sql.NullInt64   `db:"districtId"`
 	DistrictName    sql.NullString  `db:"districtName"`
-	SubDistrictId   sql.NullString  `db:"subDistrictId"`
+	SubDistrictId   sql.NullInt64   `db:"subDistrictId"`
 	SubDistrictName sql.NullString  `db:"subDistrictName"`
 	PostalCode      sql.NullString  `db:"postalCode"`
 	Line            sql.NullString  `db:"line"`
@@ -33,8 +33,8 @@ type AddressExternal struct {
 	Kecamatan   sql.NullString `db:"kecamatan"`
 	Kabupaten   sql.NullString `db:"kabupaten"`
 	Provinsi    sql.NullString `db:"provinsi"`
-	IdKelurahan sql.NullString `db:"id_kelurahan"`
-	IdKecamatan sql.NullString `db:"id_kecamatan"`
-	IdKabupaten sql.NullString `db:"id_kabupaten"`
-	IdProvinsi  sql.NullString `db:"id_provinsi"`
+	IdKelurahan sql.NullInt64  `db:"id_kelurahan"`
+	IdKecamatan sql.NullInt64  `db:"id_kecamatan"`
+	IdKabupaten sql.NullInt64  `db:"id_kabupaten"`
+	IdProvinsi  sql.NullInt64  `db:"id_provinsi"`
 }

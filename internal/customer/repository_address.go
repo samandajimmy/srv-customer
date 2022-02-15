@@ -2,7 +2,7 @@ package customer
 
 import (
 	"database/sql"
-	"errors"
+	"github.com/nbs-go/nlogger"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/constant"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/model"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/ncore"
@@ -16,11 +16,8 @@ func (rc *RepositoryContext) FindAddressByCustomerId(id int64) (*model.Address, 
 }
 
 func (rc *RepositoryContext) CreateAddress(row *model.Address) error {
-	_, err := rc.stmt.Address.Insert.ExecContext(rc.ctx, row)
-	if err != nil {
-		return err
-	}
-	return nil
+	_, err := rc.stmt.Address.Insert.ExecContext(rc.ctx, &row)
+	return err
 }
 
 func (rc *RepositoryContext) UpdateAddress(row *model.Address) error {
@@ -45,23 +42,23 @@ func (rc *RepositoryContext) FindAddressPrimary(customerId int64) (*model.Addres
 
 func (rc *RepositoryContext) InsertOrUpdateAddress(row *model.Address) error {
 	address, err := rc.FindAddressByCustomerId(row.CustomerId)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			address = nil
-		}
+	if err != nil && err != sql.ErrNoRows {
+		return ncore.TraceError("error when find address by ID", err)
 	}
 
-	if address != nil {
+	if err != sql.ErrNoRows {
 		err = rc.UpdateAddress(address)
 		if err != nil {
-			return ncore.TraceError("cannot update address.", err)
+			rc.log.Error("cannot update address.", nlogger.Error(err), nlogger.Context(rc.ctx))
+			return ncore.TraceError("", err)
 		}
 		return nil
 
 	} else {
 		err = rc.CreateAddress(row)
 		if err != nil {
-			return ncore.TraceError("cannot create address.", err)
+			rc.log.Error("cannot create address.", nlogger.Error(err), nlogger.Context(rc.ctx))
+			return ncore.TraceError("", err)
 		}
 		return nil
 	}

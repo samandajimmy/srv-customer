@@ -305,7 +305,14 @@ type UpdateProfileRequest struct {
 	TglLahir                string `json:"tgl_lahir"`
 	JenisIdentitas          string `json:"jenis_identitas"`
 	NoKtp                   string `json:"no_ktp"`
+	IdProvinsi              string `json:"id_provinsi"`
+	NamaProvinsi            string `json:"nama_provinsi"`
+	IdKabupaten             string `json:"id_kabupaten"`
+	NamaKabupaten           string `json:"nama_kabupaten"`
+	IdKecamatan             string `json:"id_kecamatan"`
+	NamaKecamatan           string `json:"nama_kecamatan"`
 	IdKelurahan             string `json:"id_kelurahan"`
+	NamaKelurahan           string `json:"nama_kelurahan"`
 	KodePos                 string `json:"kode_pos"`
 	JenisKelamin            string `json:"jenis_kelamin"`
 	Kewarganegaraan         string `json:"kewarganegaraan"`

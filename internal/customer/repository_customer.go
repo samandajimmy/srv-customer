@@ -81,8 +81,36 @@ func (rc *RepositoryContext) UpdateCustomerByCIF(customer *model.Customer, cif s
 	return nil
 }
 
-func (rc *RepositoryContext) UpdateCustomerByPhone(row *model.Customer) error {
-	result, err := rc.stmt.Customer.UpdateByPhone.ExecContext(rc.ctx, row)
+func (rc *RepositoryContext) UpdateCustomerProfile(customer *model.Customer, address *model.Address) error {
+	tx, err := rc.conn.BeginTxx(rc.ctx, nil)
+	if err != nil {
+		return ncore.TraceError("", err)
+	}
+	defer rc.ReleaseTx(tx, &err)
+
+	// Update the data to repositories
+	customerUpdate, err := rc.stmt.Customer.UpdateByUserRefID.ExecContext(rc.ctx, &model.UpdateByID{
+		Customer: customer,
+		ID:       customer.Id,
+	})
+	if err != nil {
+		return ncore.TraceError("", err)
+	}
+	if !nsql.IsUpdated(customerUpdate) {
+		return constant.ResourceNotFoundError
+	}
+
+	err = rc.InsertOrUpdateAddress(address)
+	if err != nil {
+		return ncore.TraceError("", err)
+	}
+
+	return nil
+}
+
+func (rc *RepositoryContext) UpdateCustomerByPhone(customer *model.Customer) error {
+	rc.log.Debugf("row customer %v", customer)
+	result, err := rc.stmt.Customer.UpdateByPhone.ExecContext(rc.ctx, customer)
 	if err != nil {
 		return ncore.TraceError("cannot update customer by phone", err)
 	}

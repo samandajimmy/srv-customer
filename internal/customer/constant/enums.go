@@ -57,9 +57,24 @@ const (
 	IdentityCard int64 = 2
 )
 
+// Identity
+
+type IdentityType int64
+
 const (
-	KTP   = "1"
-	KITAS = "2"
+	IdentityTypeKTP      = IdentityType(10)
+	IdentityTypeSIM      = IdentityType(11)
+	IdentityTypePassport = IdentityType(12)
+)
+
+// Marriage Status
+
+type MarriageStatus int64
+
+const (
+	Married = MarriageStatus(1)
+	Single  = MarriageStatus(2)
+	Widower = MarriageStatus(4)
 )
 
 // Request Type
