@@ -9,6 +9,7 @@ const (
 const (
 	SubjectKey   = "subject"
 	BuildHashKey = "build_hash"
+	UserRefID    = "user_ref_id"
 )
 
 const (

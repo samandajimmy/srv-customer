@@ -75,8 +75,7 @@ type Handler struct {
 }
 
 type HandlerMap struct {
-	// TODO Middleware
-	//Middlewares  *handler.Middlewares
+	Middlewares  *Middlewares
 	Auth         *Auth
 	Common       *Common
 	Customer     *Customer
@@ -86,6 +85,7 @@ type HandlerMap struct {
 func RegisterHandler(manifest ncore.Manifest, h *Handler) *HandlerMap {
 	return &HandlerMap{
 		Common:       NewCommon(time.Now(), manifest),
+		Middlewares:  NewMiddlewares(h),
 		Auth:         NewAuth(h),
 		Customer:     NewCustomer(h),
 		Verification: NewVerification(h),
