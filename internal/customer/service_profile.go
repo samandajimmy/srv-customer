@@ -183,3 +183,42 @@ func (s *Service) isValidPassword(tokenString string, password string) (bool, er
 
 	return true, nil
 }
+
+func (s *Service) UpdatePassword(userRefId string, payload dto.UpdatePasswordRequest) error {
+	// Get Context
+	ctx := s.ctx
+
+	// Find customer
+	customer, err := s.repo.FindCustomerByUserRefID(userRefId)
+	if err != nil {
+		return err
+	}
+
+	// Set current password to md5
+	currentPassword := stringToMD5(payload.CurrentPassword)
+
+	// Validate current password
+	_, err = s.repo.IsValidPassword(customer.Id, currentPassword)
+	if err != nil && err != sql.ErrNoRows {
+		s.log.Error("error found when check password match", nlogger.Error(err), nlogger.Context(ctx))
+		return ncore.TraceError("error when validate password match", err)
+	}
+
+	// If password doesn't match
+	if err == sql.ErrNoRows {
+		err = nil
+		return s.responses.GetError("E_USR_1")
+	}
+
+	// Set password to md5
+	password := stringToMD5(payload.NewPassword)
+
+	// Update password
+	err = s.repo.UpdatePassword(customer.Id, password)
+	if err != nil {
+		s.log.Error("error found when check password match", nlogger.Error(err), nlogger.Context(ctx))
+		return ncore.TraceError("failed to update password", err)
+	}
+
+	return nil
+}

@@ -324,9 +324,21 @@ type UpdatePasswordCheckRequest struct {
 	CurrentPassword string `json:"current_password"`
 }
 
+type UpdatePasswordRequest struct {
+	CurrentPassword string `json:"current_password"`
+	NewPassword     string `json:"new_password"`
+}
+
 func (d UpdatePasswordCheckRequest) Validate() error {
 	return validation.ValidateStruct(&d,
 		validation.Field(&d.CurrentPassword, validation.Required),
+	)
+}
+
+func (d UpdatePasswordRequest) Validate() error {
+	return validation.ValidateStruct(&d,
+		validation.Field(&d.CurrentPassword, validation.Required),
+		validation.Field(&d.NewPassword, validation.Required),
 	)
 }
 

@@ -73,3 +73,20 @@ func (rc *RepositoryContext) IsValidPassword(customerId int64, password string) 
 	err := rc.stmt.Credential.FindByPasswordAndCustomerID.GetContext(rc.ctx, &row, customerId, password)
 	return &row, err
 }
+
+func (rc *RepositoryContext) UpdatePassword(customerId int64, password string) error {
+	result, err := rc.stmt.Credential.UpdatePasswordByCustomerID.ExecContext(rc.ctx, &model.UpdatePassword{
+		CustomerId: customerId,
+		Password:   password,
+	})
+	if err != nil {
+		return ncore.TraceError("failed to update password", err)
+	}
+
+	// If not updated, then return stale error
+	if !nsql.IsUpdated(result) {
+		return constant.StaleResourceError.Trace()
+	}
+
+	return nil
+}

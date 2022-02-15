@@ -321,6 +321,47 @@ func (h *Customer) UpdatePasswordCheck(rx *nhttp.Request) (*nhttp.Response, erro
 	return nhttp.Success().SetMessage("Password Sesuai"), nil
 }
 
+func (h *Customer) UpdatePassword(rx *nhttp.Request) (*nhttp.Response, error) {
+	// Get context
+	ctx := rx.Context()
+
+	// Get user UserRefID
+	userRefID, err := getUserRefID(rx)
+	if err != nil {
+		log.Errorf("error: %v", err, nlogger.Error(err), nlogger.Context(ctx))
+		return nil, ncore.TraceError("", err)
+	}
+
+	// Get payload
+	var payload dto.UpdatePasswordRequest
+	err = rx.ParseJSONBody(&payload)
+	if err != nil {
+		log.Error("error when parse json body", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, nhttp.BadRequestError.Wrap(err)
+	}
+
+	// Validate payload
+	err = payload.Validate()
+	if err != nil {
+		log.Error("unprocessable entity", nlogger.Error(err), nlogger.Context(ctx))
+		data := nvalidate.Message(err.Error())
+		return nhttp.UnprocessableEntity(data), nil
+	}
+
+	// Init service
+	svc := h.NewService(rx.Context())
+	defer svc.Close()
+
+	// Call service
+	err = svc.UpdatePassword(userRefID, payload)
+	if err != nil {
+		log.Error("error when call update service", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, err
+	}
+
+	return nhttp.Success().SetMessage("Password diperbarui"), nil
+}
+
 func (s *Service) validateJWT(token string) (jwt.Token, error) {
 	// Parsing Token
 	t, err := jwt.ParseString(token, jwt.WithVerify(constant.JWTSignature, []byte(s.config.JWTKey)))

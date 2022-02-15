@@ -14,6 +14,7 @@ type Credential struct {
 	FindByCustomerID            *sqlx.Stmt
 	Insert                      *sqlx.NamedStmt
 	Update                      *sqlx.NamedStmt
+	UpdatePasswordByCustomerID  *sqlx.NamedStmt
 	DeleteByID                  *sqlx.Stmt
 	FindByPasswordAndCustomerID *sqlx.Stmt
 }
@@ -44,6 +45,10 @@ func NewCredential(db *nsql.DatabaseContext) *Credential {
 		DeleteByID: db.PrepareFmtRebind(q.
 			Delete(credentialSchema).
 			Where(q.Equal(q.Column(credentialSchema.PrimaryKey()))).
+			Build()),
+		UpdatePasswordByCustomerID: db.PrepareNamedFmtRebind(q.
+			Update(credentialSchema, "password").
+			Where(q.Equal(q.Column("customerId"))).
 			Build()),
 	}
 }

@@ -27,3 +27,8 @@ type Credential struct {
 	Metadata            json.RawMessage `db:"metadata"`
 	ItemMetadata
 }
+
+type UpdatePassword struct {
+	CustomerId int64  `db:"customerId"`
+	Password   string `db:"password"`
+}
