@@ -6,6 +6,7 @@ import (
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nclient"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/ncore"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nredis"
+	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/ns3"
 )
 
 type Service struct {
@@ -16,6 +17,7 @@ type Service struct {
 	log          nlogger.Logger
 	responses    *ncore.ResponseMap
 	redis        *nredis.Redis
+	minio        *ns3.Minio
 	client       *nclient.Nclient
 	pdsClient    *nclient.Nclient
 }
@@ -27,6 +29,7 @@ func (h Handler) NewService(ctx context.Context) *Service {
 		client:       h.Client,
 		pdsClient:    h.PdsApiClient,
 		redis:        h.Redis,
+		minio:        h.Minio,
 		responses:    h.Responses,
 		repo:         h.Repo.WithContext(ctx),
 		repoExternal: h.RepoExternal.WithContext(ctx),

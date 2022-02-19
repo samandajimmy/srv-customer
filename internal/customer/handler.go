@@ -5,6 +5,7 @@ import (
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nclient"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/ncore"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nredis"
+	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/ns3"
 	"time"
 )
 
@@ -45,6 +46,19 @@ func NewHandler(core *ncore.Core, config *Config) (*Handler, error) {
 		BaseUrl: config.PdsApiServiceUrl,
 	}
 
+	// Initialize minio client object.
+	minioClient, err := ns3.NewMinio(ns3.MinioOpt{
+		Endpoint:        config.MinioEndpoint,
+		AccessKeyId:     config.MinioAccessKeyID,
+		SecretAccessKey: config.MinioSecretAccessKey,
+		UseSSL:          config.MinioSecure,
+		BucketName:      config.MinioBucket,
+	})
+
+	if err != nil {
+		return nil, ncore.TraceError("failed to initialize minio client", err)
+	}
+
 	h := Handler{
 		StartedAt:    time.Now(),
 		Core:         core,
@@ -52,6 +66,7 @@ func NewHandler(core *ncore.Core, config *Config) (*Handler, error) {
 		Redis:        redis,
 		Client:       client,
 		PdsApiClient: pdsApiClient,
+		Minio:        minioClient,
 		Repo:         repoInternal,
 		RepoExternal: repoExternal,
 	}
@@ -68,6 +83,7 @@ type Handler struct {
 	// Client
 	Client       *nclient.Nclient
 	PdsApiClient *nclient.Nclient
+	Minio        *ns3.Minio
 	// Metadata
 	*ncore.Core
 	StartedAt time.Time
@@ -79,12 +95,14 @@ type HandlerMap struct {
 	Auth         *Auth
 	Common       *Common
 	Customer     *Customer
+	Asset        *Asset
 	Verification *Verification
 }
 
 func RegisterHandler(manifest ncore.Manifest, h *Handler) *HandlerMap {
 	return &HandlerMap{
 		Common:       NewCommon(time.Now(), manifest),
+		Asset:        NewAsset(h),
 		Middlewares:  NewMiddlewares(h),
 		Auth:         NewAuth(h),
 		Customer:     NewCustomer(h),

@@ -17,3 +17,16 @@ const (
 	SubjectNameHeader = "x-subject-name"
 	SubjectRoleHeader = "x-subject-role"
 )
+
+const (
+	_ = iota
+	AssetAvatarProfile
+	AssetNPWP
+	AssetKTP
+)
+
+var AssetDirs = map[int]string{
+	AssetAvatarProfile: "user/avatar",
+	AssetNPWP:          "user/npwp",
+	AssetKTP:           "user/ktp",
+}

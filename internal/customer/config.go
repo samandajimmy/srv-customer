@@ -13,6 +13,7 @@ type Config struct {
 	DatabaseExternal DatabaseConfig
 	SMTPConfig
 	EmailConfig
+	MinioConfig
 	ClientConfig
 	RedisConfig
 	CoreSwitchingConfig
@@ -39,6 +40,7 @@ type ServerConfig struct {
 	Secure     bool    `envconfig:"SERVER_LISTEN_SECURE"`
 	TrustProxy string  `envconfig:"SERVER_TRUST_PROXY"`
 	Debug      string  `envconfig:"LOG_LEVEL"`
+	AssetUrl   string
 }
 
 type SMTPConfig struct {
@@ -75,6 +77,15 @@ type RedisConfig struct {
 	RedisPort   string `envconfig:"REDIS_PORT"`
 	RedisPass   string `envconfig:"REDIS_PASS"`
 	RedisExpiry int64  `envconfig:"REDIS_EXPIRY"`
+}
+
+type MinioConfig struct {
+	MinioAccessKeyID     string `envconfig:"MINIO_ACCESS_KEY_ID"`
+	MinioSecretAccessKey string `envconfig:"MINIO_SECRET_ACCESS_KEY"`
+	MinioBucket          string `envconfig:"MINIO_BUCKET"`
+	MinioEndpoint        string `envconfig:"MINIO_ENDPOINT"`
+	MinioUrl             string `envconfig:"MINIO_URL"`
+	MinioSecure          bool   `envconfig:"MINIO_SECURE"`
 }
 
 type ClientEndpointConfig struct {

@@ -11,3 +11,5 @@ var ForbiddenError = ncore.NewTraceableError("403", "Forbidden")
 var ResourceNotFoundError = ncore.NewTraceableError("E_COMM_1", "Resource not found")
 var StaleResourceError = ncore.NewTraceableError("E_COMM_2", "Cannot update stale resource")
 var DefaultError = ncore.NewTraceableError("E_COMM_3", "An error has occurred, please try again later")
+
+var InvalidFormatError = ncore.NewTraceableError("E_COMM_5", "Invalid Format")

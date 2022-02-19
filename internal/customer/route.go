@@ -38,6 +38,11 @@ func setUpRoute(router *nhttp.Router, handlers *HandlerMap) {
 		router.HandleFunc(handlers.Middlewares.AuthUser),
 		router.HandleFunc(handlers.Customer.UpdatePassword))
 
+	// File Upload
+	router.Handle(http.MethodPost, "/upload",
+		router.HandleFunc(handlers.Middlewares.AuthUser),
+		router.HandleFunc(handlers.Asset.UploadFile))
+
 	// Static asset
 	staticDir := "/web/assets/"
 	router.PathPrefix(staticDir).Handler(http.StripPrefix(staticDir, http.FileServer(http.Dir("."+staticDir))))

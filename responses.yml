@@ -145,3 +145,9 @@ E_USR_1:
   message: Password tidak sesuai
   metadata:
     http_status: 400
+
+E_AST_1:
+  success: false
+  message: Unknown asset type
+  metadata:
+    http_status: 400
