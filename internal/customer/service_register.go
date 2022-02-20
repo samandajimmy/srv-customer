@@ -11,6 +11,7 @@ import (
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/model"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/dto"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/ncore"
+	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nsql"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nval"
 	"strings"
 	"time"
@@ -70,15 +71,15 @@ func (s *Service) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCus
 			Nationality:        "",
 			DateOfBirth:        "",
 			PlaceOfBirth:       "",
-			IdentityPhotoFile:  "",
 			MarriageStatus:     "",
 			NPWPNumber:         "",
+			IdentityPhotoFile:  "",
 			NPWPPhotoFile:      "",
-			NPWPUpdatedAt:      "",
-			ProfileUpdatedAt:   "",
-			CifLinkUpdatedAt:   "",
-			CifUnlinkUpdatedAt: "",
 			SidPhotoFile:       "",
+			NPWPUpdatedAt:      0,
+			ProfileUpdatedAt:   0,
+			CifLinkUpdatedAt:   0,
+			CifUnlinkUpdatedAt: 0,
 		}
 
 		insertCustomer := &model.Customer{
@@ -94,8 +95,8 @@ func (s *Service) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCus
 			Sid:            "",
 			ReferralCode:   "",
 			Profile:        model.ToCustomerProfile(profile),
-			Photos:         []byte("{}"),
-			Metadata:       []byte("{}"),
+			Photos:         nil,
+			Metadata:       nsql.EmptyObjectJSON,
 			ItemMetadata:   metaData,
 		}
 		lastInsertId, err := s.repo.CreateCustomer(insertCustomer)
