@@ -1,6 +1,7 @@
 package customer
 
 import (
+	"github.com/nbs-go/nlogger"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/constant"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/model"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/ncore"
@@ -109,7 +110,6 @@ func (rc *RepositoryContext) UpdateCustomerProfile(customer *model.Customer, add
 }
 
 func (rc *RepositoryContext) UpdateCustomerByPhone(customer *model.Customer) error {
-	rc.log.Debugf("row customer %v", customer)
 	result, err := rc.stmt.Customer.UpdateByPhone.ExecContext(rc.ctx, customer)
 	if err != nil {
 		return ncore.TraceError("cannot update customer by phone", err)
@@ -117,5 +117,21 @@ func (rc *RepositoryContext) UpdateCustomerByPhone(customer *model.Customer) err
 	if !nsql.IsUpdated(result) {
 		return constant.ResourceNotFoundError
 	}
+	return nil
+}
+
+func (rc *RepositoryContext) UpdateCustomerByUserRefID(customer *model.Customer, userRefID string) error {
+	result, err := rc.stmt.Customer.UpdateByPhone.ExecContext(rc.ctx, &model.UpdateCustomerByUserRefID{
+		Customer:  customer,
+		UserRefId: userRefID,
+	})
+	if err != nil {
+		rc.log.Error("error found when update customer by UserRefID", nlogger.Error(err))
+		return ncore.TraceError("cannot update customer by phone", err)
+	}
+	if !nsql.IsUpdated(result) {
+		return constant.ResourceNotFoundError
+	}
+
 	return nil
 }
