@@ -47,9 +47,9 @@ type User struct {
 	Saldo                     int64          `db:"saldo"`
 	PinTemp                   sql.NullString `db:"pin_temp"`
 	LastUpdateDataNasabah     string         `db:"last_update_data_nasabah"`
-	LastUpdateDataNpwp        string         `db:"last_update_data_npwp"`
-	LastUpdateLinkCif         string         `db:"last_update_link_cif"`
-	LastUpdateUnlinkCif       string         `db:"last_update_unlink_cif"`
+	LastUpdateDataNpwp        sql.NullTime   `db:"last_update_data_npwp"`
+	LastUpdateLinkCif         sql.NullTime   `db:"last_update_link_cif"`
+	LastUpdateUnlinkCif       sql.NullTime   `db:"last_update_unlink_cif"`
 	LastUpdatePin             sql.NullTime   `db:"last_update_pin"`
 	AktifasiTransFinansial    int64          `db:"aktifasiTransFinansial"`
 	TanggalAktifasiFinansial  sql.NullTime   `db:"tanggal_aktifasi_finansial"`

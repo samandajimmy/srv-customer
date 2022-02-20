@@ -84,10 +84,10 @@ type CustomerProfile struct {
 	MarriageStatus     string `json:"marriageStatus"`
 	NPWPNumber         string `json:"npwpNumber"`
 	NPWPPhotoFile      string `json:"npwpPhotoFile"`
-	NPWPUpdatedAt      string `json:"npwpUpdatedAt"`
-	ProfileUpdatedAt   string `json:"profileUpdatedAt"`
-	CifLinkUpdatedAt   string `json:"cifLinkUpdatedAt"`
-	CifUnlinkUpdatedAt string `json:"cifUnlinkUpdatedAt"`
+	NPWPUpdatedAt      int64  `json:"npwpUpdatedAt,string,omitempty"`
+	ProfileUpdatedAt   int64  `json:"profileUpdatedAt,string,omitempty"`
+	CifLinkUpdatedAt   int64  `json:"cifLinkUpdatedAt,string,omitempty"`
+	CifUnlinkUpdatedAt int64  `json:"cifUnlinkUpdatedAt,string,omitempty"`
 	SidPhotoFile       string `json:"sidPhotoFile"`
 }
 

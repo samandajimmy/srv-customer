@@ -80,7 +80,7 @@ func (s *Service) AssetUploadRule(assetType int) (*nhttp.UploadRule, error) {
 	return &rule, nil
 }
 
-func (s *Service) AssetGetPublicUrl(assetType int, fileName string) string {
+func (s *Service) AssetGetPublicUrl(assetType constant.AssetType, fileName string) string {
 	// If file name is empty, return empty
 	if fileName == "" {
 		return ""

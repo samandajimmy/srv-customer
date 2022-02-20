@@ -24,11 +24,11 @@ func ModelUserToCustomer(user *model.User) (*model.Customer, error) {
 		MarriageStatus:     user.StatusKawin,
 		NPWPNumber:         user.NoNpwp,
 		NPWPPhotoFile:      user.FotoNpwp,
-		NPWPUpdatedAt:      user.LastUpdateDataNpwp,
-		ProfileUpdatedAt:   nval.ParseStringFallback(user.LastUpdate.Time, ""),
-		CifLinkUpdatedAt:   user.LastUpdateLinkCif,
-		CifUnlinkUpdatedAt: nval.ParseStringFallback(user.LastUpdate.Time, ""),
 		SidPhotoFile:       user.FotoSid.String,
+		NPWPUpdatedAt:      user.LastUpdateDataNpwp.Time.Unix(),
+		ProfileUpdatedAt:   user.LastUpdate.Time.Unix(),
+		CifLinkUpdatedAt:   user.LastUpdate.Time.Unix(),
+		CifUnlinkUpdatedAt: user.LastUpdate.Time.Unix(),
 	}
 
 	photo := &model.CustomerPhoto{

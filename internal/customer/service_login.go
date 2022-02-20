@@ -25,10 +25,16 @@ func (s *Service) Login(payload dto.LoginRequest) (*dto.LoginResponse, error) {
 	// Check if user exists
 	t := time.Now()
 	customer, err := s.repo.FindCustomerByEmail(payload.Email)
-	if errors.Is(err, sql.ErrNoRows) {
+	if err != nil && err != sql.ErrNoRows {
+		s.log.Error("failed to retrieve customer", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, ncore.TraceError("error find customer by email", err)
+	}
+
+	// check on external database
+	if err != nil && err == sql.ErrNoRows {
 		// If data not found on internal database check on external database.
-		user, err := s.repoExternal.FindUserExternalByEmailOrPhone(payload.Email)
-		if err != nil {
+		user, errExternal := s.repoExternal.FindUserExternalByEmailOrPhone(payload.Email)
+		if errExternal != nil && errExternal == sql.ErrNoRows {
 			s.log.Debug("Phone or email is not registered")
 			return nil, s.responses.GetError("E_AUTH_10")
 		}
@@ -39,10 +45,6 @@ func (s *Service) Login(payload dto.LoginRequest) (*dto.LoginResponse, error) {
 			s.log.Error("error while sync data External to Internal", nlogger.Error(err), nlogger.Context(ctx))
 			return nil, ncore.TraceError("error sync data", err)
 		}
-
-	} else if err != nil {
-		s.log.Error("failed to retrieve customer", nlogger.Error(err), nlogger.Context(ctx))
-		return nil, ncore.TraceError("error find customer by email", err)
 	}
 
 	// Get credential customer
@@ -181,11 +183,18 @@ func (s *Service) Login(payload dto.LoginRequest) (*dto.LoginResponse, error) {
 		return nil, s.responses.GetError("E_AUTH_8")
 	}
 
-	return composeLoginResponse(dto.LoginVO{
+	// Get financial data
+	financial, err := s.repo.FindFinancialDataByCustomerID(customer.Id)
+	if err != nil && err != sql.ErrNoRows {
+		return nil, ncore.TraceError("error when count audit login", err)
+	}
+
+	return s.composeLoginResponse(dto.LoginVO{
 		Customer:              customer,
 		Address:               address,
 		Profile:               customer.Profile,
 		Verification:          verification,
+		Financial:             financial,
 		IsFirstLogin:          isFirstLogin,
 		IsForceUpdatePassword: isForceUpdatePassword,
 		Token:                 token,
@@ -335,17 +344,33 @@ func (s *Service) syncExternalToInternal(user *model.User) (*model.Customer, err
 	return customer, nil
 }
 
-func composeLoginResponse(data dto.LoginVO) (*dto.LoginResponse, error) {
+func (s *Service) composeLoginResponse(data dto.LoginVO) (*dto.LoginResponse, error) {
 	// Cast to model
 	customer := data.Customer.(*model.Customer)
 	profile := data.Profile.(*model.CustomerProfile)
 	verification := data.Verification.(*model.Verification)
 	address := data.Address.(*model.Address)
+	financial := data.Financial.(*model.FinancialData)
+
+	// Get asset url
+	// -- Avatar URL
+	avatarUrl := s.AssetGetPublicUrl(constant.AssetAvatarProfile, customer.Photos.FileName)
+	// -- NPWP URL
+	npwpUrl := s.AssetGetPublicUrl(constant.AssetNPWP, customer.Profile.NPWPPhotoFile)
+	// -- KTP URL
+	ktpURL := s.AssetGetPublicUrl(constant.AssetKTP, customer.Profile.IdentityPhotoFile)
+
+	goldSaving := &dto.GoldSavingVO{
+		TotalSaldoBlokir:  "",
+		TotalSaldoSeluruh: "",
+		TotalSaldoEfektif: "",
+		PrimaryRekening:   nil,
+	}
 
 	return &dto.LoginResponse{
 		User: &dto.LoginUserVO{
 			CustomerVO: dto.CustomerVO{
-				ID:                        nval.ParseStringFallback(customer.Id, ""),
+				ID:                        customer.UserRefId.String,
 				IsKYC:                     nval.ParseStringFallback(verification.KycVerifiedStatus, "0"),
 				Cif:                       customer.Cif,
 				Nama:                      customer.FullName,
@@ -366,33 +391,28 @@ func composeLoginResponse(data dto.LoginVO) (*dto.LoginResponse, error) {
 				Kecamatan:                 address.DistrictName.String,
 				KodePos:                   address.PostalCode.String,
 				NoHP:                      customer.Phone,
-				FotoKTP:                   profile.IdentityPhotoFile,
+				FotoKTP:                   ktpURL,
 				IsEmailVerified:           nval.ParseStringFallback(verification.EmailVerifiedStatus, "0"),
 				Kewarganegaraan:           profile.Nationality,
 				JenisIdentitas:            fmt.Sprintf("%v", customer.IdentityType),
 				NoIdentitas:               customer.IdentityNumber,
-				Avatar:                    "",
-				TglExpiredIdentitas:       "",
+				Avatar:                    avatarUrl,
+				TglExpiredIdentitas:       profile.IdentityExpiredAt,
 				NoNPWP:                    profile.NPWPNumber,
-				FotoNPWP:                  profile.NPWPPhotoFile,
+				FotoNPWP:                  npwpUrl,
 				NoSid:                     customer.Sid,
 				FotoSid:                   profile.SidPhotoFile,
 				StatusKawin:               profile.MarriageStatus,
-				Norek:                     "",
-				Saldo:                     "",
+				Norek:                     financial.AccountNumber,
+				Saldo:                     nval.ParseStringFallback(financial.Balance, "0"),
 				AktifasiTransFinansial:    nval.ParseStringFallback(verification.FinancialTransactionStatus, ""),
 				IsDukcapilVerified:        nval.ParseStringFallback(verification.DukcapilVerifiedStatus, "0"),
-				IsOpenTe:                  "",
-				ReferralCode:              "",
-				GoldCardApplicationNumber: "",
-				GoldCardAccountNumber:     "",
-				KodeCabang:                "",
-				TabunganEmas: &dto.GoldSavingVO{
-					TotalSaldoBlokir:  "",
-					TotalSaldoSeluruh: "",
-					TotalSaldoEfektif: "",
-					PrimaryRekening:   nil,
-				},
+				IsOpenTe:                  nval.ParseStringFallback(financial.GoldSavingStatus, "0"),
+				ReferralCode:              customer.ReferralCode,
+				GoldCardApplicationNumber: financial.GoldCardApplicationNumber,
+				GoldCardAccountNumber:     financial.GoldCardAccountNumber,
+				KodeCabang:                "", // TODO
+				TabunganEmas:              goldSaving,
 			},
 			IsFirstLogin:          data.IsFirstLogin,
 			IsForceUpdatePassword: data.IsForceUpdatePassword,
