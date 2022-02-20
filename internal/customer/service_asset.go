@@ -1,9 +1,11 @@
 package customer
 
 import (
+	"github.com/nbs-go/nlogger"
 	"github.com/rs/xid"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/constant"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/dto"
+	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/ncore"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nhttp"
 )
 
@@ -37,9 +39,28 @@ func (s *Service) AssetUploadFile(req dto.UploadRequest) (*dto.UploadResponse, e
 	resp := dto.UploadResponse{
 		FileName: fileName,
 		FileUrl:  fileUrl,
+		MimeType: req.File.MimeType,
+		FileSize: req.File.Header.Size,
 	}
 
 	return &resp, nil
+}
+
+func (s *Service) AssetRemoveFile(fileName string, assetType constant.AssetType) error {
+	// Get directory based-on asset type
+	directory, err := s.AssetDirectory(assetType)
+	if err != nil {
+		return ncore.TraceError("", err)
+	}
+
+	// Remove object
+	err = s.minio.Remove(directory + fileName)
+	if err != nil {
+		s.log.Error("error found when removing object", nlogger.Error(err), nlogger.Context(s.ctx))
+		return ncore.TraceError("", err)
+	}
+
+	return nil
 }
 
 func (s *Service) AssetUploadRule(assetType int) (*nhttp.UploadRule, error) {
