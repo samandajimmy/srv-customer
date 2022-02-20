@@ -259,3 +259,32 @@ func (s *Service) UpdateAvatar(userRefId string, uploaded *dto.UploadResponse) e
 
 	return nil
 }
+
+func (s *Service) UpdateIdentity(userRefId string, uploaded *dto.UploadResponse) error {
+	// Get context
+	ctx := s.ctx
+
+	// Find customer
+	customer, err := s.repo.FindCustomerByUserRefID(userRefId)
+	if err != nil {
+		s.log.Error("error when find current customer", nlogger.Error(err), nlogger.Context(ctx))
+		return ncore.TraceError("", err)
+	}
+
+	// Remove old avatar if exist
+	if oldFile := customer.Profile.IdentityPhotoFile; oldFile != "" {
+		_ = s.AssetRemoveFile(oldFile, constant.AssetKTP)
+	}
+
+	// Update identity photo
+	customer.Profile.IdentityPhotoFile = uploaded.FileName
+
+	// Persist
+	err = s.repo.UpdateCustomerByUserRefID(customer, userRefId)
+	if err != nil {
+		s.log.Error("error when update identity photo", nlogger.Error(err), nlogger.Context(ctx))
+		return ncore.TraceError("", err)
+	}
+
+	return nil
+}
