@@ -319,3 +319,34 @@ func (s *Service) UpdateNPWP(userRefId string, npwpNumber string, uploaded *dto.
 
 	return nil
 }
+
+func (s *Service) UpdateSID(userRefId string, sidNumber string, uploaded *dto.UploadResponse) error {
+	// Get context
+	ctx := s.ctx
+
+	// Find customer
+	customer, err := s.repo.FindCustomerByUserRefID(userRefId)
+	if err != nil {
+		s.log.Error("error when find current customer", nlogger.Error(err), nlogger.Context(ctx))
+		return ncore.TraceError("", err)
+	}
+
+	// remove old file if exist
+	if oldFile := customer.Profile.SidPhotoFile; oldFile != "" {
+		_ = s.AssetRemoveFile(oldFile, constant.AssetNPWP)
+	}
+
+	// Update NPWP entity
+	customer.Profile.SidPhotoFile = uploaded.FileName
+	customer.Sid = sidNumber
+	customer.Profile.NPWPUpdatedAt = time.Now().Unix()
+
+	// Persist
+	err = s.repo.UpdateCustomerByUserRefID(customer, userRefId)
+	if err != nil {
+		s.log.Error("error found when update NPWP", nlogger.Error(err), nlogger.Context(ctx))
+		return ncore.TraceError("", err)
+	}
+
+	return nil
+}

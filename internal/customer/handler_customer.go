@@ -505,6 +505,61 @@ func (h *Customer) UpdateNPWP(rx *nhttp.Request) (*nhttp.Response, error) {
 	return nhttp.Success().SetData(uploaded), nil
 }
 
+func (h *Customer) UpdateSID(rx *nhttp.Request) (*nhttp.Response, error) {
+	// Get context
+	ctx := rx.Context()
+
+	// Get user UserRefID
+	userRefID, err := getUserRefID(rx)
+	if err != nil {
+		log.Error("error user auth", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, ncore.TraceError("", err)
+	}
+
+	var payload dto.UpdateSIDRequest
+	// Get payload
+	payload.NoSID = rx.FormValue("no_sid")
+	// Validate payload
+	err = payload.Validate()
+	if err != nil {
+		log.Error("unprocessable entity", nlogger.Error(err), nlogger.Context(ctx))
+		data := nvalidate.Message(err.Error())
+		return nhttp.UnprocessableEntity(data), nil
+	}
+
+	// Init service
+	svc := h.NewService(ctx)
+	defer svc.Close()
+
+	// Parse multipart file
+	file, err := nhttp.GetFile(rx.Request, constant.KeyUserFile, nhttp.MaxFileSizeImage, nhttp.MimeTypesImage)
+	if err != nil {
+		return nil, ncore.TraceError("", err)
+	}
+
+	// Upload file payload
+	filePayload := dto.UploadRequest{
+		AssetType: constant.AssetNPWP,
+		File:      file,
+	}
+
+	// Upload a file
+	uploaded, err := svc.AssetUploadFile(filePayload)
+	if err != nil {
+		log.Error("error when call upload file service", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, constant.UploadFileError.Wrap(err)
+	}
+
+	// Persist the avatar
+	err = svc.UpdateSID(userRefID, payload.NoSID, uploaded)
+	if err != nil {
+		log.Error("error when call update SID service", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, ncore.TraceError("", err)
+	}
+
+	return nhttp.Success().SetData(uploaded), nil
+}
+
 func (s *Service) validateJWT(token string) (jwt.Token, error) {
 	// Parsing Token
 	t, err := jwt.ParseString(token, jwt.WithVerify(constant.JWTSignature, []byte(s.config.JWTKey)))

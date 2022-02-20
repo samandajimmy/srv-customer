@@ -334,6 +334,16 @@ type UpdateNPWPRequest struct {
 	NoNPWP string
 }
 
+type UpdateSIDRequest struct {
+	NoSID string
+}
+
+func (d UpdateSIDRequest) Validate() error {
+	return validation.ValidateStruct(&d,
+		validation.Field(&d.NoSID, validation.Required, validation.Length(15, 15)),
+	)
+}
+
 func (d UpdateNPWPRequest) Validate() error {
 	return validation.ValidateStruct(&d,
 		validation.Field(&d.NoNPWP, validation.Required, validation.Length(15, 15)),

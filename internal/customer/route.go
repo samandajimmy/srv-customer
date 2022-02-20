@@ -52,6 +52,9 @@ func setUpRoute(router *nhttp.Router, handlers *HandlerMap) {
 	router.Handle(http.MethodPost, "/profile/npwp", router.HandleFunc(handlers.Middlewares.AuthUser),
 		router.HandleFunc(handlers.Customer.UpdateNPWP))
 
+	router.Handle(http.MethodPost, "/profile/sid", router.HandleFunc(handlers.Middlewares.AuthUser),
+		router.HandleFunc(handlers.Customer.UpdateSID))
+
 	// Static asset
 	staticDir := "/web/assets/"
 	router.PathPrefix(staticDir).Handler(http.StripPrefix(staticDir, http.FileServer(http.Dir("."+staticDir))))

@@ -360,6 +360,9 @@ func (s *Service) composeLoginResponse(data dto.LoginVO) (*dto.LoginResponse, er
 	// -- KTP URL
 	ktpURL := s.AssetGetPublicUrl(constant.AssetKTP, customer.Profile.IdentityPhotoFile)
 
+	// -- SID URL
+	sidUrl := s.AssetGetPublicUrl(constant.AssetNPWP, customer.Profile.SidPhotoFile)
+
 	goldSaving := &dto.GoldSavingVO{
 		TotalSaldoBlokir:  "",
 		TotalSaldoSeluruh: "",
@@ -401,7 +404,7 @@ func (s *Service) composeLoginResponse(data dto.LoginVO) (*dto.LoginResponse, er
 				NoNPWP:                    profile.NPWPNumber,
 				FotoNPWP:                  npwpUrl,
 				NoSid:                     customer.Sid,
-				FotoSid:                   profile.SidPhotoFile,
+				FotoSid:                   sidUrl,
 				StatusKawin:               profile.MarriageStatus,
 				Norek:                     financial.AccountNumber,
 				Saldo:                     nval.ParseStringFallback(financial.Balance, "0"),
