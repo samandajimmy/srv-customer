@@ -362,6 +362,50 @@ func (h *Customer) UpdatePassword(rx *nhttp.Request) (*nhttp.Response, error) {
 	return nhttp.Success().SetMessage("Password diperbarui"), nil
 }
 
+func (h *Customer) UpdateAvatar(rx *nhttp.Request) (*nhttp.Response, error) {
+	// Get context
+	ctx := rx.Context()
+
+	// Get user UserRefID
+	userRefID, err := getUserRefID(rx)
+	if err != nil {
+		log.Errorf("error: %v", err, nlogger.Error(err), nlogger.Context(ctx))
+		return nil, ncore.TraceError("", err)
+	}
+
+	// Init service
+	svc := h.NewService(ctx)
+	defer svc.Close()
+
+	// Parse multipart file
+	file, err := nhttp.GetFile(rx.Request, constant.KeyUserFile, nhttp.MaxFileSizeImage, nhttp.MimeTypesImage)
+	if err != nil {
+		return nil, ncore.TraceError("", err)
+	}
+
+	// Upload file payload
+	filePayload := dto.UploadRequest{
+		AssetType: constant.AssetAvatarProfile,
+		File:      file,
+	}
+
+	// Upload a file
+	uploaded, err := svc.AssetUploadFile(filePayload)
+	if err != nil {
+		log.Error("error found when call service", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, constant.UploadFileError.Wrap(err)
+	}
+
+	// Persist the avatar
+	err = svc.UpdateAvatar(userRefID, uploaded)
+	if err != nil {
+		log.Error("error when call update avatar service", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, ncore.TraceError("", err)
+	}
+
+	return nhttp.Success().SetData(uploaded), nil
+}
+
 func (s *Service) validateJWT(token string) (jwt.Token, error) {
 	// Parsing Token
 	t, err := jwt.ParseString(token, jwt.WithVerify(constant.JWTSignature, []byte(s.config.JWTKey)))

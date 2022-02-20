@@ -17,7 +17,7 @@ type Customer struct {
 	IdentityType   int64            `db:"identityType"`
 	IdentityNumber string           `db:"identityNumber"`
 	UserRefId      sql.NullString   `db:"userRefId"`
-	Photos         json.RawMessage  `db:"photos"`
+	Photos         *CustomerPhoto   `db:"photos"`
 	Profile        *CustomerProfile `db:"profile"`
 	Cif            string           `db:"cif"`
 	Sid            string           `db:"sid"`
@@ -25,6 +25,21 @@ type Customer struct {
 	Status         int64            `db:"status"`
 	Metadata       json.RawMessage  `db:"metadata"`
 	ItemMetadata
+}
+
+type CustomerPhoto struct {
+	Xid      string `json:"xid"`
+	FileName string `json:"file_name"`
+	FileSize int64  `json:"file_size"`
+	Mimetype string `json:"mime_type"`
+}
+
+func (m *CustomerPhoto) Scan(src interface{}) error {
+	return nsql.ScanJSON(src, m)
+}
+
+func (m *CustomerPhoto) Value() (driver.Value, error) {
+	return json.Marshal(m)
 }
 
 type ValidatePassword struct {
@@ -45,6 +60,11 @@ type UpdateByCIF struct {
 type UpdateByID struct {
 	*Customer
 	ID int64 `db:"id"`
+}
+
+type UpdateCustomerByUserRefID struct {
+	*Customer
+	UserRefId string `db:"userRefId"`
 }
 
 type CustomerDetail struct {
@@ -99,24 +119,5 @@ func ToCustomerProfile(d *dto.CustomerProfileVO) *CustomerProfile {
 		CifLinkUpdatedAt:   d.CifLinkUpdatedAt,
 		CifUnlinkUpdatedAt: d.CifUnlinkUpdatedAt,
 		SidPhotoFile:       d.SidPhotoFile,
-	}
-}
-
-func ToDTOCustomerProfile(m CustomerProfile) dto.CustomerProfileVO {
-	return dto.CustomerProfileVO{
-		MaidenName:         m.MaidenName,
-		Gender:             m.Gender,
-		Nationality:        m.Nationality,
-		DateOfBirth:        m.DateOfBirth,
-		PlaceOfBirth:       m.PlaceOfBirth,
-		IdentityPhotoFile:  m.IdentityPhotoFile,
-		MarriageStatus:     m.MarriageStatus,
-		NPWPNumber:         m.NPWPNumber,
-		NPWPPhotoFile:      m.NPWPPhotoFile,
-		NPWPUpdatedAt:      m.NPWPUpdatedAt,
-		ProfileUpdatedAt:   m.ProfileUpdatedAt,
-		CifLinkUpdatedAt:   m.CifLinkUpdatedAt,
-		CifUnlinkUpdatedAt: m.CifUnlinkUpdatedAt,
-		SidPhotoFile:       m.SidPhotoFile,
 	}
 }

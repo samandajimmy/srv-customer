@@ -110,7 +110,7 @@ func (s *Service) UpdateCustomerProfile(id string, payload dto.UpdateProfileRequ
 	customer.Profile.Nationality = payload.Kewarganegaraan
 	customer.Profile.IdentityExpiredAt = payload.TanggalExpiredIdentitas
 	customer.Profile.Religion = payload.Agama
-	customer.Profile.ProfileUpdatedAt = time.Now().String()
+	customer.Profile.ProfileUpdatedAt = time.Now().Unix()
 
 	// Get current address data
 	address, errAddress := s.repo.FindAddressByCustomerId(customer.Id)
@@ -218,6 +218,43 @@ func (s *Service) UpdatePassword(userRefId string, payload dto.UpdatePasswordReq
 	if err != nil {
 		s.log.Error("error found when check password match", nlogger.Error(err), nlogger.Context(ctx))
 		return ncore.TraceError("failed to update password", err)
+	}
+
+	return nil
+}
+
+func (s *Service) UpdateAvatar(userRefId string, uploaded *dto.UploadResponse) error {
+	// Get context
+	ctx := s.ctx
+
+	// Find customer
+	customer, err := s.repo.FindCustomerByUserRefID(userRefId)
+	if err != nil {
+		s.log.Error("error when find current customer", nlogger.Error(err), nlogger.Context(ctx))
+		return ncore.TraceError("", err)
+	}
+
+	// Remove old avatar if exist
+	if photo := customer.Photos; photo != nil && photo.FileName != "" {
+		_ = s.AssetRemoveFile(photo.FileName, constant.AssetAvatarProfile)
+	}
+
+	// Create new photo
+	newPhoto := &model.CustomerPhoto{
+		Xid:      xid.New().String(),
+		FileName: uploaded.FileName,
+		FileSize: uploaded.FileSize,
+		Mimetype: uploaded.MimeType,
+	}
+
+	customer.Photos = newPhoto
+	customer.Profile.ProfileUpdatedAt = time.Now().Unix()
+
+	// Persist
+	err = s.repo.UpdateCustomerByUserRefID(customer, userRefId)
+	if err != nil {
+		s.log.Error("error when update photo profile", nlogger.Error(err), nlogger.Context(ctx))
+		return ncore.TraceError("", err)
 	}
 
 	return nil

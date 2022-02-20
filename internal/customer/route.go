@@ -43,6 +43,9 @@ func setUpRoute(router *nhttp.Router, handlers *HandlerMap) {
 		router.HandleFunc(handlers.Middlewares.AuthUser),
 		router.HandleFunc(handlers.Asset.UploadFile))
 
+	router.Handle(http.MethodPost, "/profile/avatar", router.HandleFunc(handlers.Middlewares.AuthUser),
+		router.HandleFunc(handlers.Customer.UpdateAvatar))
+
 	// Static asset
 	staticDir := "/web/assets/"
 	router.PathPrefix(staticDir).Handler(http.StripPrefix(staticDir, http.FileServer(http.Dir("."+staticDir))))
