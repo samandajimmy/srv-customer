@@ -3,8 +3,11 @@ package ns3
 import (
 	"context"
 	"github.com/minio/minio-go"
+	"github.com/nbs-go/nlogger"
 	"io"
 )
+
+var log = nlogger.Get()
 
 type MinioOpt struct {
 	Endpoint        string
@@ -40,6 +43,17 @@ func (m *Minio) Upload(file io.Reader, contentType, dest string) error {
 		ContentType: contentType,
 	})
 	if err != nil {
+		log.Error("error when upload object", nlogger.Error(err))
+		return err
+	}
+
+	return nil
+}
+
+func (m *Minio) Remove(objectName string) error {
+	err := m.Client.RemoveObject(m.BucketName, objectName)
+	if err != nil {
+		log.Error("error when removing object", nlogger.Error(err))
 		return err
 	}
 
