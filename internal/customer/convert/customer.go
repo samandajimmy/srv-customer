@@ -31,16 +31,11 @@ func ModelUserToCustomer(user *model.User) (*model.Customer, error) {
 		SidPhotoFile:       user.FotoSid.String,
 	}
 
-	photosVO := dto.CustomerPhotoVO{
+	photo := &model.CustomerPhoto{
 		Xid:      strings.ToUpper(xid.New().String()),
-		Filename: nval.ParseStringFallback(user.FotoUrl, ""),
-		Filesize: 0,
+		FileName: nval.ParseStringFallback(user.FotoUrl, ""),
+		FileSize: 0,
 		Mimetype: "",
-	}
-
-	photoRawMessage, err := json.Marshal(photosVO)
-	if err != nil {
-		return nil, err
 	}
 
 	userSnapshot, err := json.Marshal(user)
@@ -66,7 +61,7 @@ func ModelUserToCustomer(user *model.User) (*model.Customer, error) {
 		Phone:          user.NoHp.String,
 		Email:          user.Email.String,
 		IdentityNumber: user.NoKtp.String,
-		Photos:         photoRawMessage,
+		Photos:         photo,
 		Cif:            user.Cif,
 		Sid:            user.NoSid.String,
 		UserRefId: sql.NullString{

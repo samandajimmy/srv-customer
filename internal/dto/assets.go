@@ -11,4 +11,6 @@ type UploadRequest struct {
 type UploadResponse struct {
 	FileName string `json:"file_name"`
 	FileUrl  string `json:"file_url"`
+	MimeType string `json:"mime_type"`
+	FileSize int64  `json:"file_size"`
 }
