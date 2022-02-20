@@ -13,3 +13,4 @@ var StaleResourceError = ncore.NewTraceableError("E_COMM_2", "Cannot update stal
 var DefaultError = ncore.NewTraceableError("E_COMM_3", "An error has occurred, please try again later")
 
 var InvalidFormatError = ncore.NewTraceableError("E_COMM_5", "Invalid Format")
+var UploadFileError = ncore.NewTraceableError("E_FILE_1", "Error occurs when upload")

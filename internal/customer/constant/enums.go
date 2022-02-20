@@ -11,14 +11,6 @@ const (
 	Disabled
 )
 
-/// Asset Type
-
-type AssetType = int8
-
-const (
-	ThumbnailAsset = AssetType(iota + 1)
-)
-
 const (
 	Prefix = "PDSAPI"
 )

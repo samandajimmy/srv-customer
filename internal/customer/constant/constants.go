@@ -18,15 +18,21 @@ const (
 	SubjectRoleHeader = "x-subject-role"
 )
 
+type AssetType = int
+
 const (
-	_ = iota
+	_ = AssetType(iota)
 	AssetAvatarProfile
 	AssetNPWP
 	AssetKTP
 )
 
-var AssetDirs = map[int]string{
+var AssetDirs = map[AssetType]string{
 	AssetAvatarProfile: "user/avatar",
 	AssetNPWP:          "user/npwp",
 	AssetKTP:           "user/ktp",
 }
+
+const (
+	KeyUserFile = "userfile"
+)
