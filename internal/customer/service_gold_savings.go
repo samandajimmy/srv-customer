@@ -10,6 +10,8 @@ import (
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/model"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/dto"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/ncore"
+	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nsql"
+	"strings"
 )
 
 // Tabungan Emas Service
@@ -63,30 +65,16 @@ func (s *Service) getListAccountNumber(cif string, userRefId string) (*dto.GoldS
 	}
 
 	// Call service portfolio
-	_, err = s.portfolioGoldSaving(customer.Cif)
+	switchingResponse, err := s.portfolioGoldSaving(customer.Cif)
 	if err != nil {
 		s.log.Error("error found when get gold saving", nlogger.Error(err), nlogger.Context(ctx))
 		return nil, ncore.TraceError("failed to get portfolio gold saving", err)
 	}
 
-	// Mocking response tabungan emas
-	resMock := `{
-    	"responseCode": "00",
-		"responseDesc": "Approved",
-    	"data": "{\"totalSaldoBlokir\":\"0.0000\",\"totalSaldoSeluruh\":\"99.9672\",\"totalSaldoEfektif\":\"99.9672\",\"listTabungan\":[{\"cif\":\"1015419761\",\"kodeCabang\":\"13025\",\"namaNasabah\":\"HADIYU\",\"noBuku\":\"18051249\",\"norek\":\"1302519620000663\",\"saldoBlokir\":\"0.0000\",\"saldoEmas\":\"99.9672\",\"tglBuka\":\"2021-07-23\",\"saldoEfektif\":\"99.9672\"}]}"
-	}`
-
-	switchingResponse := ResponseSwitchingSuccess{}
-	err = json.Unmarshal([]byte(resMock), &switchingResponse)
-	if err != nil {
-		s.log.Error("error found when unmarshal response", nlogger.Error(err), nlogger.Context(ctx))
-		return nil, ncore.TraceError("error found when unmarshal response", err)
-	}
-
-	// account saving
+	// Gold saving account
 	accountSaving := &dto.GoldSavingVO{}
 
-	// get from cache when switching response is not success
+	// Get from cache when switching response is not success
 	if switchingResponse.ResponseCode != "00" {
 		accountSaving, err = s.CacheGetGoldSavings(customer.Cif)
 		if err != nil {
@@ -109,11 +97,11 @@ func (s *Service) getListAccountNumber(cif string, userRefId string) (*dto.GoldS
 		return nil, ncore.TraceError("error found get financial data", err)
 	}
 
-	if financialData == nil {
+	if err == sql.ErrNoRows {
 		// init model
 		itemMetaData := model.NewItemMetadata(convert.ModifierDTOToModel(dto.Modifier{ID: "", Role: "", FullName: ""}))
 		financialData = &model.FinancialData{
-			Xid:                       xid.New().String(),
+			Xid:                       strings.ToUpper(xid.New().String()),
 			CustomerId:                customer.Id,
 			MainAccountNumber:         "",
 			AccountNumber:             "",
@@ -121,7 +109,7 @@ func (s *Service) getListAccountNumber(cif string, userRefId string) (*dto.GoldS
 			GoldCardApplicationNumber: "",
 			GoldCardAccountNumber:     "",
 			Balance:                   0,
-			Metadata:                  []byte("{}"),
+			Metadata:                  nsql.EmptyObjectJSON,
 			ItemMetadata:              itemMetaData,
 		}
 	}
@@ -183,13 +171,13 @@ func (s *Service) updateReferralCode(customer *model.Customer, financialData *mo
 
 		for {
 			newReferralCode = generateReferralCode(prefixReferralCode)
-			exists, err := s.repo.ReferralCodeExists(newReferralCode)
+			_, err := s.repo.ReferralCodeExists(newReferralCode)
 			if err != nil && err != sql.ErrNoRows {
 				s.log.Error("error found when check referral code repo", nlogger.Error(err), nlogger.Context(s.ctx))
-				return err
+				return ncore.TraceError("err", err)
 			}
 
-			if exists == nil {
+			if err == sql.ErrNoRows {
 				break
 			}
 		}

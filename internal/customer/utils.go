@@ -3,13 +3,14 @@ package customer
 import (
 	"crypto/md5"
 	"fmt"
+	"github.com/rs/xid"
 	"strings"
 	"time"
 )
 
 func generateReferralCode(prefix string) string {
-	unique := uniqID("")
-	rand := fmt.Sprintf("%s", unique[8:15])
+	unique := xid.New().String()
+	rand := fmt.Sprintf("%s", unique[0:7])
 
 	var referralCode string
 	if prefix == "PDS" {
@@ -22,21 +23,14 @@ func generateReferralCode(prefix string) string {
 
 }
 
-func uniqID(prefix string) string {
-	now := time.Now()
-	sec := now.Unix()
-	usec := now.UnixNano() % 0x100000
-	return fmt.Sprintf("%s%08x%05x", prefix, sec, usec)
+func monthsToUnix(month int) int64 {
+	twoMonth := time.Now().AddDate(0, month, 0).Unix()
+	return twoMonth
 }
 
-func monthsToSeconds(month int) int {
+func hoursToSeconds(hour int64) int64 {
 	now := time.Now()
-	return now.AddDate(0, month, 0).Second()
-}
-
-func hoursToSeconds(hour int64) int {
-	now := time.Now()
-	return now.Add(time.Hour * time.Duration(hour)).Second()
+	return now.Add(time.Hour * time.Duration(hour)).Unix()
 }
 
 func stringToMD5(str string) string {

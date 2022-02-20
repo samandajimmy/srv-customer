@@ -6,7 +6,6 @@ import (
 	"github.com/nbs-go/nlogger"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/constant"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/dto"
-	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nval"
 )
 
 func (s *Service) CacheGet(key string) (string, error) {
@@ -72,10 +71,7 @@ func (s *Service) CacheSetGoldSavings(id string, goldSaving *dto.GoldSavingVO) e
 		return err
 	}
 
-	expiry, ok := nval.ParseInt64(monthsToSeconds(2))
-	if !ok {
-		return constant.InternalError
-	}
+	expiry := monthsToUnix(2)
 
 	_, err = s.redis.SetThenGet(key, string(value), expiry)
 	if err != nil {

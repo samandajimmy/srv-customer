@@ -40,11 +40,22 @@ func (s *Service) CustomerProfile(id string) (*dto.ProfileResponse, error) {
 		return nil, ncore.TraceError("", err)
 	}
 
-	// TODO
-	//goldSaving, err := s.getListAccountNumber(c.Cif, c.UserRefId)
-	//if err != nil {
-	//	return nil, ncore.TraceError("error when get list gold saving account", err)
-	//}
+	//  gold saving account
+	goldSaving, err := s.getListAccountNumber(c.Cif, c.UserRefId.String)
+	if err != nil {
+		return nil, ncore.TraceError("error when get list gold saving account", err)
+	}
+
+	gs := &dto.GoldSavingVO{
+		TotalSaldoBlokir:  goldSaving.TotalSaldoBlokir,
+		TotalSaldoSeluruh: goldSaving.TotalSaldoSeluruh,
+		TotalSaldoEfektif: goldSaving.TotalSaldoEfektif,
+		ListTabungan:      goldSaving.ListTabungan,
+		PrimaryRekening:   goldSaving.PrimaryRekening,
+	}
+	// Get avatar
+	avatarUrl := s.AssetGetPublicUrl(constant.AssetAvatarProfile, c.Photos.FileName)
+	ktpUrl := s.AssetGetPublicUrl(constant.AssetKTP, c.Profile.IdentityPhotoFile)
 
 	// Compose response
 	resp := dto.ProfileResponse{
@@ -71,17 +82,11 @@ func (s *Service) CustomerProfile(id string) (*dto.ProfileResponse, error) {
 			Kecamatan:       a.DistrictName.String,
 			Kelurahan:       a.SubDistrictName.String,
 			KodePos:         a.PostalCode.String,
-			Avatar:          "", // TODO Avatar
-			FotoKTP:         "", // TODO Foto KTP
+			Avatar:          avatarUrl,
+			FotoKTP:         ktpUrl,
 			IsEmailVerified: nval.ParseStringFallback(v.EmailVerifiedStatus, ""),
 			JenisIdentitas:  nval.ParseStringFallback(c.IdentityType, ""),
-			TabunganEmas: &dto.GoldSavingVO{
-				TotalSaldoBlokir:  "",
-				TotalSaldoSeluruh: "",
-				TotalSaldoEfektif: "",
-				ListTabungan:      nil,
-				PrimaryRekening:   nil,
-			},
+			TabunganEmas:    gs,
 		},
 	}
 
