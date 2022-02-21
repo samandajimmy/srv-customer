@@ -16,11 +16,11 @@ type OTP struct {
 
 func NewOTP(db *nsql.DatabaseContext) *OTP {
 	// Init query Schema Builder
-	bs := query.Schema(OTPSchema)
+	sb := query.Schema(OTPSchema)
 
 	// Init query
 
 	return &OTP{
-		Insert: db.PrepareNamedFmtRebind(bs.Insert()),
+		Insert: db.PrepareNamedFmtRebind(sb.Insert()),
 	}
 }

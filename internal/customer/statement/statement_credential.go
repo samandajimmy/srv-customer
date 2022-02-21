@@ -21,7 +21,7 @@ type Credential struct {
 
 func NewCredential(db *nsql.DatabaseContext) *Credential {
 	// Init query Schema Builder
-	bs := query.Schema(CredentialSchema)
+	sb := query.Schema(CredentialSchema)
 
 	// Init query
 	updateByCustomerId := query.
@@ -51,9 +51,9 @@ func NewCredential(db *nsql.DatabaseContext) *Credential {
 	return &Credential{
 		FindByCustomerID:            db.PrepareFmtRebind(findByCustomerId),
 		FindByPasswordAndCustomerID: db.PrepareFmtRebind(findByPasswordAndCustomerId),
-		Insert:                      db.PrepareNamedFmtRebind(bs.Insert()),
+		Insert:                      db.PrepareNamedFmtRebind(sb.Insert()),
 		Update:                      db.PrepareNamedFmtRebind(updateByCustomerId),
-		DeleteByID:                  db.PrepareFmtRebind(bs.Delete()),
+		DeleteByID:                  db.PrepareFmtRebind(sb.Delete()),
 		UpdatePasswordByCustomerID:  db.PrepareNamedFmtRebind(updatePasswordByCustomerId),
 	}
 }

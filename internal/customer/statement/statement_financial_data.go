@@ -19,7 +19,7 @@ type FinancialData struct {
 
 func NewFinancialData(db *nsql.DatabaseContext) *FinancialData {
 	// Init query Schema Builder
-	bs := query.Schema(FinancialDataSchema)
+	sb := query.Schema(FinancialDataSchema)
 
 	// Init query
 	findByCustomerId := query.Select(query.Column("*")).
@@ -33,8 +33,8 @@ func NewFinancialData(db *nsql.DatabaseContext) *FinancialData {
 
 	return &FinancialData{
 		FindByCustomerID: db.PrepareFmtRebind(findByCustomerId),
-		Insert:           db.PrepareNamedFmtRebind(bs.Insert()),
+		Insert:           db.PrepareNamedFmtRebind(sb.Insert()),
 		Update:           db.PrepareNamedFmtRebind(updateByCustomerId),
-		DeleteByID:       db.PrepareFmtRebind(bs.Delete()),
+		DeleteByID:       db.PrepareFmtRebind(sb.Delete()),
 	}
 }

@@ -19,7 +19,7 @@ type AuditLogin struct {
 
 func NewAuditLogin(db *nsql.DatabaseContext) *AuditLogin {
 	// Init query Schema Builder
-	bs := query.Schema(AuditLoginSchema)
+	sb := query.Schema(AuditLoginSchema)
 
 	// Init Query
 	countLogin := query.
@@ -29,7 +29,7 @@ func NewAuditLogin(db *nsql.DatabaseContext) *AuditLogin {
 		Build()
 
 	return &AuditLogin{
-		Insert: db.PrepareNamedFmtRebind(bs.Insert()),
+		Insert: db.PrepareNamedFmtRebind(sb.Insert()),
 		UpdateByCustomerId: db.PrepareNamedFmtRebind(query.
 			Update(AuditLoginSchema, "*").
 			Where(query.Equal(query.Column("customerId"))).

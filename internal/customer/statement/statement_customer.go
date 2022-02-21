@@ -27,10 +27,10 @@ type Customer struct {
 
 func NewCustomer(db *nsql.DatabaseContext) *Customer {
 	// Init query Schema Builder
-	bs := query.Schema(CredentialSchema)
+	sb := query.Schema(CustomerSchema)
 
 	// Init query
-	insert := fmt.Sprintf(`%s ON CONFLICT DO NOTHING RETURNING "id"`, bs.Insert())
+	insert := fmt.Sprintf(`%s ON CONFLICT DO NOTHING RETURNING "id"`, sb.Insert())
 
 	findById := query.Select(query.Column("*")).
 		From(CustomerSchema).
