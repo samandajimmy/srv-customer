@@ -160,8 +160,6 @@ func (s *Service) Login(payload dto.LoginRequest) (*dto.LoginResponse, error) {
 		return nil, s.responses.GetError("E_AUTH_1")
 	}
 
-	// TODO get tabungan emas service / get tabungan emas from financial table
-
 	// Check is force update password
 	validatePassword := s.validatePassword(payload.Password)
 	isForceUpdatePassword := false
@@ -193,6 +191,20 @@ func (s *Service) Login(payload dto.LoginRequest) (*dto.LoginResponse, error) {
 		return nil, ncore.TraceError("error when count audit login", err)
 	}
 
+	//  gold saving account
+	goldSaving, err := s.getListAccountNumber(customer.Cif, customer.UserRefId.String)
+	if err != nil {
+		return nil, ncore.TraceError("error when get list gold saving account", err)
+	}
+
+	gs := &dto.GoldSavingVO{
+		TotalSaldoBlokir:  goldSaving.TotalSaldoBlokir,
+		TotalSaldoSeluruh: goldSaving.TotalSaldoSeluruh,
+		TotalSaldoEfektif: goldSaving.TotalSaldoEfektif,
+		ListTabungan:      goldSaving.ListTabungan,
+		PrimaryRekening:   goldSaving.PrimaryRekening,
+	}
+
 	return s.composeLoginResponse(dto.LoginVO{
 		Customer:              customer,
 		Address:               address,
@@ -201,6 +213,7 @@ func (s *Service) Login(payload dto.LoginRequest) (*dto.LoginResponse, error) {
 		Financial:             financial,
 		IsFirstLogin:          isFirstLogin,
 		IsForceUpdatePassword: isForceUpdatePassword,
+		GoldSaving:            gs,
 		Token:                 token,
 	})
 }
@@ -355,6 +368,7 @@ func (s *Service) composeLoginResponse(data dto.LoginVO) (*dto.LoginResponse, er
 	verification := data.Verification.(*model.Verification)
 	address := data.Address.(*model.Address)
 	financial := data.Financial.(*model.FinancialData)
+	goldSaving := data.GoldSaving.(*dto.GoldSavingVO)
 
 	// Get asset url
 	// -- Avatar URL
@@ -363,16 +377,8 @@ func (s *Service) composeLoginResponse(data dto.LoginVO) (*dto.LoginResponse, er
 	npwpUrl := s.AssetGetPublicUrl(constant.AssetNPWP, customer.Profile.NPWPPhotoFile)
 	// -- KTP URL
 	ktpURL := s.AssetGetPublicUrl(constant.AssetKTP, customer.Profile.IdentityPhotoFile)
-
 	// -- SID URL
 	sidUrl := s.AssetGetPublicUrl(constant.AssetNPWP, customer.Profile.SidPhotoFile)
-
-	goldSaving := &dto.GoldSavingVO{
-		TotalSaldoBlokir:  "",
-		TotalSaldoSeluruh: "",
-		TotalSaldoEfektif: "",
-		PrimaryRekening:   nil,
-	}
 
 	return &dto.LoginResponse{
 		User: &dto.LoginUserVO{
