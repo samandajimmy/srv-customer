@@ -2,7 +2,7 @@ package statement
 
 import (
 	"github.com/jmoiron/sqlx"
-	q "github.com/nbs-go/nsql/pq/query"
+	"github.com/nbs-go/nsql/pq/query"
 	"github.com/nbs-go/nsql/schema"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/model"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nsql"
@@ -19,31 +19,33 @@ type Verification struct {
 }
 
 func NewVerification(db *nsql.DatabaseContext) *Verification {
+	// Init query Schema Builder
+	sb := query.Schema(VerificationSchema)
+
+	// Init query
+	findByCustomerId := query.
+		Select(query.Column("*")).
+		From(VerificationSchema).
+		Where(query.Equal(query.Column("customerId"))).
+		Build()
+
+	findByEmailToken := query.
+		Select(query.Column("*")).
+		From(VerificationSchema).
+		Where(query.Equal(query.Column("emailVerificationToken"))).
+		Build()
+
+	updateByCustomerId := query.
+		Update(VerificationSchema, "*").
+		Where(query.Equal(query.Column("customerId"))).
+		Build()
+
 	return &Verification{
-		FindByCustomerID: db.PrepareFmtRebind(q.
-			Select(q.Column("*")).
-			From(VerificationSchema).
-			Where(q.Equal(q.Column("customerId"))).
-			Build(),
-		),
-		FindByEmailToken: db.PrepareFmtRebind(q.
-			Select(q.Column("*")).
-			From(VerificationSchema).
-			Where(q.Equal(q.Column("emailVerificationToken"))).
-			Build(),
-		),
-		Insert: db.PrepareNamedFmtRebind(q.
-			Insert(VerificationSchema, "*").
-			Build()),
-		Update: db.PrepareNamedFmtRebind(q.
-			Update(VerificationSchema, "*").
-			Where(q.Equal(q.Column("customerId"))).
-			Build(),
-		),
-		DeleteByID: db.PrepareFmtRebind(q.
-			Delete(VerificationSchema).
-			Where(q.Equal(q.Column(VerificationSchema.PrimaryKey()))).
-			Build(),
-		),
+
+		FindByCustomerID: db.PrepareFmtRebind(findByCustomerId),
+		FindByEmailToken: db.PrepareFmtRebind(findByEmailToken),
+		Insert:           db.PrepareNamedFmtRebind(sb.Insert()),
+		Update:           db.PrepareNamedFmtRebind(updateByCustomerId),
+		DeleteByID:       db.PrepareFmtRebind(sb.Delete()),
 	}
 }

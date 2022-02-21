@@ -3,13 +3,13 @@ package statement
 import (
 	"fmt"
 	"github.com/jmoiron/sqlx"
-	q "github.com/nbs-go/nsql/pq/query"
+	"github.com/nbs-go/nsql/pq/query"
 	"github.com/nbs-go/nsql/schema"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/model"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nsql"
 )
 
-var customerSchema = schema.New(schema.FromModelRef(model.Customer{}))
+var CustomerSchema = schema.New(schema.FromModelRef(model.Customer{}))
 
 type Customer struct {
 	Insert             *sqlx.NamedStmt
@@ -26,62 +26,85 @@ type Customer struct {
 }
 
 func NewCustomer(db *nsql.DatabaseContext) *Customer {
+	// Init query Schema Builder
+	bs := query.Schema(CredentialSchema)
+
+	// Init query
+	insert := fmt.Sprintf(`%s ON CONFLICT DO NOTHING RETURNING "id"`, bs.Insert())
+
+	findById := query.Select(query.Column("*")).
+		From(CustomerSchema).
+		Where(query.Equal(query.Column(CustomerSchema.PrimaryKey()))).
+		Build()
+
+	findByRefId := query.Select(query.Column("*")).
+		From(CustomerSchema).
+		Where(query.Equal(query.Column("userRefId"))).
+		Build()
+
+	findByPhone := query.Select(query.Column("*")).
+		From(CustomerSchema).
+		Where(query.Equal(query.Column("phone"))).
+		Build()
+
+	findByPhoneOrCIF := query.Select(query.Column("*")).
+		From(CustomerSchema).
+		Where(
+			query.Or(
+				query.Equal(query.Column("cif")),
+				query.Equal(query.Column("phone")),
+			),
+		).
+		Build()
+
+	findByEmail := query.Select(query.Column("*")).
+		From(CustomerSchema).
+		Where(query.Equal(query.Column("email"))).
+		Build()
+
+	referralCodeExist := query.Select(query.Column("*")).
+		From(CustomerSchema).
+		Where(query.Equal(query.Column("referralCode"))).
+		Limit(1).
+		Build()
+
+	findByEmailOrPhone := query.
+		Select(query.Column("*")).
+		From(CustomerSchema).
+		Where(
+			query.Or(
+				query.Equal(query.Column("phone")),
+				query.Equal(query.Column("email")),
+			),
+		).
+		Build()
+
+	updateByCif := query.
+		Update(CustomerSchema, "*").
+		Where(query.Equal(query.Column("cif"))).
+		Build()
+
+	updateByUserRefId := query.
+		Update(CustomerSchema, "*").
+		Where(query.Equal(query.Column("userRefId"))).
+		Build()
+
+	updateByPhone := query.
+		Update(CustomerSchema, "*").
+		Where(query.Equal(query.Column("phone"))).
+		Build()
+
 	return &Customer{
-		Insert: db.PrepareNamedFmtRebind(fmt.Sprintf(`%s ON CONFLICT DO NOTHING RETURNING "id"`, q.
-			Insert(customerSchema, "*").
-			Build())),
-		FindById: db.PrepareFmtRebind(q.Select(q.Column("*")).
-			From(customerSchema).
-			Where(q.Equal(q.Column(customerSchema.PrimaryKey()))).
-			Build()),
-		FindByRefId: db.PrepareFmtRebind(q.Select(q.Column("*")).
-			From(customerSchema).
-			Where(q.Equal(q.Column("userRefId"))).
-			Build()),
-		FindByPhone: db.PrepareFmtRebind(q.Select(q.Column("*")).
-			From(customerSchema).
-			Where(q.Equal(q.Column("phone"))).
-			Build()),
-		FindByPhoneOrCIF: db.PrepareFmtRebind(q.Select(q.Column("*")).
-			From(customerSchema).
-			Where(
-				q.Or(
-					q.Equal(q.Column("cif")),
-					q.Equal(q.Column("phone")),
-				),
-			).
-			Build()),
-		FindByEmail: db.PrepareFmtRebind(q.Select(q.Column("*")).
-			From(customerSchema).
-			Where(q.Equal(q.Column("email"))).
-			Build()),
-		ReferralCodeExist: db.PrepareFmtRebind(q.Select(q.Column("*")).
-			From(customerSchema).
-			Where(q.Equal(q.Column("referralCode"))).
-			Limit(1).
-			Build()),
-		FindByEmailOrPhone: db.PrepareFmtRebind(q.
-			Select(q.Column("*")).
-			From(customerSchema).
-			Where(
-				q.Or(
-					q.Equal(q.Column("phone")),
-					q.Equal(q.Column("email")),
-				),
-			).
-			Build(),
-		),
-		UpdateByCIF: db.PrepareNamedFmtRebind(q.
-			Update(customerSchema, "*").
-			Where(q.Equal(q.Column("cif"))).
-			Build()),
-		UpdateByUserRefID: db.PrepareNamedFmtRebind(q.
-			Update(customerSchema, "*").
-			Where(q.Equal(q.Column("userRefId"))).
-			Build()),
-		UpdateByPhone: db.PrepareNamedFmtRebind(q.
-			Update(customerSchema, "*").
-			Where(q.Equal(q.Column("phone"))).
-			Build()),
+		Insert:             db.PrepareNamedFmtRebind(insert),
+		FindById:           db.PrepareFmtRebind(findById),
+		FindByRefId:        db.PrepareFmtRebind(findByRefId),
+		FindByPhone:        db.PrepareFmtRebind(findByPhone),
+		FindByPhoneOrCIF:   db.PrepareFmtRebind(findByPhoneOrCIF),
+		FindByEmail:        db.PrepareFmtRebind(findByEmail),
+		ReferralCodeExist:  db.PrepareFmtRebind(referralCodeExist),
+		FindByEmailOrPhone: db.PrepareFmtRebind(findByEmailOrPhone),
+		UpdateByCIF:        db.PrepareNamedFmtRebind(updateByCif),
+		UpdateByUserRefID:  db.PrepareNamedFmtRebind(updateByUserRefId),
+		UpdateByPhone:      db.PrepareNamedFmtRebind(updateByPhone),
 	}
 }

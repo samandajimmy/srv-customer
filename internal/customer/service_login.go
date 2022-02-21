@@ -1,7 +1,6 @@
 package customer
 
 import (
-	"crypto/md5"
 	"database/sql"
 	"encoding/json"
 	"errors"
@@ -24,7 +23,7 @@ func (s *Service) Login(payload dto.LoginRequest) (*dto.LoginResponse, error) {
 	ctx := s.ctx
 	// Check if user exists
 	t := time.Now()
-	customer, err := s.repo.FindCustomerByEmail(payload.Email)
+	customer, err := s.repo.FindCustomerByEmailOrPhone(payload.Email)
 	if err != nil && err != sql.ErrNoRows {
 		s.log.Error("failed to retrieve customer", nlogger.Error(err), nlogger.Context(ctx))
 		return nil, ncore.TraceError("error find customer by email", err)
@@ -34,7 +33,12 @@ func (s *Service) Login(payload dto.LoginRequest) (*dto.LoginResponse, error) {
 	if err != nil && err == sql.ErrNoRows {
 		// If data not found on internal database check on external database.
 		user, errExternal := s.repoExternal.FindUserExternalByEmailOrPhone(payload.Email)
-		if errExternal != nil && errExternal == sql.ErrNoRows {
+		if errExternal != nil && errExternal != sql.ErrNoRows {
+			s.log.Error("error found when query find by email or phone", nlogger.Error(err), nlogger.Context(ctx))
+			return nil, ncore.TraceError("failed to query to external database", err)
+		}
+
+		if errExternal == sql.ErrNoRows {
 			s.log.Debug("Phone or email is not registered")
 			return nil, s.responses.GetError("E_AUTH_10")
 		}
@@ -70,10 +74,10 @@ func (s *Service) Login(payload dto.LoginRequest) (*dto.LoginResponse, error) {
 	}
 
 	// Counter wrong password count
-	passwordRequest := fmt.Sprintf("%x", md5.Sum([]byte(payload.Password)))
+	passwordRequest := stringToMD5(payload.Password)
 	if credential.Password != passwordRequest {
-		err := s.handleWrongPassword(credential, customer)
-		return nil, err
+		errB := s.handleWrongPassword(credential, customer)
+		return nil, errB
 	}
 
 	// get userRefId from external DB
@@ -86,10 +90,10 @@ func (s *Service) Login(payload dto.LoginRequest) (*dto.LoginResponse, error) {
 			FcmToken:    payload.FcmToken,
 		}
 		// sync data from customer service to PDS API
-		resultSync, err := s.syncInternalToExternal(registerPayload)
-		if err != nil {
-			s.log.Error("error found when sync to pds api", nlogger.Error(err), nlogger.Context(ctx))
-			return nil, ncore.TraceError("error found when sync to pds api", err)
+		resultSync, errInternal := s.syncInternalToExternal(registerPayload)
+		if errInternal != nil {
+			s.log.Error("error found when sync to pds api", nlogger.Error(errInternal), nlogger.Context(ctx))
+			return nil, ncore.TraceError("error found when sync to pds api", errInternal)
 		}
 		// set userRefId
 		customer.UserRefId = sql.NullString{

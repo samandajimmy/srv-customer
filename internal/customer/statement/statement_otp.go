@@ -2,7 +2,7 @@ package statement
 
 import (
 	"github.com/jmoiron/sqlx"
-	q "github.com/nbs-go/nsql/pq/query"
+	"github.com/nbs-go/nsql/pq/query"
 	"github.com/nbs-go/nsql/schema"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/model"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nsql"
@@ -15,10 +15,12 @@ type OTP struct {
 }
 
 func NewOTP(db *nsql.DatabaseContext) *OTP {
+	// Init query Schema Builder
+	bs := query.Schema(OTPSchema)
+
+	// Init query
+
 	return &OTP{
-		Insert: db.PrepareNamedFmtRebind(q.
-			Insert(OTPSchema, "*").
-			Build(),
-		),
+		Insert: db.PrepareNamedFmtRebind(bs.Insert()),
 	}
 }

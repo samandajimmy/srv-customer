@@ -2,13 +2,13 @@ package statement
 
 import (
 	"github.com/jmoiron/sqlx"
-	q "github.com/nbs-go/nsql/pq/query"
+	"github.com/nbs-go/nsql/pq/query"
 	"github.com/nbs-go/nsql/schema"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/model"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nsql"
 )
 
-var credentialSchema = schema.New(schema.FromModelRef(model.Credential{}))
+var CredentialSchema = schema.New(schema.FromModelRef(model.Credential{}))
 
 type Credential struct {
 	FindByCustomerID            *sqlx.Stmt
@@ -20,35 +20,40 @@ type Credential struct {
 }
 
 func NewCredential(db *nsql.DatabaseContext) *Credential {
+	// Init query Schema Builder
+	bs := query.Schema(CredentialSchema)
+
+	// Init query
+	updateByCustomerId := query.
+		Update(CredentialSchema, "*").
+		Where(query.Equal(query.Column("customerId"))).
+		Build()
+
+	findByPasswordAndCustomerId := query.
+		Select(query.Column("*")).
+		From(CredentialSchema).
+		Where(
+			query.Equal(query.Column("customerId")),
+			query.Equal(query.Column("password")),
+		).Build()
+
+	findByCustomerId := query.
+		Select(query.Column("*")).
+		From(CredentialSchema).
+		Where(query.Equal(query.Column("customerId"))).
+		Build()
+
+	updatePasswordByCustomerId := query.
+		Update(CredentialSchema, "password").
+		Where(query.Equal(query.Column("customerId"))).
+		Build()
+
 	return &Credential{
-		FindByCustomerID: db.PrepareFmtRebind(q.
-			Select(q.Column("*")).
-			From(credentialSchema).
-			Where(q.Equal(q.Column("customerId"))).
-			Build(),
-		),
-		FindByPasswordAndCustomerID: db.PrepareFmtRebind(q.
-			Select(q.Column("*")).
-			From(credentialSchema).
-			Where(
-				q.Equal(q.Column("customerId")),
-				q.Equal(q.Column("password")),
-			).Build(),
-		),
-		Insert: db.PrepareNamedFmtRebind(q.
-			Insert(credentialSchema, "*").
-			Build()),
-		Update: db.PrepareNamedFmtRebind(q.
-			Update(credentialSchema, "*").
-			Where(q.Equal(q.Column("customerId"))).
-			Build()),
-		DeleteByID: db.PrepareFmtRebind(q.
-			Delete(credentialSchema).
-			Where(q.Equal(q.Column(credentialSchema.PrimaryKey()))).
-			Build()),
-		UpdatePasswordByCustomerID: db.PrepareNamedFmtRebind(q.
-			Update(credentialSchema, "password").
-			Where(q.Equal(q.Column("customerId"))).
-			Build()),
+		FindByCustomerID:            db.PrepareFmtRebind(findByCustomerId),
+		FindByPasswordAndCustomerID: db.PrepareFmtRebind(findByPasswordAndCustomerId),
+		Insert:                      db.PrepareNamedFmtRebind(bs.Insert()),
+		Update:                      db.PrepareNamedFmtRebind(updateByCustomerId),
+		DeleteByID:                  db.PrepareFmtRebind(bs.Delete()),
+		UpdatePasswordByCustomerID:  db.PrepareNamedFmtRebind(updatePasswordByCustomerId),
 	}
 }

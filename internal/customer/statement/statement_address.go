@@ -2,7 +2,7 @@ package statement
 
 import (
 	"github.com/jmoiron/sqlx"
-	q "github.com/nbs-go/nsql/pq/query"
+	"github.com/nbs-go/nsql/pq/query"
 	"github.com/nbs-go/nsql/schema"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/model"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nsql"
@@ -18,24 +18,29 @@ type Address struct {
 }
 
 func NewAddress(db *nsql.DatabaseContext) *Address {
+	// Init query Schema Builder
+	sb := query.Schema(AddressSchema)
+
+	// Init query
+	findByCustomerId := query.Select(query.Column("*")).
+		From(AddressSchema).
+		Where(query.Equal(query.Column("customerId"))).
+		Build()
+
+	findPrimaryByCustomerId := query.
+		Select(query.Column("*")).
+		From(AddressSchema).
+		Where(
+			query.Equal(query.Column("isPrimary")),
+			query.Equal(query.Column("customerId")),
+		).
+		Limit(1).
+		Build()
+
 	return &Address{
-		FindByCustomerId: db.PrepareFmtRebind(q.
-			Select(q.Column("*")).
-			From(AddressSchema).
-			Where(q.Equal(q.Column("customerId"))).
-			Build(),
-		),
-		Insert: db.PrepareNamedFmtRebind(q.Insert(AddressSchema, "*").Build()),
-		Update: db.PrepareNamedFmtRebind(q.Update(AddressSchema, "*").Build()),
-		FindPrimaryByCustomerId: db.PrepareFmtRebind(q.
-			Select(q.Column("*")).
-			From(AddressSchema).
-			Where(
-				q.Equal(q.Column("isPrimary")),
-				q.Equal(q.Column("customerId")),
-			).
-			Limit(1).
-			Build(),
-		),
+		Insert:                  db.PrepareNamedFmtRebind(sb.Insert()),
+		Update:                  db.PrepareNamedFmtRebind(sb.Update()),
+		FindByCustomerId:        db.PrepareFmtRebind(findByCustomerId),
+		FindPrimaryByCustomerId: db.PrepareFmtRebind(findPrimaryByCustomerId),
 	}
 }

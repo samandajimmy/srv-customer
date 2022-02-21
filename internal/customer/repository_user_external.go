@@ -1,7 +1,9 @@
 package customer
 
 import (
+	"database/sql"
 	"fmt"
+	"github.com/nbs-go/nlogger"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/model"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/ncore"
 )
@@ -27,8 +29,10 @@ func (rc *RepositoryContext) FindUserExternalAddressByCustomerID(id int64) (*mod
 	q = rc.conn.Rebind(q)
 	var row []model.AddressExternal
 	err := rc.conn.SelectContext(rc.ctx, &row, q)
-	if err != nil {
+	if err != nil && err != sql.ErrNoRows {
+		rc.log.Error("error found when get address external", nlogger.Error(err), nlogger.Context(rc.ctx))
 		return nil, ncore.TraceError("error when find user external", err)
 	}
+
 	return &row[0], nil
 }

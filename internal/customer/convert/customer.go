@@ -7,6 +7,7 @@ import (
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/constant"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/model"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/dto"
+	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nsql"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nval"
 	"strings"
 )
@@ -188,7 +189,7 @@ func ModelUserToAddress(user *model.User, userAddress *model.AddressExternal) (*
 		SubDistrictId:   userAddress.IdKelurahan,
 		SubDistrictName: userAddress.Kelurahan,
 		PostalCode:      userAddress.Kodepos,
-		Metadata:        []byte("{}"),
+		Metadata:        nsql.EmptyObjectJSON,
 		ItemMetadata:    itemMetaData,
 	}
 

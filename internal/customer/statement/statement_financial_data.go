@@ -2,13 +2,13 @@ package statement
 
 import (
 	"github.com/jmoiron/sqlx"
-	q "github.com/nbs-go/nsql/pq/query"
+	"github.com/nbs-go/nsql/pq/query"
 	"github.com/nbs-go/nsql/schema"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/model"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nsql"
 )
 
-var financialDataSchema = schema.New(schema.FromModelRef(model.FinancialData{}))
+var FinancialDataSchema = schema.New(schema.FromModelRef(model.FinancialData{}))
 
 type FinancialData struct {
 	FindByCustomerID *sqlx.Stmt
@@ -18,21 +18,23 @@ type FinancialData struct {
 }
 
 func NewFinancialData(db *nsql.DatabaseContext) *FinancialData {
+	// Init query Schema Builder
+	bs := query.Schema(FinancialDataSchema)
+
+	// Init query
+	findByCustomerId := query.Select(query.Column("*")).
+		Where(query.Equal(query.Column("customerId"))).
+		From(FinancialDataSchema).
+		Build()
+
+	updateByCustomerId := query.Update(FinancialDataSchema, "*").
+		Where(query.Equal(query.Column("customerId"))).
+		Build()
+
 	return &FinancialData{
-		FindByCustomerID: db.PrepareFmtRebind(q.Select(q.Column("*")).
-			Where(q.Equal(q.Column("customerId"))).
-			From(financialDataSchema).
-			Build()),
-		Insert: db.PrepareNamedFmtRebind(q.
-			Insert(financialDataSchema, "*").
-			Build()),
-		Update: db.PrepareNamedFmtRebind(q.Update(financialDataSchema, "*").
-			Where(q.Equal(q.Column("customerId"))).
-			Build()),
-		DeleteByID: db.PrepareFmtRebind(q.
-			Delete(financialDataSchema).
-			Where(q.Equal(q.Column(financialDataSchema.PrimaryKey()))).
-			Build(),
-		),
+		FindByCustomerID: db.PrepareFmtRebind(findByCustomerId),
+		Insert:           db.PrepareNamedFmtRebind(bs.Insert()),
+		Update:           db.PrepareNamedFmtRebind(updateByCustomerId),
+		DeleteByID:       db.PrepareFmtRebind(bs.Delete()),
 	}
 }

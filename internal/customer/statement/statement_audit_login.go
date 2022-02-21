@@ -2,8 +2,8 @@ package statement
 
 import (
 	"github.com/jmoiron/sqlx"
-	q "github.com/nbs-go/nsql/pq/query"
-	opt "github.com/nbs-go/nsql/query/option"
+	"github.com/nbs-go/nsql/option"
+	"github.com/nbs-go/nsql/pq/query"
 	"github.com/nbs-go/nsql/schema"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/model"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nsql"
@@ -18,18 +18,23 @@ type AuditLogin struct {
 }
 
 func NewAuditLogin(db *nsql.DatabaseContext) *AuditLogin {
+	// Init query Schema Builder
+	bs := query.Schema(AuditLoginSchema)
+
+	// Init Query
+	countLogin := query.
+		Select(query.Count("id", option.Schema(AuditLoginSchema), option.As("count"))).
+		From(AuditLoginSchema).
+		Where(query.Equal(query.Column("customerId"))).
+		Build()
+
 	return &AuditLogin{
-		Insert: db.PrepareNamedFmtRebind(q.Insert(AuditLoginSchema, "*").Build()),
-		UpdateByCustomerId: db.PrepareNamedFmtRebind(q.
+		Insert: db.PrepareNamedFmtRebind(bs.Insert()),
+		UpdateByCustomerId: db.PrepareNamedFmtRebind(query.
 			Update(AuditLoginSchema, "*").
-			Where(q.Equal(q.Column("customerId"))).
+			Where(query.Equal(query.Column("customerId"))).
 			Build(),
 		),
-		CountLogin: db.PrepareFmtRebind(q.
-			Select(q.Count("id", opt.Schema(AuditLoginSchema), opt.As("count"))).
-			From(AuditLoginSchema).
-			Where(q.Equal(q.Column("customerId"))).
-			Build(),
-		),
+		CountLogin: db.PrepareFmtRebind(countLogin),
 	}
 }

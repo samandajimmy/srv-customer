@@ -52,7 +52,7 @@ func (rc *RepositoryContext) FindCustomerByEmail(email string) (*model.Customer,
 
 func (rc *RepositoryContext) FindCustomerByEmailOrPhone(email string) (*model.Customer, error) {
 	var row model.Customer
-	err := rc.stmt.Customer.FindByEmailOrPhone.GetContext(rc.ctx, &row, email)
+	err := rc.stmt.Customer.FindByEmailOrPhone.GetContext(rc.ctx, &row, email, email)
 	return &row, err
 }
 

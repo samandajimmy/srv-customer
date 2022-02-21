@@ -18,7 +18,7 @@ require (
 	github.com/matoous/go-nanoid/v2 v2.0.0
 	github.com/minio/minio-go v6.0.14+incompatible
 	github.com/nbs-go/nlogger v1.4.3
-	github.com/nbs-go/nsql v0.1.1
+	github.com/nbs-go/nsql v0.5.1
 	github.com/rs/xid v1.3.0
 	gopkg.in/yaml.v2 v2.3.0
 )
