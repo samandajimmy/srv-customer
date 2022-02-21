@@ -163,3 +163,77 @@ func (s *Service) unblockPINUser(customer *model.Customer) error {
 
 	return nil
 }
+
+func (s *Service) UpdatePin(payload *dto.UpdatePinPayload) (*dto.UpdatePinResult, string, error) {
+	// If check pin is true
+	if payload.CheckPIN { // Prepare payload check pin
+		payloadCheckPIN := &dto.CheckPinPayload{
+			Pin: payload.PIN,
+		}
+		// Check PIN user
+		_, err := s.CheckPinUser(payloadCheckPIN)
+		if err != nil {
+			return nil, "", err
+		}
+	}
+
+	// Validate pin user
+	_, err := s.ValidatePin(&dto.ValidatePinPayload{
+		NewPin: payload.NewPIN,
+	})
+	if err != nil {
+		return nil, "", err
+	}
+
+	err = s.handleUpdatePin(payload.UserRefID, payload.NewPIN)
+	if err != nil {
+		s.log.Error("error found when handle update pin", nlogger.Context(s.ctx))
+		return nil, "", err
+	}
+
+	// TODO: Audit log reset pin
+
+	return &dto.UpdatePinResult{
+		Title: "PIN Berhasil Diubah",
+		Text:  "Selamat! Kamu berhasil mengubah PIN Pegadaian Digital.",
+	}, "PIN Berhasil Diubah", nil
+}
+
+func (s *Service) handleUpdatePin(userRefID string, newPin string) error {
+	// Get customer id
+	customer, err := s.repo.FindCustomerByUserRefID(userRefID)
+	if err != nil {
+		s.log.Error("error found when get customer repo", nlogger.Error(err), nlogger.Context(s.ctx))
+		if errors.Is(err, sql.ErrNoRows) {
+			return errors.New("user not found")
+		}
+		return err
+	}
+
+	// Get customer pin
+	credential, err := s.repo.FindCredentialByCustomerID(customer.ID)
+	if err != nil || credential.Pin == "" {
+		s.log.Error("error found when get credential repo", nlogger.Context(s.ctx))
+		if errors.Is(err, sql.ErrNoRows) || credential.Pin == "" {
+			return constant.AccountPINIsNotActive
+		}
+		return errx.Trace(err)
+	}
+
+	// Prepare update pin
+	credential.Pin = nval.MD5(newPin)
+	credential.UpdatedAt = time.Now()
+	credential.PinUpdatedAt = sql.NullTime{
+		Valid: true,
+		Time:  time.Now(),
+	}
+	credential.Version++
+
+	err = s.repo.UpdateCredential(credential)
+	if err != nil {
+		s.log.Error("error when update credential.", nlogger.Error(err))
+		return errx.Trace(err)
+	}
+
+	return nil
+}

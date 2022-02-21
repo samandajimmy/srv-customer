@@ -1,6 +1,7 @@
 package validate
 
 import (
+	"fmt"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/go-ozzo/ozzo-validation/v4/is"
 	"github.com/nbs-go/errx"
@@ -130,6 +131,33 @@ func PostCheckPin(p *dto.CheckPinPayload) error {
 
 	if err != nil {
 		return nhttp.BadRequestError.Trace(errx.Source(err))
+	}
+
+	return nil
+}
+
+func PostUpdatePin(p *dto.UpdatePinPayload) error {
+	err := validation.ValidateStruct(p,
+		validation.Field(&p.PIN, validation.Required, validation.Length(6, 6)),
+		validation.Field(&p.NewPIN, validation.Required, validation.Length(6, 6)),
+		validation.Field(&p.NewPINConfirmation, validation.Required, validation.Length(6, 6)),
+	)
+	if err != nil {
+		return nhttp.BadRequestError.Trace(errx.Source(err))
+	}
+
+	// Validate pin confirmation
+	err = PINConfirmation(p)
+	if err != nil {
+		return nhttp.BadRequestError.Trace(errx.Source(err))
+	}
+
+	return nil
+}
+
+func PINConfirmation(p *dto.UpdatePinPayload) error {
+	if p.NewPIN != p.NewPINConfirmation {
+		return fmt.Errorf("new_pin: Masukan PIN yang sama dengan sebelumnya")
 	}
 
 	return nil

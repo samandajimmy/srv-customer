@@ -14,3 +14,16 @@ type CheckPinPayload struct {
 	Pin       string `json:"pin"`
 	UserRefID string `json:"userRefId"`
 }
+
+type UpdatePinPayload struct {
+	PIN                string `json:"pin"`
+	NewPIN             string `json:"new_pin"`
+	NewPINConfirmation string `json:"new_pin_confirmation"`
+	UserRefID          string `json:"userRefId"`
+	CheckPIN           bool   `json:"check_pin"`
+}
+
+type UpdatePinResult struct {
+	Title string `json:"title"`
+	Text  string `json:"text"`
+}
