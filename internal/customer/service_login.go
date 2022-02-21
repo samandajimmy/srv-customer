@@ -29,7 +29,35 @@ func (s *Service) Login(payload dto.LoginRequest) (*dto.LoginResponse, error) {
 		return nil, ncore.TraceError("error find customer by email", err)
 	}
 
-	// check on external database
+	// Handle null Profile
+	if customer.Profile == nil {
+		customer.Profile = &model.CustomerProfile{
+			MaidenName:         "",
+			Gender:             "",
+			Nationality:        "",
+			DateOfBirth:        "",
+			PlaceOfBirth:       "",
+			IdentityPhotoFile:  "",
+			IdentityExpiredAt:  "",
+			Religion:           "",
+			MarriageStatus:     "",
+			NPWPNumber:         "",
+			NPWPPhotoFile:      "",
+			NPWPUpdatedAt:      0,
+			ProfileUpdatedAt:   0,
+			CifLinkUpdatedAt:   0,
+			CifUnlinkUpdatedAt: 0,
+			SidPhotoFile:       "",
+		}
+		// Update profile json
+		err = s.repo.UpdateCustomerByPhone(customer)
+		if err != nil {
+			s.log.Error("error when update customer by phone", nlogger.Error(err), nlogger.Context(ctx))
+			return nil, ncore.TraceError("failed to update customer", err)
+		}
+	}
+
+	// Check on external database
 	if err != nil && err == sql.ErrNoRows {
 		// If data not found on internal database check on external database.
 		user, errExternal := s.repoExternal.FindUserExternalByEmailOrPhone(payload.Email)
