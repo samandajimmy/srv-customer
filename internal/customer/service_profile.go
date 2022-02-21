@@ -2,6 +2,7 @@ package customer
 
 import (
 	"database/sql"
+	"encoding/json"
 	"github.com/nbs-go/nlogger"
 	"github.com/rs/xid"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/constant"
@@ -354,4 +355,102 @@ func (s *Service) UpdateSID(userRefId string, sidNumber string, uploaded *dto.Up
 	}
 
 	return nil
+}
+
+func (s *Service) CheckStatus(userRefId string) (*dto.CheckStatusResponse, error) {
+	// Get context
+	ctx := s.ctx
+
+	// Find customer
+	customer, err := s.repo.FindCustomerByUserRefID(userRefId)
+	if err != nil {
+		s.log.Error("error when find current customer", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, ncore.TraceError("", err)
+	}
+
+	// Find Verification
+	verification, err := s.repo.FindVerificationByCustomerID(customer.Id)
+
+	// Find Credential
+	credential, err := s.repo.FindCredentialByCustomerID(customer.Id)
+
+	var status = &dto.CheckStatusResponse{}
+
+	status.Cif = customer.Cif
+	status.EmailVerified = nval.ParseBooleanFallback(verification.EmailVerifiedStatus, false)
+	status.KycVerified = false
+	status.PinAvailable = nval.ParseBooleanFallback(credential.Pin, false)
+	status.AktifasiTransFinansial = nval.ParseStringFallback(verification.FinancialTransactionStatus, "0")
+
+	// If cif is empty
+	if customer.Cif == "" {
+		return status, nil
+	}
+
+	// Check CIF
+	checkCifResponse, err := s.CheckCIF(customer.Cif)
+	if err != nil {
+		s.log.Error("error found when check CIF", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, ncore.TraceError("", err)
+	}
+
+	if checkCifResponse.ResponseCode != "00" {
+		s.log.Error("error response code from check CIF", nlogger.Error(err), nlogger.Context(ctx))
+		return status, nil
+	}
+
+	if checkCifResponse.Message == "" {
+		s.log.Error("error response message from check CIF", nlogger.Error(err), nlogger.Context(ctx))
+		return status, nil
+	}
+
+	customerInquiry := &dto.CustomerInquiryVO{}
+	err = json.Unmarshal([]byte(checkCifResponse.Message), customerInquiry)
+	if err != nil {
+		s.log.Error("error marshall customer inquiry", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, constant.DefaultError.Trace()
+	}
+
+	// Update KYC
+
+	// -- Update time if kyc was recently activated
+	if customerInquiry.StatusKyc == "1" && verification.KycVerifiedStatus == 0 {
+		verification.KycVerifiedAt = sql.NullTime{
+			Valid: true,
+			Time:  time.Now(),
+		}
+	}
+
+	verification.KycVerifiedStatus = nval.ParseInt64Fallback(customerInquiry.StatusKyc, 0)
+	err = s.repo.UpdateVerification(verification)
+	if err != nil {
+		s.log.Error("error found when update verification repo", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, ncore.TraceError("", err)
+	}
+
+	status.KycVerified = nval.ParseBooleanFallback(verification.KycVerifiedStatus, false)
+
+	return status, nil
+}
+
+// Endpoint POST /customer/inquiry
+
+func (s *Service) CheckCIF(cif string) (*ResponseSwitchingSuccess, error) {
+	// Check CIF
+	reqBody := map[string]interface{}{
+		"cif": cif,
+	}
+
+	sp := PostDataPayload{
+		Url:  "/customer/inquiry",
+		Data: reqBody,
+	}
+
+	data, err := s.RestSwitchingPostData(sp)
+	if err != nil {
+		s.log.Error("error found when get gold savings", nlogger.Error(err), nlogger.Context(s.ctx))
+		return nil, ncore.TraceError("error found when get gold savings", err)
+	}
+
+	return data, nil
 }

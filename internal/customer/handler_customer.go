@@ -560,6 +560,31 @@ func (h *Customer) UpdateSID(rx *nhttp.Request) (*nhttp.Response, error) {
 	return nhttp.Success().SetData(uploaded), nil
 }
 
+func (h *Customer) CheckStatus(rx *nhttp.Request) (*nhttp.Response, error) {
+	// Get context
+	ctx := rx.Context()
+
+	// Get user UserRefID
+	userRefID, err := getUserRefID(rx)
+	if err != nil {
+		log.Errorf("error: %v", err, nlogger.Error(err), nlogger.Context(ctx))
+		return nil, ncore.TraceError("", err)
+	}
+
+	// Init service
+	svc := h.NewService(ctx)
+	defer svc.Close()
+
+	// Call service
+	resp, err := svc.CheckStatus(userRefID)
+	if err != nil {
+		log.Error("error found when call check status service", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, err
+	}
+
+	return nhttp.Success().SetData(resp), nil
+}
+
 func (s *Service) validateJWT(token string) (jwt.Token, error) {
 	// Parsing Token
 	t, err := jwt.ParseString(token, jwt.WithVerify(constant.JWTSignature, []byte(s.config.JWTKey)))

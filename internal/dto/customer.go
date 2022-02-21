@@ -338,6 +338,36 @@ type UpdateSIDRequest struct {
 	NoSID string
 }
 
+type CheckStatusResponse struct {
+	Cif                    string `json:"cif"`
+	EmailVerified          bool   `json:"emailVerified"`
+	KycVerified            bool   `json:"kycVerified"`
+	PinAvailable           bool   `json:"pinAvailable"`
+	AktifasiTransFinansial string `json:"aktifasiTransFinansial"`
+}
+
+type CustomerInquiryVO struct {
+	Cif                string `json:"cif"`
+	Hp                 string `json:"hp"`
+	IbuKandung         string `json:"ibuKandung"`
+	JenisKelamin       string `json:"jenisKelamin"`
+	KodeCabang         string `json:"kodeCabang"`
+	NamaNasabah        string `json:"namaNasabah"`
+	NoIdentitas        string `json:"noIdentitas"`
+	Telp               string `json:"telp"`
+	TempatLahir        string `json:"tempatLahir"`
+	TglLahir           string `json:"tglLahir"`
+	TglKyc             string `json:"tglKyc"`
+	StatusKyc          string `json:"statusKyc"`
+	StatusKawin        string `json:"statusKawin"`
+	Kewarganegaraan    string `json:"kewarganegaraan"`
+	TipeIdentitas      string `json:"tipeIdentitas"`
+	IdKelurahan        string `json:"idKelurahan"`
+	Jalan              string `json:"jalan"`
+	IsDukcapilVerified string `json:"isDukcapilVerified"`
+	Agama              string `json:"agama"`
+}
+
 func (d UpdateSIDRequest) Validate() error {
 	return validation.ValidateStruct(&d,
 		validation.Field(&d.NoSID, validation.Required, validation.Length(15, 15)),
