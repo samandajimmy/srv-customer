@@ -21,19 +21,28 @@ func (s *Service) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCus
 	// Get context
 	ctx := s.ctx
 
+	// Set Registration ID and Phone Number
 	registrationId := payload.RegistrationId
 	phoneNumber := payload.PhoneNumber
 
-	// validate exist
+	// Validate exist
 	var customer *model.Customer
 	customer, err := s.repo.FindCustomerByEmail(payload.Email)
-	if errors.Is(err, sql.ErrNoRows) {
+	if err != nil && err != sql.ErrNoRows {
+		s.log.Errorf("error found when get customer by email", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, s.responses.GetError("E_REG_1")
+	}
+
+	if err != nil && err == sql.ErrNoRows {
 		customer = nil
-	} else if customer != nil {
-		s.log.Debugf("Email already registered: %s", registrationId, nlogger.Error(err), nlogger.Context(ctx))
+	}
+
+	if customer != nil {
+		s.log.Debugf("Email already registered: %s", registrationId)
 		return nil, s.responses.GetError("E_REG_2")
 	}
-	// find registerID
+
+	// Find registerID
 	registerOTP, err := s.repo.FindVerificationOTPByRegistrationIDAndPhone(registrationId, phoneNumber)
 	if err != nil {
 		s.log.Errorf("Registration ID not found: %s", registrationId, nlogger.Error(err), nlogger.Context(ctx))
@@ -41,29 +50,32 @@ func (s *Service) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCus
 	}
 
 	// Get data user
-	customer, _ = s.repo.FindCustomerByPhone(phoneNumber)
+	customer, err = s.repo.FindCustomerByPhone(phoneNumber)
+	if err != nil && err != sql.ErrNoRows {
+		s.log.Errorf("error found when get customer", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, s.responses.GetError("E_REG_1")
+	}
 
 	var customerXID string
 	var customerId int64
-	// update name if customer exists
+
+	// Update name if customer exists
 	if customer != nil {
 		customer.FullName = payload.Name
 		customer.Email = payload.Email
-		err := s.repo.UpdateCustomerByPhone(customer)
+		err = s.repo.UpdateCustomerByPhone(customer)
 		if err != nil {
 			s.log.Error("error when update customer by phone", nlogger.Error(err), nlogger.Context(ctx))
 			return nil, s.responses.GetError("E_AUTH_5")
 		}
+
+		// Update customerId and CustomerXID
 		customerXID = customer.CustomerXID
 		customerId = customer.Id
 	} else {
-		// create new one
+		// Create new profile
 		customerXID = strings.ToUpper(xid.New().String())
-		metaData := model.NewItemMetadata(
-			convert.ModifierDTOToModel(
-				dto.Modifier{ID: "", Role: "", FullName: ""},
-			),
-		)
+		metaData := model.NewItemMetadata(convert.ModifierDTOToModel(dto.Modifier{ID: "", Role: "", FullName: ""}))
 
 		profile := &dto.CustomerProfileVO{
 			MaidenName:         "",
@@ -99,10 +111,12 @@ func (s *Service) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCus
 			Metadata:       nsql.EmptyObjectJSON,
 			ItemMetadata:   metaData,
 		}
-		lastInsertId, err := s.repo.CreateCustomer(insertCustomer)
-		if err != nil {
-			s.log.Errorf("error when persist customer: %s", payload.Name, nlogger.Error(err), nlogger.Context(ctx))
-			return nil, ncore.TraceError("failed to persist customer", err)
+
+		// Persist Customer
+		lastInsertId, errInsert := s.repo.CreateCustomer(insertCustomer)
+		if errInsert != nil {
+			s.log.Errorf("error when persist customer: %s", payload.Name, nlogger.Error(errInsert), nlogger.Context(ctx))
+			return nil, ncore.TraceError("failed to persist customer", errInsert)
 		}
 		customerId = lastInsertId
 		customer = insertCustomer
@@ -116,7 +130,7 @@ func (s *Service) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCus
 		return nil, s.responses.GetError("E_REG_1")
 	}
 
-	// prepare verification model
+	// Prepare verification model
 	verification := &model.Verification{
 		Xid:                             strings.ToUpper(xid.New().String()),
 		CustomerId:                      customerId,
@@ -129,24 +143,30 @@ func (s *Service) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCus
 		DukcapilVerifiedAt:              sql.NullTime{},
 		FinancialTransactionStatus:      0,
 		FinancialTransactionActivatedAt: sql.NullTime{},
-		Metadata:                        []byte("{}"),
+		Metadata:                        nsql.EmptyObjectJSON,
 		ItemMetadata:                    model.NewItemMetadata(convert.ModifierDTOToModel(dto.Modifier{ID: "", Role: "", FullName: ""})),
 	}
-	// update verification
+
+	// Update verification
 	err = s.repo.InsertOrUpdateVerification(verification)
 	if err != nil {
 		s.log.Errorf("error when persist customer verification. Customer Name: %s", payload.Name, nlogger.Error(err), nlogger.Context(ctx))
 		return nil, s.responses.GetError("E_REG_1")
 	}
 
-	// set metadata credential
+	// Set metadata credential
 	var Format dto.MetadataCredential
 	Format.TryLoginAt = ""
 	Format.PinCreatedAt = ""
 	Format.PinBlockedAt = ""
-	Metadata, _ := json.Marshal(&Format)
 
-	// create credential
+	metadata, err := json.Marshal(&Format)
+	if err != nil {
+		s.log.Error("error when marshal metadata", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, ncore.TraceError("", err)
+	}
+
+	// Create credential
 	credentialXID := strings.ToUpper(xid.New().String())
 	credentialInsert := &model.Credential{
 		Xid:                 credentialXID,
@@ -166,16 +186,18 @@ func (s *Service) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCus
 		BlockedUntilAt:      sql.NullTime{},
 		BiometricLogin:      0,
 		BiometricDeviceId:   "",
-		Metadata:            Metadata,
+		Metadata:            metadata,
 		ItemMetadata:        model.NewItemMetadata(convert.ModifierDTOToModel(dto.Modifier{ID: "", Role: "", FullName: ""})),
 	}
+
+	// Insert or update credential
 	err = s.repo.InsertOrUpdateCredential(credentialInsert)
 	if err != nil {
 		s.log.Error("Error when persist customer credential", nlogger.Error(err), nlogger.Context(ctx))
 		return nil, s.responses.GetError("E_REG_1")
 	}
 
-	// insert OTP
+	// Insert OTP
 	insertOTP := &model.OTP{
 		CustomerId: customerId,
 		Content:    "",
@@ -184,29 +206,33 @@ func (s *Service) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCus
 		Status:     "",
 		UpdatedAt:  time.Now(),
 	}
+
+	// Create OTP repo
 	err = s.repo.CreateOTP(insertOTP)
 	if err != nil {
 		s.log.Error("error when persist OTP", nlogger.Error(err), nlogger.Context(ctx))
 		return nil, ncore.TraceError("failed to persist OTP", err)
 	}
 
-	// insert session
+	// Init model access session
 	insertAccessSession := &model.AccessSession{
 		Xid:                  customerXID,
 		CustomerId:           customerId,
-		ExpiredAt:            time.Now().Add(1 * time.Hour),
+		ExpiredAt:            time.Now().Add(time.Hour),
 		NotificationToken:    payload.FcmToken,
 		NotificationProvider: 1,
-		Metadata:             []byte("{}"),
+		Metadata:             nsql.EmptyObjectJSON,
 		ItemMetadata:         model.NewItemMetadata(convert.ModifierDTOToModel(dto.Modifier{ID: "", Role: "", FullName: ""})),
 	}
+
+	// Create access session
 	err = s.repo.CreateAccessSession(insertAccessSession)
 	if err != nil {
 		s.log.Error("error when persist access session", nlogger.Error(err), nlogger.Context(ctx))
 		return nil, s.responses.GetError("E_REG_1")
 	}
 
-	// call login service
+	// Init payload Login
 	payloadLogin := dto.LoginRequest{
 		Email:    payload.Email,
 		Password: payload.Password,
@@ -214,9 +240,10 @@ func (s *Service) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCus
 		Version:  payload.Version,
 		FcmToken: payload.FcmToken,
 	}
+	// Call login service
 	res, err := s.Login(payloadLogin)
 	if err != nil {
-		s.log.Error("error when call login service", nlogger.Error(err), nlogger.Context(ctx))
+		s.log.Error("error found when call login service", nlogger.Error(err), nlogger.Context(ctx))
 		return nil, ncore.TraceError("failed to login", err)
 	}
 
@@ -289,7 +316,7 @@ func (s *Service) RegisterStepOne(payload dto.RegisterStepOne) (*dto.RegisterSte
 		}
 	}
 	if emailExist != nil {
-		s.log.Debugf("email already registered. %s", payload.Email, nlogger.Error(err), nlogger.Context(ctx))
+		s.log.Debugf("email already registered. %s", payload.Email)
 		return nil, s.responses.GetError("E_REG_2")
 	}
 
@@ -304,7 +331,7 @@ func (s *Service) RegisterStepOne(payload dto.RegisterStepOne) (*dto.RegisterSte
 		}
 	}
 	if phoneExist != nil {
-		s.log.Debug("phone number already registered", nlogger.Error(err), nlogger.Context(ctx))
+		s.log.Debug("phone number already registered", nlogger.Error(err))
 		return nil, s.responses.GetError("E_REG_3")
 	}
 
@@ -316,7 +343,7 @@ func (s *Service) RegisterStepOne(payload dto.RegisterStepOne) (*dto.RegisterSte
 	// Send OTP To Phone Number
 	resp, err := s.SendOTP(sendOtpRequest)
 	if err != nil {
-		s.log.Error("error when send OTP", nlogger.Error(err), nlogger.Context(ctx))
+		s.log.Error("error found when call send OTP service", nlogger.Error(err), nlogger.Context(ctx))
 		return nil, ncore.TraceError("failed to send OTP", err)
 	}
 
@@ -325,7 +352,7 @@ func (s *Service) RegisterStepOne(payload dto.RegisterStepOne) (*dto.RegisterSte
 	}
 
 	if resp.Message != "" {
-		s.log.Debugf("Debug: RegisterStepOne OTP CODE %s", resp.Message, nlogger.Context(ctx))
+		s.log.Debugf("Debug: RegisterStepOne OTP CODE %s", resp.Message)
 	}
 
 	return &dto.RegisterStepOneResponse{
@@ -370,7 +397,7 @@ func (s *Service) RegisterResendOTP(payload dto.RegisterResendOTP) (*dto.Registe
 	}
 
 	if resp.Message != "" {
-		s.log.Debugf("Debug: RegisterResendOTP OTP CODE: %s", resp.Message, nlogger.Error(err), nlogger.Context(ctx))
+		s.log.Debugf("Debug: RegisterResendOTP OTP CODE: %s", resp.Message)
 	}
 
 	return &dto.RegisterResendOTPResponse{
@@ -386,7 +413,7 @@ func (s *Service) RegisterStepTwo(payload dto.RegisterStepTwo) (*dto.RegisterSte
 	request := dto.VerifyOTPRequest{
 		PhoneNumber: payload.PhoneNumber,
 		Token:       payload.OTP,
-		RequestType: "register",
+		RequestType: constant.RequestTypeRegister,
 	}
 	// validate phone
 	phoneExist, err := s.repo.FindCustomerByPhone(payload.PhoneNumber)

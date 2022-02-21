@@ -11,7 +11,12 @@ import (
 func (rc *RepositoryContext) CreateCustomer(row *model.Customer) (int64, error) {
 	var lastInsertId int64
 	err := rc.stmt.Customer.Insert.QueryRowContext(rc.ctx, &row).Scan(&lastInsertId)
-	return lastInsertId, err
+	if err != nil {
+		rc.log.Error("error when insert customer", nlogger.Error(err), nlogger.Context(rc.ctx))
+		return 0, err
+	}
+
+	return lastInsertId, nil
 }
 
 func (rc *RepositoryContext) FindCustomerByID(id int64) (*model.Customer, error) {

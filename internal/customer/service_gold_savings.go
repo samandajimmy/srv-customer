@@ -59,9 +59,13 @@ func (s *Service) getListAccountNumber(cif string, userRefId string) (*dto.GoldS
 
 	// get customer from repo
 	customer, err := s.repo.FindCustomerByPhoneOrCIF(cif)
-	if err != nil {
+	if err != nil && err != sql.ErrNoRows {
 		s.log.Error("error found when get customer repo", nlogger.Error(err), nlogger.Context(ctx))
 		return nil, ncore.TraceError("failed get customer repo", err)
+	}
+
+	if customer.Cif == "" {
+		return nil, nil
 	}
 
 	// Call service portfolio

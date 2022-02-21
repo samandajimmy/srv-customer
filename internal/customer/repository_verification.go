@@ -2,7 +2,6 @@ package customer
 
 import (
 	"database/sql"
-	"errors"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/constant"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/model"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/ncore"
@@ -65,23 +64,23 @@ func (rc *RepositoryContext) UpdateVerificationByCustomerID(row *model.Verificat
 func (rc *RepositoryContext) InsertOrUpdateVerification(row *model.Verification) error {
 	// find by customer id
 	verification, err := rc.FindVerificationByCustomerID(row.CustomerId)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			verification = nil
-		}
+	if err != nil && err != sql.ErrNoRows {
+		return ncore.TraceError("cannot find verification by customerId", err)
 	}
 
-	if verification != nil {
-		err = rc.UpdateVerification(verification)
-		if err != nil {
-			return ncore.TraceError("cannot update verification.", err)
-		}
-		return nil
-	} else {
+	if err != nil && err == sql.ErrNoRows {
 		err = rc.InsertVerification(row)
 		if err != nil {
-			return ncore.TraceError("cannot insert verification.", err)
+			return ncore.TraceError("cannot insert verification", err)
 		}
+
 		return nil
 	}
+
+	err = rc.UpdateVerification(verification)
+	if err != nil {
+		return ncore.TraceError("cannot update verification", err)
+	}
+
+	return nil
 }

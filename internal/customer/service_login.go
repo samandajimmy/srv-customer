@@ -219,21 +219,26 @@ func (s *Service) Login(payload dto.LoginRequest) (*dto.LoginResponse, error) {
 		return nil, ncore.TraceError("error when count audit login", err)
 	}
 
-	//  gold saving account
-	goldSaving, err := s.getListAccountNumber(customer.Cif, customer.UserRefId.String)
-	if err != nil {
-		return nil, ncore.TraceError("error when get list gold saving account", err)
+	var gs interface{}
+	if len(customer.Cif) == 0 {
+		gs = false
+	} else {
+		//  gold saving account
+		goldSaving, errGs := s.getListAccountNumber(customer.Cif, customer.UserRefId.String)
+		if errGs != nil {
+			return nil, ncore.TraceError("error when get list gold saving account", err)
+		}
+
+		gs = &dto.GoldSavingVO{
+			TotalSaldoBlokir:  goldSaving.TotalSaldoBlokir,
+			TotalSaldoSeluruh: goldSaving.TotalSaldoSeluruh,
+			TotalSaldoEfektif: goldSaving.TotalSaldoEfektif,
+			ListTabungan:      goldSaving.ListTabungan,
+			PrimaryRekening:   goldSaving.PrimaryRekening,
+		}
 	}
 
-	gs := &dto.GoldSavingVO{
-		TotalSaldoBlokir:  goldSaving.TotalSaldoBlokir,
-		TotalSaldoSeluruh: goldSaving.TotalSaldoSeluruh,
-		TotalSaldoEfektif: goldSaving.TotalSaldoEfektif,
-		ListTabungan:      goldSaving.ListTabungan,
-		PrimaryRekening:   goldSaving.PrimaryRekening,
-	}
-
-	return s.composeLoginResponse(dto.LoginVO{
+	resp := dto.LoginVO{
 		Customer:              customer,
 		Address:               address,
 		Profile:               customer.Profile,
@@ -243,7 +248,9 @@ func (s *Service) Login(payload dto.LoginRequest) (*dto.LoginResponse, error) {
 		IsForceUpdatePassword: isForceUpdatePassword,
 		GoldSaving:            gs,
 		Token:                 token,
-	})
+	}
+
+	return s.composeLoginResponse(resp)
 }
 
 func (s *Service) syncInternalToExternal(payload *dto.CustomerSynchronizeRequest) (*dto.UserVO, error) {
@@ -396,7 +403,7 @@ func (s *Service) composeLoginResponse(data dto.LoginVO) (*dto.LoginResponse, er
 	verification := data.Verification.(*model.Verification)
 	address := data.Address.(*model.Address)
 	financial := data.Financial.(*model.FinancialData)
-	goldSaving := data.GoldSaving.(*dto.GoldSavingVO)
+	gs := data.GoldSaving
 
 	// Get asset url
 	// -- Avatar URL
@@ -453,7 +460,7 @@ func (s *Service) composeLoginResponse(data dto.LoginVO) (*dto.LoginResponse, er
 				GoldCardApplicationNumber: financial.GoldCardApplicationNumber,
 				GoldCardAccountNumber:     financial.GoldCardAccountNumber,
 				KodeCabang:                "", // TODO
-				TabunganEmas:              goldSaving,
+				TabunganEmas:              gs,
 			},
 			IsFirstLogin:          data.IsFirstLogin,
 			IsForceUpdatePassword: data.IsForceUpdatePassword,

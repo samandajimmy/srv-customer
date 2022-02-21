@@ -21,73 +21,104 @@ func (s *Service) CustomerProfile(id string) (*dto.ProfileResponse, error) {
 	ctx := s.ctx
 
 	// Get customer data
-	c, err := s.repo.FindCustomerByUserRefID(id)
+	customer, err := s.repo.FindCustomerByUserRefID(id)
 	if err != nil {
 		s.log.Error("error found when get customer repo", nlogger.Error(err), nlogger.Context(ctx))
 		return nil, ncore.TraceError("error when", err)
 	}
 
 	// Get verification data
-	v, err := s.repo.FindVerificationByCustomerID(c.Id)
+	verification, err := s.repo.FindVerificationByCustomerID(customer.Id)
+	if err != nil && err != sql.ErrNoRows {
+		s.log.Error("error found when get verification repo", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, ncore.TraceError("", err)
+	}
+
+	// Get financial data
+	financial, err := s.repo.FindFinancialDataByCustomerID(customer.Id)
 	if err != nil && err != sql.ErrNoRows {
 		s.log.Error("error found when get verification repo", nlogger.Error(err), nlogger.Context(ctx))
 		return nil, ncore.TraceError("", err)
 	}
 
 	// Get address
-	a, err := s.repo.FindAddressByCustomerId(c.Id)
+	address, err := s.repo.FindAddressByCustomerId(customer.Id)
 	if err != nil && err != sql.ErrNoRows {
 		s.log.Error("error found when get address repo", nlogger.Error(err), nlogger.Context(ctx))
 		return nil, ncore.TraceError("", err)
 	}
 
-	//  gold saving account
-	goldSaving, err := s.getListAccountNumber(c.Cif, c.UserRefId.String)
+	// Get Gold saving account
+	goldSaving, err := s.getListAccountNumber(customer.Cif, customer.UserRefId.String)
 	if err != nil {
 		return nil, ncore.TraceError("error when get list gold saving account", err)
 	}
 
-	gs := &dto.GoldSavingVO{
-		TotalSaldoBlokir:  goldSaving.TotalSaldoBlokir,
-		TotalSaldoSeluruh: goldSaving.TotalSaldoSeluruh,
-		TotalSaldoEfektif: goldSaving.TotalSaldoEfektif,
-		ListTabungan:      goldSaving.ListTabungan,
-		PrimaryRekening:   goldSaving.PrimaryRekening,
+	var gs interface{}
+	if len(goldSaving.ListTabungan) == 0 {
+		gs = false
+	} else {
+		gs = &dto.GoldSavingVO{
+			TotalSaldoBlokir:  goldSaving.TotalSaldoBlokir,
+			TotalSaldoSeluruh: goldSaving.TotalSaldoSeluruh,
+			TotalSaldoEfektif: goldSaving.TotalSaldoEfektif,
+			ListTabungan:      goldSaving.ListTabungan,
+			PrimaryRekening:   goldSaving.PrimaryRekening,
+		}
 	}
-	// Get avatar
-	avatarUrl := s.AssetGetPublicUrl(constant.AssetAvatarProfile, c.Photos.FileName)
-	ktpUrl := s.AssetGetPublicUrl(constant.AssetKTP, c.Profile.IdentityPhotoFile)
+
+	// Get asset url
+	avatarUrl := s.AssetGetPublicUrl(constant.AssetAvatarProfile, customer.Photos.FileName)
+	ktpUrl := s.AssetGetPublicUrl(constant.AssetKTP, customer.Profile.IdentityPhotoFile)
+	npwpUrl := s.AssetGetPublicUrl(constant.AssetNPWP, customer.Profile.NPWPPhotoFile)
+	sidUrl := s.AssetGetPublicUrl(constant.AssetNPWP, customer.Profile.SidPhotoFile)
 
 	// Compose response
 	resp := dto.ProfileResponse{
 		CustomerVO: dto.CustomerVO{
-			ID:              c.UserRefId.String,
-			Cif:             c.Cif,
-			Nama:            c.FullName,
-			NamaIbu:         c.Profile.MaidenName,
-			NoKTP:           c.IdentityNumber,
-			Email:           c.Email,
-			JenisKelamin:    c.Profile.Gender,
-			TempatLahir:     c.Profile.PlaceOfBirth,
-			TglLahir:        c.Profile.DateOfBirth,
-			Kewarganegaraan: c.Profile.Nationality,
-			NoNPWP:          c.Profile.NPWPNumber,
-			NoHP:            c.Phone,
-			Alamat:          a.Line.String,
-			IDProvinsi:      a.ProvinceId.Int64,
-			IDKabupaten:     a.CityId.Int64,
-			IDKecamatan:     a.DistrictId.Int64,
-			IDKelurahan:     a.SubDistrictId.Int64,
-			Provinsi:        a.ProvinceName.String,
-			Kabupaten:       a.CityName.String,
-			Kecamatan:       a.DistrictName.String,
-			Kelurahan:       a.SubDistrictName.String,
-			KodePos:         a.PostalCode.String,
-			Avatar:          avatarUrl,
-			FotoKTP:         ktpUrl,
-			IsEmailVerified: nval.ParseStringFallback(v.EmailVerifiedStatus, ""),
-			JenisIdentitas:  nval.ParseStringFallback(c.IdentityType, ""),
-			TabunganEmas:    gs,
+			ID:                        customer.UserRefId.String,
+			Cif:                       customer.Cif,
+			Nama:                      customer.FullName,
+			NamaIbu:                   customer.Profile.MaidenName,
+			NoKTP:                     customer.IdentityNumber,
+			Email:                     customer.Email,
+			JenisKelamin:              customer.Profile.Gender,
+			TempatLahir:               customer.Profile.PlaceOfBirth,
+			TglLahir:                  customer.Profile.DateOfBirth,
+			ReferralCode:              customer.ReferralCode,
+			NoHP:                      customer.Phone,
+			Kewarganegaraan:           customer.Profile.Nationality,
+			NoIdentitas:               customer.IdentityNumber,
+			TglExpiredIdentitas:       customer.Profile.IdentityExpiredAt,
+			StatusKawin:               customer.Profile.MarriageStatus,
+			NoNPWP:                    customer.Profile.NPWPNumber,
+			NoSid:                     customer.Sid,
+			IsKYC:                     nval.ParseStringFallback(verification.KycVerifiedStatus, ""),
+			JenisIdentitas:            nval.ParseStringFallback(customer.IdentityType, ""),
+			FotoNPWP:                  npwpUrl,
+			FotoSid:                   sidUrl,
+			Avatar:                    avatarUrl,
+			FotoKTP:                   ktpUrl,
+			Alamat:                    address.Line.String,
+			IDProvinsi:                address.ProvinceId.Int64,
+			IDKabupaten:               address.CityId.Int64,
+			IDKecamatan:               address.DistrictId.Int64,
+			IDKelurahan:               address.SubDistrictId.Int64,
+			Kelurahan:                 address.SubDistrictName.String,
+			Provinsi:                  address.ProvinceName.String,
+			Kabupaten:                 address.CityName.String,
+			Kecamatan:                 address.DistrictName.String,
+			KodePos:                   address.PostalCode.String,
+			Norek:                     financial.AccountNumber,
+			GoldCardApplicationNumber: financial.GoldCardApplicationNumber,
+			GoldCardAccountNumber:     financial.GoldCardAccountNumber,
+			Saldo:                     nval.ParseStringFallback(financial.Balance, "0"),
+			IsOpenTe:                  nval.ParseStringFallback(financial.GoldSavingStatus, "0"),
+			IsEmailVerified:           nval.ParseStringFallback(verification.EmailVerifiedStatus, ""),
+			IsDukcapilVerified:        nval.ParseStringFallback(verification.DukcapilVerifiedStatus, "0"),
+			AktifasiTransFinansial:    nval.ParseStringFallback(verification.FinancialTransactionStatus, "0"),
+			KodeCabang:                "", // TODO Branch Code
+			TabunganEmas:              gs,
 		},
 	}
 
