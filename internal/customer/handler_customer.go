@@ -90,7 +90,7 @@ func (h *Customer) PostRegister(rx *nhttp.Request) (*nhttp.Response, error) {
 	// Call service
 	resp, err := svc.Register(payload)
 	if err != nil {
-		log.Errorf("error found when call service", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("error found when call service", nlogger.Error(err), nlogger.Context(ctx))
 		return nil, err
 	}
 
@@ -158,7 +158,7 @@ func (h *Customer) VerifyOTP(rx *nhttp.Request) (*nhttp.Response, error) {
 	// Call service
 	resp, err := svc.RegisterStepTwo(payload)
 	if err != nil {
-		log.Errorf("error when processing service", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("error when processing service", nlogger.Error(err), nlogger.Context(ctx))
 		return nil, err
 	}
 

@@ -93,28 +93,6 @@ func GetResponseString(response *http.Response) string {
 	return fmt.Sprintf(string(body))
 }
 
-func GetResponseData(response *http.Response) (*ResponseSwitching, error) {
-	defer response.Body.Close()
-	var Response *ResponseSwitching
-	err := json.NewDecoder(response.Body).Decode(&Response)
-	if err != nil {
-		log.Errorf("Error while reading the response bytes:", err)
-		return Response, err
-	}
-	return Response, nil
-}
-
-func GetResponseDataPdsAPI(response *http.Response) (*ResponsePdsAPI, error) {
-	defer response.Body.Close()
-	var Response *ResponsePdsAPI
-	err := json.NewDecoder(response.Body).Decode(&Response)
-	if err != nil {
-		log.Errorf("Error while reading the response bytes:", err)
-		return Response, err
-	}
-	return Response, nil
-}
-
 func getBodyRequest(header map[string]string, body map[string]interface{}) (*bytes.Buffer, map[string]string) {
 	var payload *bytes.Buffer
 	switch header["Content-Type"] {

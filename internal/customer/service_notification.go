@@ -34,7 +34,7 @@ func (s *Service) SendNotification(payload dto.NotificationPayload) (*http.Respo
 	// Send Notification
 	resp, err := s.ClientPostData("/push-notification", reqBody, reqHeader)
 	if err != nil {
-		log.Errorf("Error when send notification")
+		log.Error("Error when send notification")
 		return resp, ncore.TraceError("error", err)
 	}
 

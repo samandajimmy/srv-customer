@@ -31,8 +31,12 @@ func NewVerificationOTP(db *nsql.DatabaseContext) *VerificationOTP {
 
 	deleteByRegistrationIdAndPhone := query.
 		Delete(VerificationOTPSchema).
-		Where(query.Equal(query.Column("registrationId"))).
-		Where(query.Equal(query.Column("phone"))).
+		Where(
+			query.And(
+				query.Equal(query.Column("registrationId")),
+				query.Equal(query.Column("phone")),
+			),
+		).
 		Build()
 
 	return &VerificationOTP{

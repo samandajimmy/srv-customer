@@ -86,7 +86,7 @@ func (s *Service) Login(payload dto.LoginRequest) (*dto.LoginResponse, error) {
 			s.log.Error("failed to retrieve credential not found", nlogger.Error(err), nlogger.Context(ctx))
 			return nil, s.responses.GetError("E_AUTH_8")
 		}
-		s.log.Errorf("failed to retrieve credential", nlogger.Error(err), nlogger.Context(ctx))
+		s.log.Error("failed to retrieve credential", nlogger.Error(err), nlogger.Context(ctx))
 		return nil, ncore.TraceError("error", err)
 	}
 
@@ -209,7 +209,7 @@ func (s *Service) Login(payload dto.LoginRequest) (*dto.LoginResponse, error) {
 	if errors.Is(err, sql.ErrNoRows) {
 		verification = &model.Verification{}
 	} else if err != nil {
-		s.log.Errorf("error found when get data verification", nlogger.Error(err), nlogger.Context(ctx))
+		s.log.Error("error found when get data verification", nlogger.Error(err), nlogger.Context(ctx))
 		return nil, s.responses.GetError("E_AUTH_8")
 	}
 

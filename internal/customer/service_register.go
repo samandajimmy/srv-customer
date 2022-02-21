@@ -29,7 +29,7 @@ func (s *Service) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCus
 	var customer *model.Customer
 	customer, err := s.repo.FindCustomerByEmail(payload.Email)
 	if err != nil && err != sql.ErrNoRows {
-		s.log.Errorf("error found when get customer by email", nlogger.Error(err), nlogger.Context(ctx))
+		s.log.Error("error found when get customer by email", nlogger.Error(err), nlogger.Context(ctx))
 		return nil, s.responses.GetError("E_REG_1")
 	}
 
@@ -45,16 +45,22 @@ func (s *Service) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCus
 	// Find registerID
 	registerOTP, err := s.repo.FindVerificationOTPByRegistrationIDAndPhone(registrationId, phoneNumber)
 	if err != nil {
-		s.log.Errorf("Registration ID not found: %s", registrationId, nlogger.Error(err), nlogger.Context(ctx))
+		s.log.Errorf("Registration ID not found: %s", registrationId)
 		return nil, s.responses.GetError("E_REG_1")
 	}
 
 	// Get data user
 	customer, err = s.repo.FindCustomerByPhone(phoneNumber)
 	if err != nil && err != sql.ErrNoRows {
-		s.log.Errorf("error found when get customer", nlogger.Error(err), nlogger.Context(ctx))
+		s.log.Error("error found when get customer", nlogger.Error(err))
 		return nil, s.responses.GetError("E_REG_1")
 	}
+
+	tx, err := s.repo.conn.BeginTxx(ctx, nil)
+	if err != nil {
+		return nil, ncore.TraceError("", err)
+	}
+	defer s.repo.ReleaseTx(tx, &err)
 
 	var customerXID string
 	var customerId int64
@@ -241,12 +247,22 @@ func (s *Service) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCus
 		FcmToken: payload.FcmToken,
 	}
 	// Call login service
-	res, err := s.Login(payloadLogin)
+	loginResponse, err := s.Login(payloadLogin)
 	if err != nil {
 		s.log.Error("error found when call login service", nlogger.Error(err), nlogger.Context(ctx))
 		return nil, ncore.TraceError("failed to login", err)
 	}
 
+	// Delete OTP RegistrationId
+	err = s.repo.DeleteVerificationOTP(registerOTP.RegistrationId, customer.Phone)
+	if err != nil {
+		s.log.Errorf("error when remove verificationOTP: %s. Phone Number : %s.",
+			registerOTP.RegistrationId, customer.Phone, nlogger.Error(err), nlogger.Context(ctx),
+		)
+		return nil, s.responses.GetError("E_REG_1")
+	}
+
+	// TODO: Fix payload endpoint to unified create notification service
 	// Send Notification Register
 	err = s.SendNotificationRegister(dto.NotificationRegister{
 		Customer:     customer,
@@ -255,20 +271,12 @@ func (s *Service) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCus
 		Payload:      payload,
 	})
 	if err != nil {
-		s.log.Error("error when send notification register", nlogger.Error(err), nlogger.Context(ctx))
-	}
-
-	// Delete OTP RegistrationId
-	err = s.repo.DeleteVerificationOTP(registerOTP.RegistrationId, customer.Phone)
-	if err != nil {
-		s.log.Debugf("error when remove verificationOTP: %s. Phone Number : %s.",
-			registerOTP.RegistrationId, customer.Phone, nlogger.Error(err), nlogger.Context(ctx),
-		)
-		return nil, s.responses.GetError("E_REG_1")
+		err = nil
+		s.log.Error("error when send notification register", nlogger.Context(ctx))
 	}
 
 	return &dto.RegisterNewCustomerResponse{
-		LoginResponse: res,
+		LoginResponse: loginResponse,
 		// TODO EKYC
 		Ekyc: &dto.EKyc{
 			AccountType: "",
