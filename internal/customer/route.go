@@ -28,19 +28,20 @@ func setUpRoute(router *nhttp.Router, handlers *HandlerMap) {
 	router.Handle(http.MethodPost, "/register/step-3", router.HandleFunc(handlers.Customer.PostRegister))
 
 	// Customer
-	router.Handle(http.MethodGet, "/profile", router.HandleFunc(handlers.Customer.GetProfile))
+	router.Handle(http.MethodGet, "/profile", router.HandleFunc(handlers.Middlewares.AuthUser),
+		router.HandleFunc(handlers.Customer.GetProfile))
 
-	router.Handle(http.MethodPut, "/profile", router.HandleFunc(handlers.Customer.UpdateProfile))
+	router.Handle(http.MethodPut, "/profile", router.HandleFunc(handlers.Middlewares.AuthUser),
+		router.HandleFunc(handlers.Customer.UpdateProfile))
 
-	router.Handle(http.MethodPost, "/profile/check_password", router.HandleFunc(handlers.Customer.UpdatePasswordCheck))
+	router.Handle(http.MethodPost, "/profile/check_password", router.HandleFunc(handlers.Middlewares.AuthUser),
+		router.HandleFunc(handlers.Customer.UpdatePasswordCheck))
 
-	router.Handle(http.MethodPut, "/profile/password",
-		router.HandleFunc(handlers.Middlewares.AuthUser),
+	router.Handle(http.MethodPut, "/profile/password", router.HandleFunc(handlers.Middlewares.AuthUser),
 		router.HandleFunc(handlers.Customer.UpdatePassword))
 
 	// File Upload
-	router.Handle(http.MethodPost, "/upload",
-		router.HandleFunc(handlers.Middlewares.AuthUser),
+	router.Handle(http.MethodPost, "/upload", router.HandleFunc(handlers.Middlewares.AuthUser),
 		router.HandleFunc(handlers.Asset.UploadFile))
 
 	router.Handle(http.MethodPost, "/profile/avatar", router.HandleFunc(handlers.Middlewares.AuthUser),

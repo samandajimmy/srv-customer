@@ -82,7 +82,7 @@ func (h *Customer) PostRegister(rx *nhttp.Request) (*nhttp.Response, error) {
 	// Check is force update password
 	validatePassword := svc.validatePassword(payload.Password)
 	if validatePassword.IsValid == false {
-		err := errors.New(fmt.Sprintf("password: %s.", validatePassword.Message))
+		err = errors.New(fmt.Sprintf("password: %s.", validatePassword.Message))
 		data := nvalidate.Message(err.Error())
 		return nhttp.UnprocessableEntity(data), nil
 	}
@@ -168,6 +168,7 @@ func (h *Customer) VerifyOTP(rx *nhttp.Request) (*nhttp.Response, error) {
 func (h *Customer) ResendOTP(rx *nhttp.Request) (*nhttp.Response, error) {
 	// Get context
 	ctx := rx.Context()
+
 	// Get Payload
 	var payload dto.RegisterResendOTP
 	err := rx.ParseJSONBody(&payload)
@@ -191,7 +192,7 @@ func (h *Customer) ResendOTP(rx *nhttp.Request) (*nhttp.Response, error) {
 	// Call service
 	resp, err := svc.RegisterResendOTP(payload)
 	if err != nil {
-		log.Error("error when processing service", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("error found when call register resend otp service", nlogger.Error(err), nlogger.Context(ctx))
 		return nil, err
 	}
 
@@ -202,27 +203,21 @@ func (h *Customer) GetProfile(rx *nhttp.Request) (*nhttp.Response, error) {
 	// Get context
 	ctx := rx.Context()
 
-	// Get token
-	tokenString, err := nhttp.ExtractBearerAuth(rx.Request)
+	// Get user UserRefID
+	userRefID, err := getUserRefID(rx)
 	if err != nil {
-		log.Error("error when extract token", nlogger.Error(err), nlogger.Context(ctx))
-		return nil, ncore.TraceError("failed to extract token", err)
+		log.Errorf("error: %v", err, nlogger.Error(err), nlogger.Context(ctx))
+		return nil, ncore.TraceError("", err)
 	}
 
 	// Init service
 	svc := h.NewService(ctx)
 	defer svc.Close()
 
-	// Get UserRefID
-	userRefId, err := svc.validateTokenAndRetrieveUserRefID(tokenString)
-	if err != nil {
-		return nil, err
-	}
-
 	// Call service
-	resp, err := svc.CustomerProfile(userRefId)
+	resp, err := svc.CustomerProfile(userRefID)
 	if err != nil {
-		log.Error("error when call customer profile service")
+		log.Error("error when call customer profile service", nlogger.Error(err), nlogger.Context(ctx))
 		return nil, err
 	}
 
@@ -233,11 +228,11 @@ func (h *Customer) UpdateProfile(rx *nhttp.Request) (*nhttp.Response, error) {
 	// Get context
 	ctx := rx.Context()
 
-	// Get token
-	tokenString, err := nhttp.ExtractBearerAuth(rx.Request)
+	// Get user UserRefID
+	userRefID, err := getUserRefID(rx)
 	if err != nil {
-		log.Error("error when extract token", nlogger.Error(err), nlogger.Context(ctx))
-		return nil, ncore.TraceError("failed to extract token", err)
+		log.Errorf("error: %v", err, nlogger.Error(err), nlogger.Context(ctx))
+		return nil, ncore.TraceError("", err)
 	}
 
 	// Get payload
@@ -260,14 +255,8 @@ func (h *Customer) UpdateProfile(rx *nhttp.Request) (*nhttp.Response, error) {
 	svc := h.NewService(rx.Context())
 	defer svc.Close()
 
-	// Get UserRefID
-	userRefId, err := svc.validateTokenAndRetrieveUserRefID(tokenString)
-	if err != nil {
-		return nil, err
-	}
-
 	// Call service
-	err = svc.UpdateCustomerProfile(userRefId, payload)
+	err = svc.UpdateCustomerProfile(userRefID, payload)
 	if err != nil {
 		log.Error("error when processing service", nlogger.Error(err), nlogger.Context(ctx))
 		return nil, err
@@ -280,11 +269,11 @@ func (h *Customer) UpdatePasswordCheck(rx *nhttp.Request) (*nhttp.Response, erro
 	// Get context
 	ctx := rx.Context()
 
-	// Get token
-	tokenString, err := nhttp.ExtractBearerAuth(rx.Request)
+	// Get user UserRefID
+	userRefID, err := getUserRefID(rx)
 	if err != nil {
-		log.Error("error when extract token", nlogger.Error(err), nlogger.Context(ctx))
-		return nil, ncore.TraceError("failed to extract token", err)
+		log.Errorf("error: %v", err, nlogger.Error(err), nlogger.Context(ctx))
+		return nil, ncore.TraceError("", err)
 	}
 
 	// Get payload
@@ -308,7 +297,7 @@ func (h *Customer) UpdatePasswordCheck(rx *nhttp.Request) (*nhttp.Response, erro
 	defer svc.Close()
 
 	// Call service
-	valid, err := svc.isValidPassword(tokenString, payload.CurrentPassword)
+	valid, err := svc.isValidPassword(userRefID, payload.CurrentPassword)
 	if err != nil {
 		log.Error("error when processing service", nlogger.Error(err), nlogger.Context(ctx))
 		return nil, err

@@ -157,16 +157,9 @@ func (s *Service) UpdateCustomerProfile(id string, payload dto.UpdateProfileRequ
 	return nil
 }
 
-func (s *Service) isValidPassword(tokenString string, password string) (bool, error) {
+func (s *Service) isValidPassword(userRefId string, password string) (bool, error) {
 	// Get Context
 	ctx := s.ctx
-
-	// Get UserRefID
-	userRefId, err := s.validateTokenAndRetrieveUserRefID(tokenString)
-	if err != nil {
-		s.log.Error("error when validate token", nlogger.Error(err), nlogger.Context(ctx))
-		return false, ncore.TraceError("", err)
-	}
 
 	// Find customer
 	c, err := s.repo.FindCustomerByUserRefID(userRefId)
