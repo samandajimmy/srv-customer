@@ -13,7 +13,7 @@ import (
 type ServerConfig struct {
 	ListenPort int
 	BasePath   string
-	BaseUrl    url.URL
+	BaseURL    url.URL
 	Secure     bool
 	TrustProxy bool
 	Debug      bool
@@ -47,18 +47,18 @@ func (s *ServerConfig) LoadFromEnv() error {
 	s.BasePath = basePath
 
 	// Get base URL
-	baseUrlStr, ok := nval.ParseString(os.Getenv("SERVER_HTTP_BASE_URL"))
-	if !ok || baseUrlStr == "" {
+	baseURLStr, ok := nval.ParseString(os.Getenv("SERVER_HTTP_BASE_URL"))
+	if !ok || baseURLStr == "" {
 		log.Warn("server.base_url is not set")
-		s.BaseUrl = BuildUrl("localhost", s.ListenPort, s.BasePath)
+		s.BaseURL = BuildURL("localhost", s.ListenPort, s.BasePath)
 	} else {
-		tmp, err := url.Parse(baseUrlStr)
+		tmp, err := url.Parse(baseURLStr)
 		if err != nil {
-			log.Warn("failed to parse server.base_url = " + baseUrlStr)
-			s.BaseUrl = BuildUrl("localhost", s.ListenPort, s.BasePath)
+			log.Warn("failed to parse server.base_url = " + baseURLStr)
+			s.BaseURL = BuildURL("localhost", s.ListenPort, s.BasePath)
 		} else {
-			s.BaseUrl = *tmp
-			s.BaseUrl.Path = s.BasePath
+			s.BaseURL = *tmp
+			s.BaseURL.Path = s.BasePath
 		}
 	}
 
@@ -87,18 +87,18 @@ func (s *ServerConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	s.BasePath = basePath
 
 	// Get base URL
-	baseUrlStr, ok := nval.ParseString(tmp["base_url"])
+	baseURLStr, ok := nval.ParseString(tmp["base_url"])
 	if !ok {
 		log.Warn("server.base_url is not set")
-		s.BaseUrl = BuildUrl("localhost", s.ListenPort, s.BasePath)
+		s.BaseURL = BuildURL("localhost", s.ListenPort, s.BasePath)
 	} else {
-		tmp, err := url.Parse(baseUrlStr)
+		tmp, err := url.Parse(baseURLStr)
 		if err != nil {
-			log.Warn("failed to parse server.base_url = " + baseUrlStr)
-			s.BaseUrl = BuildUrl("localhost", s.ListenPort, s.BasePath)
+			log.Warn("failed to parse server.base_url = " + baseURLStr)
+			s.BaseURL = BuildURL("localhost", s.ListenPort, s.BasePath)
 		} else {
-			s.BaseUrl = *tmp
-			s.BaseUrl.Path = s.BasePath
+			s.BaseURL = *tmp
+			s.BaseURL.Path = s.BasePath
 		}
 	}
 
@@ -109,8 +109,8 @@ func (s *ServerConfig) GetListenPort() string {
 	return fmt.Sprintf(":%d", s.ListenPort)
 }
 
-func (s *ServerConfig) GetHttpBaseUrl() string {
-	u := s.BaseUrl
+func (s *ServerConfig) GetHTTPBaseURL() string {
+	u := s.BaseURL
 	if s.Secure {
 		u.Scheme = "https"
 	} else {
@@ -119,8 +119,8 @@ func (s *ServerConfig) GetHttpBaseUrl() string {
 	return u.String()
 }
 
-func (s *ServerConfig) GetWebSocketBaseUrl() string {
-	u := s.BaseUrl
+func (s *ServerConfig) GetWebSocketBaseURL() string {
+	u := s.BaseURL
 	if s.Secure {
 		u.Scheme = "wss"
 	} else {

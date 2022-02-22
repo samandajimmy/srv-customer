@@ -2,6 +2,7 @@ package nhttp
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/ncore"
@@ -46,14 +47,15 @@ func (jw JSONContentWriter) WriteView(w http.ResponseWriter, httpStatus int, vie
 }
 
 func (jw JSONContentWriter) WriteError(w http.ResponseWriter, err error) int {
-	apiErr, ok := err.(*ncore.Response)
+	var apiErr *ncore.Response
+	ok := errors.Is(err, apiErr)
 	if !ok {
 		// If assert type fail, create wrap error to an internal error
 		apiErr = ncore.InternalError.Wrap(err)
 	}
 
 	// Get http status
-	httpStatus, ok := nval.ParseInt(apiErr.Metadata[HttpStatusRespKey])
+	httpStatus, ok := nval.ParseInt(apiErr.Metadata[HTTPStatusRespKey])
 	if !ok {
 		httpStatus = http.StatusInternalServerError
 	}

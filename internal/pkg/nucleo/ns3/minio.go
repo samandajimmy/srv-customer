@@ -11,7 +11,7 @@ var log = nlogger.Get()
 
 type MinioOpt struct {
 	Endpoint        string
-	AccessKeyId     string
+	AccessKeyID     string
 	SecretAccessKey string
 	UseSSL          bool
 	BucketName      string
@@ -20,7 +20,7 @@ type MinioOpt struct {
 
 func NewMinio(opt MinioOpt) (*Minio, error) {
 	// Init minio client
-	client, err := minio.New(opt.Endpoint, opt.AccessKeyId, opt.SecretAccessKey, opt.UseSSL)
+	client, err := minio.New(opt.Endpoint, opt.AccessKeyID, opt.SecretAccessKey, opt.UseSSL)
 	if err != nil {
 		return nil, err
 	}

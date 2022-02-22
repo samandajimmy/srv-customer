@@ -77,8 +77,9 @@ func GetFile(r *http.Request, key string, maxSize int64, mimeTypes []string) (re
 	}
 	// Get mimeType
 	mimeType := fileHeader.Header.Get("Content-Type")
+
 	// If mime types is defined, validate mime type
-	if mimeTypes != nil && len(mimeTypes) > 0 {
+	if len(mimeTypes) > 0 {
 		// Init found flag
 		isAccepted := false
 		for _, v := range mimeTypes {

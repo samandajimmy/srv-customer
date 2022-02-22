@@ -16,7 +16,7 @@ type DatabaseContext struct {
 func (s *DatabaseContext) Prepare(query string) *sqlx.Stmt {
 	stmt, err := s.conn.PreparexContext(s.ctx, query)
 	if err != nil {
-		panic(fmt.Errorf("nsql: error while preparing statment [%s] (%s)", query, err))
+		panic(fmt.Errorf("nsql: error while preparing statment [%s] (%w)", query, err))
 	}
 	return stmt
 }
@@ -37,7 +37,7 @@ func (s *DatabaseContext) PrepareNamedFmt(queryFmt string, args ...interface{}) 
 func (s *DatabaseContext) PrepareNamed(query string) *sqlx.NamedStmt {
 	stmt, err := s.conn.PrepareNamedContext(s.ctx, query)
 	if err != nil {
-		panic(fmt.Errorf("nsql: error while preparing statment [%s] (%s)", query, err))
+		panic(fmt.Errorf("nsql: error while preparing statment [%s] (%w)", query, err))
 	}
 	return stmt
 }

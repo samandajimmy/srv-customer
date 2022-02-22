@@ -21,10 +21,12 @@ func NewCaptureRequestMetadataHandler(trustProxy bool) mux.MiddlewareFunc {
 			startedAt := time.Now()
 
 			// Set to context value
-			ctx := context.WithValue(r.Context(), RequestMetadataKey, RequestMetadata{
-				ClientIP:  clientIP,
-				StartedAt: startedAt,
-			})
+			var ctx context.Context
+			ctx = context.WithValue(r.Context(), RequestMetadataKey,
+				RequestMetadata{
+					ClientIP:  clientIP,
+					StartedAt: startedAt,
+				})
 
 			// Continue
 			next.ServeHTTP(w, r.WithContext(ctx))
@@ -52,7 +54,7 @@ func HandleLogRequest(h http.Handler) http.Handler {
 		}
 
 		// Get httpStatus
-		httpStatus, ok := ctx.Value(HttpStatusRespKey).(int)
+		httpStatus, ok := ctx.Value(HTTPStatusRespKey).(int)
 		if !ok {
 			httpStatus = -1
 		}

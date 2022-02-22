@@ -16,6 +16,7 @@ func NewHandler(fn HandlerFunc) *Handler {
 }
 
 /// Handler handles HTTP request and send response as JSON
+
 type Handler struct {
 	// Private
 	contentWriter ContentWriter
@@ -42,7 +43,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		// If an error occurred, then write error response
 		httpStatus = h.contentWriter.WriteError(w, err)
-		rx.SetContextValue(HttpStatusRespKey, httpStatus)
+		rx.SetContextValue(HTTPStatusRespKey, httpStatus)
 		return
 	}
 
@@ -50,7 +51,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if result == nil {
 		httpStatus = http.StatusNoContent
 		w.WriteHeader(httpStatus)
-		rx.SetContextValue(HttpStatusRespKey, httpStatus)
+		rx.SetContextValue(HTTPStatusRespKey, httpStatus)
 		return
 	}
 
@@ -80,29 +81,29 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Set status http by result code
-	var statusHttp int
+	var statusHTTP int
 	switch result.Code {
 	case "200":
-		statusHttp = http.StatusOK
+		statusHTTP = http.StatusOK
 	case "400":
-		statusHttp = http.StatusBadRequest
+		statusHTTP = http.StatusBadRequest
 	case "422":
-		statusHttp = http.StatusUnprocessableEntity
+		statusHTTP = http.StatusUnprocessableEntity
 	case "503":
-		statusHttp = http.StatusServiceUnavailable
+		statusHTTP = http.StatusServiceUnavailable
 	default:
-		statusHttp = http.StatusOK
+		statusHTTP = http.StatusOK
 	}
 
 	if result.responseFlag == ViewRequest {
 		// Write response html
-		httpStatus = h.contentWriter.WriteView(w, statusHttp, result.Data)
+		httpStatus = h.contentWriter.WriteView(w, statusHTTP, result.Data)
 	} else {
 		// Write standard response json
-		httpStatus = h.contentWriter.Write(w, statusHttp, result)
+		httpStatus = h.contentWriter.Write(w, statusHTTP, result)
 	}
 
-	rx.SetContextValue(HttpStatusRespKey, httpStatus)
+	rx.SetContextValue(HTTPStatusRespKey, httpStatus)
 }
 
 func HandleErrorNotFound(_ *Request) (*Response, error) {

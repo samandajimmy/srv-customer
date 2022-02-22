@@ -38,10 +38,9 @@ func customMessage() {
 func Message(err string, additional ...*ErrMessageVO) interface{} {
 	splitErrMessage := strings.Split(err, "; ")
 
-	var messages []*ErrMessageVO
+	messages := make([]*ErrMessageVO, len(splitErrMessage))
 
 	for _, errMessage := range splitErrMessage {
-
 		splitMessage := strings.Split(errMessage, ": ")
 		message := strings.Replace(splitMessage[1], ".", "", 1)
 		item := &ErrMessageVO{
@@ -52,10 +51,8 @@ func Message(err string, additional ...*ErrMessageVO) interface{} {
 		messages = append(messages, item)
 	}
 
-	if additional != nil && len(additional) != 0 {
-		for _, m := range additional {
-			messages = append(messages, m)
-		}
+	if len(additional) > 0 {
+		messages = append(messages, additional...)
 	}
 
 	return messages

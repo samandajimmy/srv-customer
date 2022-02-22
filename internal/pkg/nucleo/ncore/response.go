@@ -116,14 +116,11 @@ type ErrorOptions struct {
 }
 
 func (r Response) SetMessage(message string, args ...interface{}) Response {
-
 	r.Message = fmt.Sprintf(message, args...)
-
 	return r
 }
 
-func (r Response) HttpStatus(code int) Response {
-
+func (r Response) HTTPStatus(code int) Response {
 	r.Metadata = map[string]interface{}{
 		"http_status": code,
 	}

@@ -12,7 +12,7 @@ type CmdFlags struct {
 	CmdShowVersion *bool
 	OptEnvironment *string
 	OptWorkDir     *string
-	OptNodeId      *string
+	OptNodeID      *string
 }
 
 type BootOptions struct {
@@ -29,7 +29,7 @@ func initCmdFlags() CmdFlags {
 		// Options
 		OptEnvironment: flag.String("env", "", "Option: Set app environment"),
 		OptWorkDir:     flag.String("dir", ".", "Option: Set working directory"),
-		OptNodeId:      flag.String("node-id", "", "Option: App instance number"),
+		OptNodeID:      flag.String("node-id", "", "Option: App instance number"),
 	}
 }
 
@@ -55,7 +55,7 @@ func handleCmdFlags() BootOptions {
 			Manifest:    ncore.NewManifest(AppName, AppVersion, BuildSignature),
 			Environment: ncore.ParseEnvironment(*cmdFlags.OptEnvironment),
 			WorkDir:     *cmdFlags.OptWorkDir,
-			NodeId:      *cmdFlags.OptNodeId,
+			NodeID:      *cmdFlags.OptNodeID,
 			EnvPrefix:   EnvPrefix,
 		},
 	}

@@ -11,11 +11,11 @@ var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ123456
 func RandomString(length int) string {
 	b := make([]rune, length)
 	for i := range b {
-		b[i] = letters[rand.Intn(len(letters))]
+		b[i] = letters[rand.Intn(len(letters))] //nolint:gosec
 	}
 	return string(b)
 }
 
 func MD5(str string) string {
-	return fmt.Sprintf("%x", md5.Sum([]byte(str)))
+	return fmt.Sprintf("%x", md5.Sum([]byte(str))) //nolint:gosec
 }

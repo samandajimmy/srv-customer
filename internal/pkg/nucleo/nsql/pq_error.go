@@ -1,6 +1,9 @@
 package nsql
 
-import "github.com/lib/pq"
+import (
+	"errors"
+	"github.com/lib/pq"
+)
 
 type ErrorMetadata struct {
 	Constraint string
@@ -9,7 +12,8 @@ type ErrorMetadata struct {
 
 func GetPostgresError(err error) (ErrorCode, *ErrorMetadata) {
 	// Cast error
-	pqErr, ok := err.(*pq.Error)
+	var pqErr *pq.Error
+	ok := errors.Is(err, pqErr)
 	if !ok {
 		return UnknownError, nil
 	}

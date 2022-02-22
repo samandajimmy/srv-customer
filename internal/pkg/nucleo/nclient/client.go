@@ -16,7 +16,7 @@ import (
 )
 
 type Nclient struct {
-	ChannelId string
+	ChannelID string
 	ClientId  string
 	Client    http.Client
 	BaseUrl   string
@@ -38,7 +38,7 @@ var log = nlogger.Get()
 
 func NewNucleoClient(channelId string, clientId string, baseUrl string) *Nclient {
 	return &Nclient{
-		ChannelId: channelId,
+		ChannelID: channelId,
 		ClientId:  clientId,
 		Client:    http.Client{},
 		BaseUrl:   baseUrl,
@@ -53,9 +53,9 @@ func (c *Nclient) PostData(endpoint string, body map[string]interface{}, header 
 	payload, header = getBodyRequest(header, body)
 
 	// Make request http
-	baseUrlWithEndpoint := c.BaseUrl + endpoint
-	log.Debugf("PostData.Endpoint %s", baseUrlWithEndpoint)
-	request, err := http.NewRequest("POST", baseUrlWithEndpoint, payload)
+	baseURLWithEndpoint := c.BaseUrl + endpoint
+	log.Debugf("PostData.Endpoint %s", baseURLWithEndpoint)
+	request, err := http.NewRequest("POST", baseURLWithEndpoint, payload)
 	if err != nil {
 		log.Errorf("Error when make new request. err: %s", err)
 		return result, ncore.TraceError("Error when make new request", err)
@@ -100,7 +100,7 @@ func getBodyRequest(header map[string]string, body map[string]interface{}) (*byt
 		payload = setBodyApplicationJSON(body)
 		break
 	case "application/x-www-form-urlencoded":
-		payload = setBodyUrlEncoded(body)
+		payload = setBodyURLEncoded(body)
 		break
 	case "multipart/form-data":
 		result, contentType := setBodyFormData(body)
@@ -114,7 +114,7 @@ func getBodyRequest(header map[string]string, body map[string]interface{}) (*byt
 	return payload, header
 }
 
-func setBodyUrlEncoded(data map[string]interface{}) *bytes.Buffer {
+func setBodyURLEncoded(data map[string]interface{}) *bytes.Buffer {
 	var param = url.Values{}
 	for key, value := range data {
 		param.Set(key, nval.ParseStringFallback(value, ""))

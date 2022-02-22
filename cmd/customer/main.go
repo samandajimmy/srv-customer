@@ -43,7 +43,7 @@ func main() {
 
 	// Start server
 	log.Infof("Starting %s...", c.Manifest.AppName)
-	log.Infof("NodeId = %s, Environment = %s", c.NodeId, c.GetEnvironmentString())
+	log.Infof("NodeId = %s, Environment = %s", c.NodeID, c.GetEnvironmentString())
 	log.Debugf("Boot Time: %s", time.Since(startedAt))
 
 	err = http.ListenAndServe(serverConfig.GetListenPort(), router)

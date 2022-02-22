@@ -55,7 +55,7 @@ func (s *Schema) TableQuery() string {
 	return fmt.Sprintf(`"%s"`, s.TableName)
 }
 
-func (s *Schema) FindById() string {
+func (s *Schema) FindByID() string {
 	q := fmt.Sprintf(`SELECT %s FROM "%s" WHERE "%s" = $1`, s.SelectAllColumns(), s.TableName, s.primaryKey)
 	return q
 }
@@ -87,7 +87,7 @@ func NewSchema(tableName string, columns []string, args ...SchemaOption) *Schema
 				continue
 			}
 			insertColumns[i] = col
-			i += 1
+			i++
 		}
 	} else {
 		insertColumns = s.Columns

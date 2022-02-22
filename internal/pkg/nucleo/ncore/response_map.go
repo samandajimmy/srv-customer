@@ -42,7 +42,7 @@ func (m *ResponseMap) GetSuccess(code string) Response {
 	}
 
 	// If found, but Success if false, then return standard success response
-	if resp.Success == false {
+	if !resp.Success {
 		return Success
 	}
 
@@ -58,7 +58,7 @@ func (m *ResponseMap) GetError(code string) *Response {
 	}
 
 	// If found, but Success if true, then return standard success response
-	if resp.Success == true {
+	if resp.Success {
 		return InternalError
 	}
 

@@ -27,7 +27,7 @@ var BadRequestError = &ncore.Response{
 	Code:    BadRequestErrorCode,
 	Message: "Bad Request",
 	Metadata: map[string]interface{}{
-		HttpStatusRespKey: 400,
+		HTTPStatusRespKey: 400,
 	},
 }
 
@@ -36,7 +36,7 @@ var UnprocessableEntityError = &ncore.Response{
 	Code:    UnprocessableEntityErrorCode,
 	Message: "Unprocessable Entity",
 	Metadata: map[string]interface{}{
-		HttpStatusRespKey: 422,
+		HTTPStatusRespKey: 422,
 	},
 }
 
@@ -45,7 +45,7 @@ var UnauthorizedError = &ncore.Response{
 	Code:    UnauthorizedErrorCode,
 	Message: "Unauthorized",
 	Metadata: map[string]interface{}{
-		HttpStatusRespKey: 401,
+		HTTPStatusRespKey: 401,
 	},
 }
 
@@ -54,7 +54,7 @@ var ForbiddenError = &ncore.Response{
 	Code:    ForbiddenErrorCode,
 	Message: "Forbidden",
 	Metadata: map[string]interface{}{
-		HttpStatusRespKey: 403,
+		HTTPStatusRespKey: 403,
 	},
 }
 
@@ -63,7 +63,7 @@ var NotFoundError = &ncore.Response{
 	Code:    NotFoundErrorCode,
 	Message: "Not Found",
 	Metadata: map[string]interface{}{
-		HttpStatusRespKey: 404,
+		HTTPStatusRespKey: 404,
 	},
 }
 
@@ -72,6 +72,6 @@ var MethodNotAllowedError = &ncore.Response{
 	Code:    MethodNotAllowedErrorCode,
 	Message: "Method Not Allowed",
 	Metadata: map[string]interface{}{
-		HttpStatusRespKey: 405,
+		HTTPStatusRespKey: 405,
 	},
 }

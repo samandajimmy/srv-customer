@@ -1,6 +1,7 @@
 package nredis
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/gomodule/redigo/redis"
@@ -33,7 +34,6 @@ func NewNucleoRedis(network string, host string, port string, password string) *
 }
 
 func DialClient(network string, host string, port string, password string) (*redis.Pool, error) {
-
 	address := fmt.Sprintf("%s:%s", host, port)
 
 	initPool := redis.Pool{
@@ -60,9 +60,7 @@ func (c *Redis) Ping() (string, error) {
 }
 
 func (c *Redis) Get(key string) (string, error) {
-
 	result, err := redis.String(c.redis.Do("GET", key))
-
 	if err == redis.ErrNil {
 		log.Errorf("Key is empty. key: %s", key)
 		return "", nil
@@ -76,7 +74,6 @@ func (c *Redis) Get(key string) (string, error) {
 }
 
 func (c *Redis) SetThenGet(key string, value string, expire int64) (string, error) {
-
 	// Set value
 	_, err := c.redis.Do("SET", key, value)
 	if err != nil {
@@ -95,7 +92,7 @@ func (c *Redis) SetThenGet(key string, value string, expire int64) (string, erro
 	// Get value
 	result, err := redis.String(c.redis.Do("GET", key))
 
-	if err == redis.ErrNil {
+	if errors.Is(err, redis.ErrNil) {
 		log.Errorf("Key is empty. key: %s", key)
 		return "", nil
 	} else if err != nil {

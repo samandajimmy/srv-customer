@@ -12,7 +12,7 @@ type BootOptions struct {
 	Manifest    Manifest    // Application manifest
 	Environment Environment // Process environment
 	WorkDir     string      // Working directory
-	NodeId      string      // Process Node Identifier
+	NodeID      string      // Process Node Identifier
 	// Boot options
 	EnvPrefix string
 	// ResponseMapFile
@@ -28,7 +28,7 @@ func Boot(destConfig interface{}, destConfigExternal interface{}, args ...BootOp
 		Manifest:    options.Manifest,
 		Environment: options.Environment,
 		WorkDir:     options.WorkDir,
-		NodeId:      options.NodeId,
+		NodeID:      options.NodeID,
 	}
 
 	// Load responses
@@ -66,12 +66,12 @@ func getBootOptions(args []BootOptions) BootOptions {
 	}
 
 	// If node number is not set, then set random id
-	if options.NodeId == "" {
-		nodeId, err := gonanoid.Generate(AlphaNumUpperCharSet, 4)
+	if options.NodeID == "" {
+		nodeID, err := gonanoid.Generate(AlphaNumUpperCharSet, 4)
 		if err != nil {
 			panic(fmt.Errorf("failed to generate NodeId. Error = %w", err))
 		}
-		options.NodeId = nodeId
+		options.NodeID = nodeID
 	}
 
 	// If config file is not set, then set default

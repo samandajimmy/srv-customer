@@ -7,7 +7,7 @@ type Core struct {
 	Manifest    Manifest     // Application manifest
 	Environment Environment  // Process environment
 	WorkDir     string       // Working directory
-	NodeId      string       // Process Node Identifier
+	NodeID      string       // Process Node Identifier
 	Responses   *ResponseMap // Contains list of response codes
 }
 
