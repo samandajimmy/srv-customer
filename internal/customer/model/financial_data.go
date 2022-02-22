@@ -1,17 +1,30 @@
 package model
 
-import "encoding/json"
+import (
+	"github.com/rs/xid"
+	"strings"
+)
+
+var EmptyFinancialData = &FinancialData{
+	Xid:                       strings.ToUpper(xid.New().String()),
+	MainAccountNumber:         "",
+	AccountNumber:             "",
+	GoldSavingStatus:          0,
+	GoldCardApplicationNumber: "",
+	GoldCardAccountNumber:     "",
+	Balance:                   0,
+	BaseField:                 EmptyBaseField,
+}
 
 type FinancialData struct {
-	Id                        int64           `db:"id"`
-	Xid                       string          `db:"xid"`
-	CustomerId                int64           `db:"customerId"`
-	MainAccountNumber         string          `db:"mainAccountNumber"`
-	AccountNumber             string          `db:"accountNumber"`
-	GoldSavingStatus          int64           `db:"goldSavingStatus"`
-	GoldCardApplicationNumber string          `db:"goldCardApplicationNumber"`
-	GoldCardAccountNumber     string          `db:"goldCardAccountNumber"`
-	Balance                   int64           `db:"balance"`
-	Metadata                  json.RawMessage `db:"metadata"`
-	ItemMetadata
+	BaseField
+	ID                        int64  `db:"id"`
+	Xid                       string `db:"xid"`
+	CustomerID                int64  `db:"customerId"`
+	MainAccountNumber         string `db:"mainAccountNumber"`
+	AccountNumber             string `db:"accountNumber"`
+	GoldSavingStatus          int64  `db:"goldSavingStatus"`
+	GoldCardApplicationNumber string `db:"goldCardApplicationNumber"`
+	GoldCardAccountNumber     string `db:"goldCardAccountNumber"`
+	Balance                   int64  `db:"balance"`
 }

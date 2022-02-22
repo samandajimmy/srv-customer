@@ -3,8 +3,8 @@ package model
 import "time"
 
 type OTP struct {
-	Id         int64     `db:"id"`
-	CustomerId int64     `db:"customerId"`
+	ID         int64     `db:"id"`
+	CustomerID int64     `db:"customerId"`
 	Content    string    `db:"content"`
 	Type       string    `db:"type"`
 	Data       string    `db:"data"`

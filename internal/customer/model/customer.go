@@ -9,14 +9,15 @@ import (
 )
 
 type Customer struct {
-	Id             int64            `db:"id"`
+	BaseField
+	ID             int64            `db:"id"`
 	CustomerXID    string           `db:"xid"`
 	FullName       string           `db:"fullName"`
 	Phone          string           `db:"phone"`
 	Email          string           `db:"email"`
 	IdentityType   int64            `db:"identityType"`
 	IdentityNumber string           `db:"identityNumber"`
-	UserRefId      sql.NullString   `db:"userRefId"`
+	UserRefID      sql.NullString   `db:"userRefId"`
 	Photos         *CustomerPhoto   `db:"photos"`
 	Profile        *CustomerProfile `db:"profile"`
 	Cif            string           `db:"cif"`
@@ -24,7 +25,6 @@ type Customer struct {
 	ReferralCode   string           `db:"referralCode"`
 	Status         int64            `db:"status"`
 	Metadata       json.RawMessage  `db:"metadata"`
-	ItemMetadata
 }
 
 type CustomerPhoto struct {
@@ -43,7 +43,7 @@ func (m *CustomerPhoto) Value() (driver.Value, error) {
 }
 
 type ValidatePassword struct {
-	CustomerId int64  `db:"customerId"`
+	CustomerID int64  `db:"customerId"`
 	Password   string `db:"password"`
 }
 
@@ -64,7 +64,7 @@ type UpdateByID struct {
 
 type UpdateCustomerByUserRefID struct {
 	*Customer
-	UserRefId string `db:"userRefId"`
+	UserRefID string `db:"userRefId"`
 }
 
 type CustomerDetail struct {
@@ -120,4 +120,23 @@ func ToCustomerProfile(d *dto.CustomerProfileVO) *CustomerProfile {
 		CifUnlinkUpdatedAt: d.CifUnlinkUpdatedAt,
 		SidPhotoFile:       d.SidPhotoFile,
 	}
+}
+
+var EmptyCustomerProfile = &CustomerProfile{
+	MaidenName:         "",
+	Gender:             "",
+	Nationality:        "",
+	DateOfBirth:        "",
+	PlaceOfBirth:       "",
+	IdentityPhotoFile:  "",
+	IdentityExpiredAt:  "",
+	Religion:           "",
+	MarriageStatus:     "",
+	NPWPNumber:         "",
+	NPWPPhotoFile:      "",
+	NPWPUpdatedAt:      0,
+	ProfileUpdatedAt:   0,
+	CifLinkUpdatedAt:   0,
+	CifUnlinkUpdatedAt: 0,
+	SidPhotoFile:       "",
 }

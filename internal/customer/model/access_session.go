@@ -1,19 +1,17 @@
 package model
 
 import (
-	"encoding/json"
 	"time"
 )
 
 type AccessSession struct {
-	Id                   int64           `db:"id"`
-	Xid                  string          `db:"xid"`
-	CustomerId           int64           `db:"customerId"`
-	ExpiredAt            time.Time       `db:"expiredAt"`
-	NotificationToken    string          `db:"notificationToken"`
-	NotificationProvider int64           `db:"notificationProvider"`
-	Metadata             json.RawMessage `db:"metadata"`
-	ItemMetadata
+	BaseField
+	ID                   int64     `db:"id"`
+	Xid                  string    `db:"xid"`
+	CustomerID           int64     `db:"customerId"`
+	ExpiredAt            time.Time `db:"expiredAt"`
+	NotificationToken    string    `db:"notificationToken"`
+	NotificationProvider int64     `db:"notificationProvider"`
 }
 
 type UpdateAccessSession struct {

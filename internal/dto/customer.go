@@ -17,7 +17,7 @@ type RegisterNewCustomer struct {
 	PhoneNumber    string `json:"no_hp"`
 	Password       string `json:"password"`
 	FcmToken       string `json:"fcm_token"`
-	RegistrationId string `json:"register_id"`
+	RegistrationID string `json:"register_id"`
 	Agen           string `json:"agen"`
 	Version        string `json:"version"`
 }
@@ -31,7 +31,7 @@ type RegisterNewCustomerResponse struct {
 
 type NewRegisterResponse struct {
 	Token  string `json:"token"`
-	ReffId int64  `json:"reffId"`
+	ReffID int64  `json:"reffId"`
 }
 
 type RegisterStepOne struct {
@@ -59,7 +59,7 @@ type RegisterStepTwo struct {
 }
 
 type RegisterStepTwoResponse struct {
-	RegisterId string `json:"register_id"`
+	RegisterID string `json:"register_id"`
 }
 
 type CustomerSynchronizeRequest struct {
@@ -183,14 +183,14 @@ type UserVO struct {
 	Kewarganegaraan           string `json:"kewarganegaraan,omitempty"`
 	StatusKawin               string `json:"status_kawin,omitempty"`
 	Kodepos                   string `json:"kodepos"`
-	IdKelurahan               string `json:"id_kelurahan,omitempty"`
+	IDKelurahan               string `json:"id_kelurahan,omitempty"`
 	NoNpwp                    string `json:"no_npwp,omitempty"`
 	FotoNpwp                  string `json:"foto_npwp,omitempty"`
 	NoSid                     string `json:"no_sid"`
 	FotoSid                   string `json:"foto_sid"`
 	KodeCabang                string `json:"kode_cabang,omitempty"`
-	FotoUrl                   string `json:"foto_url"`
-	FotoKtpUrl                string `json:"foto_ktp_url,omitempty"`
+	FotoURL                   string `json:"foto_url"`
+	FotoKtpURL                string `json:"foto_ktp_url,omitempty"`
 	Status                    string `json:"status"`
 	IsLocked                  string `json:"is_locked"`
 	LoginFailCount            string `json:"login_fail_count,omitempty"`
@@ -222,7 +222,7 @@ type UserVO struct {
 	BlockedToDate             string `json:"blocked_to_date"`
 	NorekUtama                string `json:"norek_utama"`
 	IsSetBiometric            string `json:"is_set_biometric"`
-	DeviceIdBiometric         string `json:"device_id_biometric"`
+	DeviceIDBiometric         string `json:"device_id_biometric"`
 }
 
 type CustomerMetadata struct {
@@ -286,7 +286,7 @@ type LoginRequest struct {
 	Password     string `json:"password"`
 	Agen         string `json:"agen"`
 	Version      string `json:"version"`
-	DeviceId     string `json:"device_id"`
+	DeviceID     string `json:"device_id"`
 	IP           string `json:"ip"`
 	Latitude     string `json:"latitude"`
 	Longitude    string `json:"longitude"`
@@ -307,13 +307,13 @@ type UpdateProfileRequest struct {
 	TglLahir                string `json:"tgl_lahir"`
 	JenisIdentitas          string `json:"jenis_identitas"`
 	NoKtp                   string `json:"no_ktp"`
-	IdProvinsi              string `json:"id_provinsi"`
+	IDProvinsi              string `json:"id_provinsi"`
 	NamaProvinsi            string `json:"nama_provinsi"`
-	IdKabupaten             string `json:"id_kabupaten"`
+	IDKabupaten             string `json:"id_kabupaten"`
 	NamaKabupaten           string `json:"nama_kabupaten"`
-	IdKecamatan             string `json:"id_kecamatan"`
+	IDKecamatan             string `json:"id_kecamatan"`
 	NamaKecamatan           string `json:"nama_kecamatan"`
-	IdKelurahan             string `json:"id_kelurahan"`
+	IDKelurahan             string `json:"id_kelurahan"`
 	NamaKelurahan           string `json:"nama_kelurahan"`
 	KodePos                 string `json:"kode_pos"`
 	JenisKelamin            string `json:"jenis_kelamin"`
@@ -363,7 +363,7 @@ type CustomerInquiryVO struct {
 	StatusKawin        string `json:"statusKawin"`
 	Kewarganegaraan    string `json:"kewarganegaraan"`
 	TipeIdentitas      string `json:"tipeIdentitas"`
-	IdKelurahan        string `json:"idKelurahan"`
+	IDKelurahan        string `json:"idKelurahan"`
 	Jalan              string `json:"jalan"`
 	IsDukcapilVerified string `json:"isDukcapilVerified"`
 	Agama              string `json:"agama"`
@@ -402,7 +402,7 @@ func (d UpdateProfileRequest) Validate() error {
 		validation.Field(&d.TempatLahir, validation.Required),
 		validation.Field(&d.TglLahir, validation.Required),
 		validation.Field(&d.NoKtp, validation.Required),
-		validation.Field(&d.IdKelurahan, validation.Required),
+		validation.Field(&d.IDKelurahan, validation.Required),
 		validation.Field(&d.JenisKelamin, validation.Required),
 		validation.Field(&d.JenisIdentitas, validation.Required),
 		validation.Field(&d.Kewarganegaraan, validation.Required),
@@ -417,7 +417,7 @@ func (d RegisterNewCustomer) Validate() error {
 		validation.Field(&d.PhoneNumber, validation.Required),
 		validation.Field(&d.Password, validation.Required),
 		validation.Field(&d.FcmToken, validation.Required),
-		validation.Field(&d.RegistrationId, validation.Required),
+		validation.Field(&d.RegistrationID, validation.Required),
 	)
 }
 

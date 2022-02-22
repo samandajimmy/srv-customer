@@ -2,7 +2,7 @@ package dto
 
 type EmailVerification struct {
 	FullName        string
-	VerificationUrl string
+	VerificationURL string
 	Email           string
 }
 
@@ -11,5 +11,5 @@ type EmailBlock struct {
 	Text         string
 	Message      string
 	LastTryLogin string
-	BaseUrl      string
+	BaseURL      string
 }

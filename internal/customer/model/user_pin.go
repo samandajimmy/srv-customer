@@ -3,7 +3,7 @@ package model
 import "database/sql"
 
 type UserPin struct {
-	UserId         int64          `db:"user_id"`
+	UserID         int64          `db:"user_id"`
 	Cif            sql.NullString `db:"cif"`
 	LastAccessTime sql.NullTime   `db:"last_access_time"`
 	Counter        int64          `db:"counter"`
