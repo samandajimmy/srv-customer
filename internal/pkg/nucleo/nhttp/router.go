@@ -3,7 +3,6 @@ package nhttp
 import (
 	"github.com/gorilla/mux"
 	"net/http"
-	"time"
 )
 
 func NewRouter(args ...RouterOptions) *Router {
@@ -65,7 +64,6 @@ type Router struct {
 	LogRequest bool
 	// Private
 	contentWriter                ContentWriter
-	startedAt                    time.Time
 	handleCaptureRequestMetadata mux.MiddlewareFunc
 }
 

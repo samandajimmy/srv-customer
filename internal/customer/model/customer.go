@@ -24,7 +24,6 @@ type Customer struct {
 	Sid            string           `db:"sid"`
 	ReferralCode   string           `db:"referralCode"`
 	Status         int64            `db:"status"`
-	Metadata       json.RawMessage  `db:"metadata"`
 }
 
 type CustomerPhoto struct {

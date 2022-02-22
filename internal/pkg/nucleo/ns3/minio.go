@@ -1,7 +1,6 @@
 package ns3
 
 import (
-	"context"
 	"github.com/minio/minio-go"
 	"github.com/nbs-go/nlogger"
 	"io"
@@ -15,7 +14,6 @@ type MinioOpt struct {
 	SecretAccessKey string
 	UseSSL          bool
 	BucketName      string
-	ctx             *context.Context
 }
 
 func NewMinio(opt MinioOpt) (*Minio, error) {

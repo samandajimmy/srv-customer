@@ -585,11 +585,9 @@ func (s *Service) HandleWrongPassword(credential *model.Credential, customer *mo
 	case constant.Warn2XWrongPassword:
 		resp = s.responses.GetError("E_AUTH_6")
 		credential.WrongPasswordCount = wrongCount
-		break
 	case constant.Warn4XWrongPassword:
 		resp = s.responses.GetError("E_AUTH_7")
 		credential.WrongPasswordCount = wrongCount
-		break
 	case constant.MinWrongPassword:
 		// Set block account
 		hour := 1 // Block for 1 hours
@@ -628,7 +626,6 @@ func (s *Service) HandleWrongPassword(credential *model.Credential, customer *mo
 			Message:      fmt.Sprintf(message, timeBlocked, credential.WrongPasswordCount),
 			LastTryLogin: ntime.NewTimeWIB(tryLoginAt).Format("02-Jan-2006 15:04:05"),
 		})
-		break
 	case constant.MaxWrongPassword:
 		// Set block account
 		hour := 24 // Block for 24 hours
@@ -666,11 +663,9 @@ func (s *Service) HandleWrongPassword(credential *model.Credential, customer *mo
 			Message:      fmt.Sprintf(message, timeBlocked, credential.WrongPasswordCount),
 			LastTryLogin: ntime.NewTimeWIB(tryLoginAt).Format("02-Jan-2006 15:04:05"),
 		})
-		break
 	default:
 		resp = s.responses.GetError("E_AUTH_8")
 		credential.WrongPasswordCount = wrongCount
-		break
 	}
 
 	// Handle notification error

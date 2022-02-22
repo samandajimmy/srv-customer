@@ -30,8 +30,7 @@ func (r *Request) ParseJSONBody(dest interface{}) error {
 /// Value is accessible chain of http.Handler
 
 func (r *Request) SetContextValue(k string, v interface{}) {
-	var ctx context.Context
-	ctx = context.WithValue(r.Context(), k, v)
+	ctx := context.WithValue(r.Context(), k, v)
 	*r.Request = *r.WithContext(ctx)
 }
 

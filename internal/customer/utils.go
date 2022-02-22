@@ -27,11 +27,6 @@ func monthsToUnix(month int) int64 {
 	return twoMonth
 }
 
-func hoursToSeconds(hour int64) int64 {
-	now := time.Now()
-	return now.Add(time.Hour * time.Duration(hour)).Unix()
-}
-
 func stringToMD5(str string) string {
 	return fmt.Sprintf("%x", md5.Sum([]byte(str))) //nolint:gosec
 }

@@ -90,7 +90,7 @@ func GetResponseString(response *http.Response) string {
 		return ""
 	}
 	log.Debugf(string(body))
-	return fmt.Sprintf(string(body))
+	return string(body)
 }
 
 func getBodyRequest(header map[string]string, body map[string]interface{}) (*bytes.Buffer, map[string]string) {
@@ -98,18 +98,14 @@ func getBodyRequest(header map[string]string, body map[string]interface{}) (*byt
 	switch header["Content-Type"] {
 	case "application/json":
 		payload = setBodyApplicationJSON(body)
-		break
 	case "application/x-www-form-urlencoded":
 		payload = setBodyURLEncoded(body)
-		break
 	case "multipart/form-data":
 		result, contentType := setBodyFormData(body)
 		header["Content-Type"] = contentType
 		payload = result
-		break
 	default:
 		payload = setBodyApplicationJSON(body)
-		break
 	}
 	return payload, header
 }

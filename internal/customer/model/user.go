@@ -121,6 +121,9 @@ func UserToCustomer(user *User) (*Customer, error) {
 		return nil, err
 	}
 
+	baseField := EmptyBaseField
+	baseField.Metadata = customerMetadataRaw
+
 	customerXID := strings.ToUpper(xid.New().String())
 	customer := &Customer{
 		CustomerXID:    customerXID,
@@ -131,15 +134,12 @@ func UserToCustomer(user *User) (*Customer, error) {
 		Photos:         photo,
 		Cif:            user.Cif,
 		Sid:            user.NoSid.String,
-		UserRefID: sql.NullString{
-			String: nval.ParseStringFallback(user.UserAiid, ""),
-		},
-		IdentityType: nval.ParseInt64Fallback(user.JenisIdentitas, 0),
-		Profile:      ToCustomerProfile(profile),
-		ReferralCode: nval.ParseStringFallback(user.ReferralCode, ""),
-		Status:       user.Status.Int64,
-		Metadata:     customerMetadataRaw,
-		BaseField:    EmptyBaseField,
+		UserRefID:      sql.NullString{String: nval.ParseStringFallback(user.UserAiid, "")},
+		IdentityType:   nval.ParseInt64Fallback(user.JenisIdentitas, 0),
+		Profile:        ToCustomerProfile(profile),
+		ReferralCode:   nval.ParseStringFallback(user.ReferralCode, ""),
+		Status:         user.Status.Int64,
+		BaseField:      baseField,
 	}
 
 	return customer, nil
