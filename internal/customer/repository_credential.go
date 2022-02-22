@@ -47,7 +47,7 @@ func (rc *RepositoryContext) UpdateCredential(row *model.Credential) error {
 
 func (rc *RepositoryContext) InsertOrUpdateCredential(row *model.Credential) error {
 	// find by customer id
-	credential, err := rc.FindCredentialByCustomerID(row.CustomerId)
+	credential, err := rc.FindCredentialByCustomerID(row.CustomerID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			credential = nil
@@ -76,7 +76,7 @@ func (rc *RepositoryContext) IsValidPassword(customerId int64, password string) 
 
 func (rc *RepositoryContext) UpdatePassword(customerId int64, password string) error {
 	result, err := rc.stmt.Credential.UpdatePasswordByCustomerID.ExecContext(rc.ctx, &model.UpdatePassword{
-		CustomerId: customerId,
+		CustomerID: customerId,
 		Password:   password,
 	})
 	if err != nil {

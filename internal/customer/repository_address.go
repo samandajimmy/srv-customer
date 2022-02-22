@@ -11,7 +11,7 @@ import (
 
 func (rc *RepositoryContext) FindAddressByCustomerId(id int64) (*model.Address, error) {
 	var row model.Address
-	err := rc.stmt.Address.FindByCustomerId.GetContext(rc.ctx, &row, id)
+	err := rc.stmt.Address.FindByCustomerID.GetContext(rc.ctx, &row, id)
 	return &row, err
 }
 
@@ -33,7 +33,7 @@ func (rc *RepositoryContext) UpdateAddress(row *model.Address) error {
 
 func (rc *RepositoryContext) FindAddressPrimary(customerId int64) (*model.Address, error) {
 	var row model.Address
-	err := rc.stmt.Address.FindPrimaryByCustomerId.GetContext(rc.ctx, &row, customerId)
+	err := rc.stmt.Address.FindPrimaryByCustomerID.GetContext(rc.ctx, &row, customerId)
 	if err != nil {
 		return nil, ncore.TraceError("failed to find primary address", err)
 	}
@@ -41,7 +41,7 @@ func (rc *RepositoryContext) FindAddressPrimary(customerId int64) (*model.Addres
 }
 
 func (rc *RepositoryContext) InsertOrUpdateAddress(row *model.Address) error {
-	address, err := rc.FindAddressByCustomerId(row.CustomerId)
+	address, err := rc.FindAddressByCustomerId(row.CustomerID)
 	if err != nil && err != sql.ErrNoRows {
 		return ncore.TraceError("error when find address by ID", err)
 	}

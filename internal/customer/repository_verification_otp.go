@@ -8,17 +8,17 @@ import (
 )
 
 func (rc *RepositoryContext) CreateVerificationOTP(row *model.VerificationOTP) (int64, error) {
-	var lastInsertId int64
-	err := rc.stmt.VerificationOTP.Insert.QueryRowContext(rc.ctx, &row).Scan(&lastInsertId)
+	var lastInsertID int64
+	err := rc.stmt.VerificationOTP.Insert.QueryRowContext(rc.ctx, &row).Scan(&lastInsertID)
 	if err != nil {
 		return 0, err
 	}
-	return lastInsertId, nil
+	return lastInsertID, nil
 }
 
 func (rc *RepositoryContext) FindVerificationOTPByRegistrationIDAndPhone(id string, phone string) (*model.VerificationOTP, error) {
 	var row model.VerificationOTP
-	err := rc.stmt.VerificationOTP.FindByRegistrationId.GetContext(rc.ctx, &row, id, phone)
+	err := rc.stmt.VerificationOTP.FindByRegistrationID.GetContext(rc.ctx, &row, id, phone)
 	if err != nil {
 		return nil, err
 	}

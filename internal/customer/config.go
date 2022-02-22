@@ -36,11 +36,11 @@ type DatabaseConfig struct {
 type ServerConfig struct {
 	ListenPort int     `envconfig:"PORT"`
 	BasePath   string  `envconfig:"SERVER_BASE_PATH"`
-	BaseUrl    url.URL `envconfig:"SERVER_HTTP_BASE_URL"`
+	BaseURL    url.URL `envconfig:"SERVER_HTTP_BASE_URL"`
 	Secure     bool    `envconfig:"SERVER_LISTEN_SECURE"`
 	TrustProxy string  `envconfig:"SERVER_TRUST_PROXY"`
 	Debug      string  `envconfig:"LOG_LEVEL"`
-	AssetUrl   string
+	AssetURL   string
 }
 
 type SMTPConfig struct {
@@ -63,7 +63,7 @@ type ClientConfig struct {
 }
 
 type CoreSwitchingConfig struct {
-	CoreApiURL         string `envconfig:"CORE_API_URL"`
+	CoreAPIURL         string `envconfig:"CORE_API_URL"`
 	CoreOauthUsername  string `envconfig:"CORE_OAUTH_USERNAME"`
 	CoreOauthPassword  string `envconfig:"CORE_OAUTH_PASSWORD"`
 	CoreOauthGrantType string `envconfig:"CORE_OAUTH_GRANT_TYPE"`
@@ -84,21 +84,21 @@ type MinioConfig struct {
 	MinioSecretAccessKey string `envconfig:"MINIO_SECRET_ACCESS_KEY"`
 	MinioBucket          string `envconfig:"MINIO_BUCKET"`
 	MinioEndpoint        string `envconfig:"MINIO_ENDPOINT"`
-	MinioUrl             string `envconfig:"MINIO_URL"`
+	MinioURL             string `envconfig:"MINIO_URL"`
 	MinioSecure          bool   `envconfig:"MINIO_SECURE"`
 }
 
 type ClientEndpointConfig struct {
-	NotificationServiceUrl string `envconfig:"NOTIFICATION_SERVICE_URL"`
-	PdsApiServiceUrl       string `envconfig:"PDS_API_SERVICE_URL"`
+	NotificationServiceURL string `envconfig:"NOTIFICATION_SERVICE_URL"`
+	PdsAPIServiceURL       string `envconfig:"PDS_API_SERVICE_URL"`
 }
 
 func (s *ServerConfig) GetListenPort() string {
 	return fmt.Sprintf(":%d", s.ListenPort)
 }
 
-func (s *ServerConfig) GetHttpBaseUrl() string {
-	u := s.BaseUrl
+func (s *ServerConfig) GetHTTPBaseURL() string {
+	u := s.BaseURL
 	if s.Secure {
 		u.Scheme = "https"
 	} else {
@@ -107,8 +107,8 @@ func (s *ServerConfig) GetHttpBaseUrl() string {
 	return u.String()
 }
 
-func (s *ServerConfig) GetWebSocketBaseUrl() string {
-	u := s.BaseUrl
+func (s *ServerConfig) GetWebSocketBaseURL() string {
+	u := s.BaseURL
 	if s.Secure {
 		u.Scheme = "wss"
 	} else {

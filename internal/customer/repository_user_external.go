@@ -2,6 +2,7 @@ package customer
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"github.com/nbs-go/nlogger"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/model"
@@ -15,7 +16,6 @@ func (rc *RepositoryContext) FindUserExternalByEmailOrPhone(email string) (*mode
 }
 
 func (rc *RepositoryContext) FindUserExternalAddressByCustomerID(id int64) (*model.AddressExternal, error) {
-
 	from := `user`
 	columns := `user.user_AIID, user.alamat, user.kodepos, kel.nama_kelurahan as kelurahan, kec.nama_kecamatan as kecamatan, kab.nama_kabupaten as kabupaten, prov.nama_provinsi as provinsi, `
 	columns += `kel.id as id_kelurahan, kec.id as id_kecamatan, kab.id as id_kabupaten, prov.id as id_provinsi`
@@ -29,7 +29,7 @@ func (rc *RepositoryContext) FindUserExternalAddressByCustomerID(id int64) (*mod
 	q = rc.conn.Rebind(q)
 	var row []model.AddressExternal
 	err := rc.conn.SelectContext(rc.ctx, &row, q)
-	if err != nil && err != sql.ErrNoRows {
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		rc.log.Error("error found when get address external", nlogger.Error(err), nlogger.Context(rc.ctx))
 		return nil, ncore.TraceError("error when find user external", err)
 	}

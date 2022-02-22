@@ -48,7 +48,7 @@ func (rc *RepositoryContext) UpdateFinancialData(row *model.FinancialData) error
 
 func (rc *RepositoryContext) InsertOrUpdateFinancialData(row *model.FinancialData) error {
 	// find by customer id
-	financialData, err := rc.FindFinancialDataByCustomerID(row.CustomerId)
+	financialData, err := rc.FindFinancialDataByCustomerID(row.CustomerID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			financialData = nil
@@ -60,13 +60,13 @@ func (rc *RepositoryContext) InsertOrUpdateFinancialData(row *model.FinancialDat
 			return ncore.TraceError("cannot update financial data", err)
 		}
 		return nil
-	} else {
-		err = rc.CreateFinancialData(row)
-		if err != nil {
-			return ncore.TraceError("cannot create financial data", err)
-		}
-		return nil
 	}
+
+	err = rc.CreateFinancialData(row)
+	if err != nil {
+		return ncore.TraceError("cannot create financial data", err)
+	}
+	return nil
 }
 
 func (rc *RepositoryContext) DeleteFinancialData(id string) error {

@@ -41,6 +41,24 @@ type Repository struct {
 }
 
 func (r *Repository) WithContext(ctx context.Context) *RepositoryContext {
+	r.InitializeStatement(ctx)
+
+	// Get connection
+	conn, err := r.db.GetConnection(ctx)
+	if err != nil {
+		log.Error("failed to retrieve connection to db", nlogger.Error(err))
+		panic(ncore.TraceError("failed to retrieve connection to db", err))
+	}
+
+	return &RepositoryContext{
+		ctx:  ctx,
+		conn: conn,
+		stmt: r.stmt,
+		log:  nlogger.Get().NewChild(nlogger.Context(ctx)),
+	}
+}
+
+func (r *Repository) InitializeStatement(ctx context.Context) {
 	// If db is not connected, then initialize connection
 	isConnected, _ := r.db.IsConnected(ctx)
 	if !isConnected {
@@ -60,20 +78,6 @@ func (r *Repository) WithContext(ctx context.Context) *RepositoryContext {
 		log.Debugf("initialize statement...")
 		dbc := r.db.WithContext(ctx)
 		r.stmt = statement.New(dbc)
-	}
-
-	// Get connection
-	conn, err := r.db.GetConnection(ctx)
-	if err != nil {
-		log.Error("failed to retrieve connection to db", nlogger.Error(err))
-		panic(ncore.TraceError("failed to retrieve connection to db", err))
-	}
-
-	return &RepositoryContext{
-		ctx:  ctx,
-		conn: conn,
-		stmt: r.stmt,
-		log:  nlogger.Get().NewChild(nlogger.Context(ctx)),
 	}
 }
 

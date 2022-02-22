@@ -40,6 +40,25 @@ type RepositoryExternal struct {
 
 func (r *RepositoryExternal) WithContext(ctx context.Context) *RepositoryContext {
 	// If db is not connected, then initialize connection
+	r.InitializeStatement(ctx)
+
+	// Get connection
+	conn, err := r.db.GetConnection(ctx)
+	if err != nil {
+		log.Error("failed to retrieve connection to db", nlogger.Error(err))
+		panic(ncore.TraceError("failed to retrieve connection to db", err))
+	}
+
+	return &RepositoryContext{
+		ctx:  ctx,
+		conn: conn,
+		stmt: r.stmt,
+		log:  nlogger.Get().NewChild(nlogger.Context(ctx)),
+	}
+}
+
+func (r *RepositoryExternal) InitializeStatement(ctx context.Context) {
+	// If db is not connected, then initialize connection
 	isConnected, _ := r.db.IsConnected(ctx)
 	if !isConnected {
 		log.Debugf("initialize connection to database external...")
@@ -58,19 +77,5 @@ func (r *RepositoryExternal) WithContext(ctx context.Context) *RepositoryContext
 		log.Debugf("initialize statement...")
 		dbc := r.db.WithContext(ctx)
 		r.stmt = statement.NewExternal(dbc)
-	}
-
-	// Get connection
-	conn, err := r.db.GetConnection(ctx)
-	if err != nil {
-		log.Error("failed to retrieve connection to db", nlogger.Error(err))
-		panic(ncore.TraceError("failed to retrieve connection to db", err))
-	}
-
-	return &RepositoryContext{
-		ctx:  ctx,
-		conn: conn,
-		stmt: r.stmt,
-		log:  nlogger.Get().NewChild(nlogger.Context(ctx)),
 	}
 }
