@@ -13,7 +13,7 @@ var AuditLoginSchema = schema.New(schema.FromModelRef(model.AuditLogin{}))
 
 type AuditLogin struct {
 	Insert             *sqlx.NamedStmt
-	UpdateByCustomerId *sqlx.NamedStmt
+	UpdateByCustomerID *sqlx.NamedStmt
 	CountLogin         *sqlx.Stmt
 }
 
@@ -30,7 +30,7 @@ func NewAuditLogin(db *nsql.DatabaseContext) *AuditLogin {
 
 	return &AuditLogin{
 		Insert: db.PrepareNamedFmtRebind(sb.Insert()),
-		UpdateByCustomerId: db.PrepareNamedFmtRebind(query.
+		UpdateByCustomerID: db.PrepareNamedFmtRebind(query.
 			Update(AuditLoginSchema, "*").
 			Where(query.Equal(query.Column("customerId"))).
 			Build(),

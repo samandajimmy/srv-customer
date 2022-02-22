@@ -13,7 +13,7 @@ var VerificationOTPSchema = schema.New(schema.FromModelRef(model.VerificationOTP
 
 type VerificationOTP struct {
 	Insert               *sqlx.NamedStmt
-	FindByRegistrationId *sqlx.Stmt
+	FindByRegistrationID *sqlx.Stmt
 	Delete               *sqlx.Stmt
 }
 
@@ -23,13 +23,13 @@ func NewVerificationOTP(db *nsql.DatabaseContext) *VerificationOTP {
 
 	insert := fmt.Sprintf(`%s ON CONFLICT DO NOTHING RETURNING "id"`, sb.Insert())
 
-	findByRegistrationId := query.
+	findByRegistrationID := query.
 		Select(query.Column("*")).
 		From(VerificationOTPSchema).
 		Where(query.Equal(query.Column("registrationId")), query.Equal(query.Column("phone"))).
 		Build()
 
-	deleteByRegistrationIdAndPhone := query.
+	deleteByRegistrationIDAndPhone := query.
 		Delete(VerificationOTPSchema).
 		Where(
 			query.And(
@@ -41,7 +41,7 @@ func NewVerificationOTP(db *nsql.DatabaseContext) *VerificationOTP {
 
 	return &VerificationOTP{
 		Insert:               db.PrepareNamedFmtRebind(insert),
-		FindByRegistrationId: db.PrepareFmtRebind(findByRegistrationId),
-		Delete:               db.PrepareFmtRebind(deleteByRegistrationIdAndPhone),
+		FindByRegistrationID: db.PrepareFmtRebind(findByRegistrationID),
+		Delete:               db.PrepareFmtRebind(deleteByRegistrationIDAndPhone),
 	}
 }

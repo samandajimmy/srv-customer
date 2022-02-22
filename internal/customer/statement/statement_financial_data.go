@@ -22,19 +22,19 @@ func NewFinancialData(db *nsql.DatabaseContext) *FinancialData {
 	sb := query.Schema(FinancialDataSchema)
 
 	// Init query
-	findByCustomerId := query.Select(query.Column("*")).
+	findByCustomerID := query.Select(query.Column("*")).
 		Where(query.Equal(query.Column("customerId"))).
 		From(FinancialDataSchema).
 		Build()
 
-	updateByCustomerId := query.Update(FinancialDataSchema, "*").
+	updateByCustomerID := query.Update(FinancialDataSchema, "*").
 		Where(query.Equal(query.Column("customerId"))).
 		Build()
 
 	return &FinancialData{
-		FindByCustomerID: db.PrepareFmtRebind(findByCustomerId),
+		FindByCustomerID: db.PrepareFmtRebind(findByCustomerID),
 		Insert:           db.PrepareNamedFmtRebind(sb.Insert()),
-		Update:           db.PrepareNamedFmtRebind(updateByCustomerId),
+		Update:           db.PrepareNamedFmtRebind(updateByCustomerID),
 		DeleteByID:       db.PrepareFmtRebind(sb.Delete()),
 	}
 }

@@ -11,10 +11,10 @@ import (
 var AddressSchema = schema.New(schema.FromModelRef(model.Address{}))
 
 type Address struct {
-	FindByCustomerId        *sqlx.Stmt
+	FindByCustomerID        *sqlx.Stmt
 	Insert                  *sqlx.NamedStmt
 	Update                  *sqlx.NamedStmt
-	FindPrimaryByCustomerId *sqlx.Stmt
+	FindPrimaryByCustomerID *sqlx.Stmt
 }
 
 func NewAddress(db *nsql.DatabaseContext) *Address {
@@ -22,12 +22,12 @@ func NewAddress(db *nsql.DatabaseContext) *Address {
 	sb := query.Schema(AddressSchema)
 
 	// Init query
-	findByCustomerId := query.Select(query.Column("*")).
+	findByCustomerID := query.Select(query.Column("*")).
 		From(AddressSchema).
 		Where(query.Equal(query.Column("customerId"))).
 		Build()
 
-	findPrimaryByCustomerId := query.
+	findPrimaryByCustomerID := query.
 		Select(query.Column("*")).
 		From(AddressSchema).
 		Where(
@@ -40,7 +40,7 @@ func NewAddress(db *nsql.DatabaseContext) *Address {
 	return &Address{
 		Insert:                  db.PrepareNamedFmtRebind(sb.Insert()),
 		Update:                  db.PrepareNamedFmtRebind(sb.Update()),
-		FindByCustomerId:        db.PrepareFmtRebind(findByCustomerId),
-		FindPrimaryByCustomerId: db.PrepareFmtRebind(findPrimaryByCustomerId),
+		FindByCustomerID:        db.PrepareFmtRebind(findByCustomerID),
+		FindPrimaryByCustomerID: db.PrepareFmtRebind(findPrimaryByCustomerID),
 	}
 }

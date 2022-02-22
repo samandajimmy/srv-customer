@@ -23,7 +23,7 @@ func NewVerification(db *nsql.DatabaseContext) *Verification {
 	sb := query.Schema(VerificationSchema)
 
 	// Init query
-	findByCustomerId := query.
+	findByCustomerID := query.
 		Select(query.Column("*")).
 		From(VerificationSchema).
 		Where(query.Equal(query.Column("customerId"))).
@@ -35,17 +35,17 @@ func NewVerification(db *nsql.DatabaseContext) *Verification {
 		Where(query.Equal(query.Column("emailVerificationToken"))).
 		Build()
 
-	updateByCustomerId := query.
+	updateByCustomerID := query.
 		Update(VerificationSchema, "*").
 		Where(query.Equal(query.Column("customerId"))).
 		Build()
 
 	return &Verification{
 
-		FindByCustomerID: db.PrepareFmtRebind(findByCustomerId),
+		FindByCustomerID: db.PrepareFmtRebind(findByCustomerID),
 		FindByEmailToken: db.PrepareFmtRebind(findByEmailToken),
 		Insert:           db.PrepareNamedFmtRebind(sb.Insert()),
-		Update:           db.PrepareNamedFmtRebind(updateByCustomerId),
+		Update:           db.PrepareNamedFmtRebind(updateByCustomerID),
 		DeleteByID:       db.PrepareFmtRebind(sb.Delete()),
 	}
 }

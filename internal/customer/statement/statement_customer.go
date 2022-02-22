@@ -15,7 +15,7 @@ type Customer struct {
 	Insert             *sqlx.NamedStmt
 	UpdateByPhone      *sqlx.NamedStmt
 	UpdateByUserRefID  *sqlx.NamedStmt
-	FindByRefId        *sqlx.Stmt
+	FindByRefID        *sqlx.Stmt
 	FindById           *sqlx.Stmt
 	FindByPhoneOrCIF   *sqlx.Stmt
 	FindByPhone        *sqlx.Stmt
@@ -97,7 +97,7 @@ func NewCustomer(db *nsql.DatabaseContext) *Customer {
 	return &Customer{
 		Insert:             db.PrepareNamedFmtRebind(insert),
 		FindById:           db.PrepareFmtRebind(findById),
-		FindByRefId:        db.PrepareFmtRebind(findByRefId),
+		FindByRefID:        db.PrepareFmtRebind(findByRefId),
 		FindByPhone:        db.PrepareFmtRebind(findByPhone),
 		FindByPhoneOrCIF:   db.PrepareFmtRebind(findByPhoneOrCIF),
 		FindByEmail:        db.PrepareFmtRebind(findByEmail),

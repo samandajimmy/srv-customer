@@ -24,12 +24,12 @@ func NewCredential(db *nsql.DatabaseContext) *Credential {
 	sb := query.Schema(CredentialSchema)
 
 	// Init query
-	updateByCustomerId := query.
+	updateByCustomerID := query.
 		Update(CredentialSchema, "*").
 		Where(query.Equal(query.Column("customerId"))).
 		Build()
 
-	findByPasswordAndCustomerId := query.
+	findByPasswordAndCustomerID := query.
 		Select(query.Column("*")).
 		From(CredentialSchema).
 		Where(
@@ -37,23 +37,23 @@ func NewCredential(db *nsql.DatabaseContext) *Credential {
 			query.Equal(query.Column("password")),
 		).Build()
 
-	findByCustomerId := query.
+	findByCustomerID := query.
 		Select(query.Column("*")).
 		From(CredentialSchema).
 		Where(query.Equal(query.Column("customerId"))).
 		Build()
 
-	updatePasswordByCustomerId := query.
+	updatePasswordByCustomerID := query.
 		Update(CredentialSchema, "password").
 		Where(query.Equal(query.Column("customerId"))).
 		Build()
 
 	return &Credential{
-		FindByCustomerID:            db.PrepareFmtRebind(findByCustomerId),
-		FindByPasswordAndCustomerID: db.PrepareFmtRebind(findByPasswordAndCustomerId),
+		FindByCustomerID:            db.PrepareFmtRebind(findByCustomerID),
+		FindByPasswordAndCustomerID: db.PrepareFmtRebind(findByPasswordAndCustomerID),
 		Insert:                      db.PrepareNamedFmtRebind(sb.Insert()),
-		Update:                      db.PrepareNamedFmtRebind(updateByCustomerId),
+		Update:                      db.PrepareNamedFmtRebind(updateByCustomerID),
 		DeleteByID:                  db.PrepareFmtRebind(sb.Delete()),
-		UpdatePasswordByCustomerID:  db.PrepareNamedFmtRebind(updatePasswordByCustomerId),
+		UpdatePasswordByCustomerID:  db.PrepareNamedFmtRebind(updatePasswordByCustomerID),
 	}
 }
