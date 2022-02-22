@@ -32,12 +32,12 @@ func (h *Middlewares) AuthUser(rx *nhttp.Request) (*nhttp.Response, error) {
 	defer svc.Close()
 
 	// Get UserRefID
-	userRefId, err := svc.validateTokenAndRetrieveUserRefID(tokenString)
+	userRefID, err := svc.validateTokenAndRetrieveUserRefID(tokenString)
 	if err != nil {
 		return nil, err
 	}
 
-	rx.SetContextValue(constant.UserRefID, userRefId)
+	rx.SetContextValue(constant.UserRefID, userRefID)
 
 	return nhttp.Continue(), nil
 }
@@ -45,10 +45,10 @@ func (h *Middlewares) AuthUser(rx *nhttp.Request) (*nhttp.Response, error) {
 func getUserRefID(rx *nhttp.Request) (string, error) {
 	v := rx.GetContextValue(constant.UserRefID)
 
-	userRefId, ok := v.(string)
+	userRefID, ok := v.(string)
 	if !ok {
 		return "", fmt.Errorf("unexpected userRefID value in context. Type: %T", v)
 	}
 
-	return userRefId, nil
+	return userRefID, nil
 }

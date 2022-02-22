@@ -9,6 +9,7 @@ import (
 	"time"
 )
 
+//nolint:funlen
 func NewHandler(core *ncore.Core, config *Config) (*Handler, error) {
 	// Init repository
 	repoInternal, err := NewRepository(&config.DatabaseConfig)
@@ -41,20 +42,19 @@ func NewHandler(core *ncore.Core, config *Config) (*Handler, error) {
 	}
 
 	// Init PDS API client config
-	pdsApiClient := &nclient.Nclient{
+	pdsAPIClient := &nclient.Nclient{
 		Client:  httpClient,
-		BaseUrl: config.PdsApiServiceUrl,
+		BaseUrl: config.PdsAPIServiceURL,
 	}
 
 	// Initialize minio client object.
 	minioClient, err := ns3.NewMinio(ns3.MinioOpt{
 		Endpoint:        config.MinioEndpoint,
-		AccessKeyId:     config.MinioAccessKeyID,
+		AccessKeyID:     config.MinioAccessKeyID,
 		SecretAccessKey: config.MinioSecretAccessKey,
 		UseSSL:          config.MinioSecure,
 		BucketName:      config.MinioBucket,
 	})
-
 	if err != nil {
 		return nil, ncore.TraceError("failed to initialize minio client", err)
 	}
@@ -65,7 +65,7 @@ func NewHandler(core *ncore.Core, config *Config) (*Handler, error) {
 		Config:       config,
 		Redis:        redis,
 		Client:       client,
-		PdsApiClient: pdsApiClient,
+		PdsAPIClient: pdsAPIClient,
 		Minio:        minioClient,
 		Repo:         repoInternal,
 		RepoExternal: repoExternal,
@@ -82,7 +82,7 @@ type Handler struct {
 	Redis *nredis.Redis
 	// Client
 	Client       *nclient.Nclient
-	PdsApiClient *nclient.Nclient
+	PdsAPIClient *nclient.Nclient
 	Minio        *ns3.Minio
 	// Metadata
 	*ncore.Core

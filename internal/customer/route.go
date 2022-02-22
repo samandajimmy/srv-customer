@@ -8,7 +8,6 @@ import (
 )
 
 func setUpRoute(router *nhttp.Router, handlers *HandlerMap) {
-
 	// Common
 	router.Handle(http.MethodGet, "/", router.HandleFunc(handlers.Common.GetAPIStatus))
 

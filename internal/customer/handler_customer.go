@@ -1,7 +1,6 @@
 package customer
 
 import (
-	"errors"
 	"fmt"
 	"github.com/lestrrat-go/jwx/jwt"
 	"github.com/nbs-go/nlogger"
@@ -81,8 +80,8 @@ func (h *Customer) PostRegister(rx *nhttp.Request) (*nhttp.Response, error) {
 
 	// Check is force update password
 	validatePassword := svc.validatePassword(payload.Password)
-	if validatePassword.IsValid == false {
-		err = errors.New(fmt.Sprintf("password: %s.", validatePassword.Message))
+	if !validatePassword.IsValid {
+		err = fmt.Errorf("password: %s", validatePassword.Message)
 		data := nvalidate.Message(err.Error())
 		return nhttp.UnprocessableEntity(data), nil
 	}
@@ -91,108 +90,6 @@ func (h *Customer) PostRegister(rx *nhttp.Request) (*nhttp.Response, error) {
 	resp, err := svc.Register(payload)
 	if err != nil {
 		log.Error("error found when call service", nlogger.Error(err), nlogger.Context(ctx))
-		return nil, err
-	}
-
-	return nhttp.Success().SetData(resp), nil
-}
-
-func (h *Customer) SendOTP(rx *nhttp.Request) (*nhttp.Response, error) {
-	// Get context
-	ctx := rx.Context()
-
-	// Get Payload
-	var payload dto.RegisterStepOne
-	err := rx.ParseJSONBody(&payload)
-	if err != nil {
-		log.Error("error when parse json body", nlogger.Error(err), nlogger.Context(ctx))
-		return nil, nhttp.BadRequestError.Wrap(err)
-	}
-
-	// Validate payload
-	err = payload.Validate()
-	if err != nil {
-		log.Error("unprocessable Entity", nlogger.Error(err), nlogger.Context(ctx))
-		data := nvalidate.Message(err.Error())
-		return nhttp.UnprocessableEntity(data), nil
-	}
-
-	// Init service
-	svc := h.NewService(rx.Context())
-	defer svc.Close()
-
-	// Call service
-	resp, err := svc.RegisterStepOne(payload)
-	if err != nil {
-		log.Error("error when processing service", nlogger.Error(err), nlogger.Context(ctx))
-		return nil, err
-	}
-
-	return nhttp.Success().SetData(resp), nil
-}
-
-func (h *Customer) VerifyOTP(rx *nhttp.Request) (*nhttp.Response, error) {
-	// Get context
-	ctx := rx.Context()
-
-	// Get Payload
-	var payload dto.RegisterStepTwo
-	err := rx.ParseJSONBody(&payload)
-	if err != nil {
-		log.Error("error when parse json body", nlogger.Error(err), nlogger.Context(ctx))
-		return nil, nhttp.BadRequestError.Wrap(err)
-	}
-
-	// Validate payload
-	err = payload.Validate()
-	if err != nil {
-		log.Error("unprocessable entity", nlogger.Error(err), nlogger.Context(ctx))
-		data := nvalidate.Message(err.Error())
-		return nhttp.UnprocessableEntity(data), nil
-	}
-
-	// Init service
-	svc := h.NewService(rx.Context())
-	defer svc.Close()
-
-	// Call service
-	resp, err := svc.RegisterStepTwo(payload)
-	if err != nil {
-		log.Error("error when processing service", nlogger.Error(err), nlogger.Context(ctx))
-		return nil, err
-	}
-
-	return nhttp.Success().SetData(resp), nil
-}
-
-func (h *Customer) ResendOTP(rx *nhttp.Request) (*nhttp.Response, error) {
-	// Get context
-	ctx := rx.Context()
-
-	// Get Payload
-	var payload dto.RegisterResendOTP
-	err := rx.ParseJSONBody(&payload)
-	if err != nil {
-		log.Error("error when parse json body", nlogger.Error(err), nlogger.Context(ctx))
-		return nil, nhttp.BadRequestError.Wrap(err)
-	}
-
-	// Validate payload
-	err = payload.Validate()
-	if err != nil {
-		log.Error("unprocessable entity", nlogger.Error(err), nlogger.Context(ctx))
-		data := nvalidate.Message(err.Error())
-		return nhttp.UnprocessableEntity(data), nil
-	}
-
-	// Init service
-	svc := h.NewService(rx.Context())
-	defer svc.Close()
-
-	// Call service
-	resp, err := svc.RegisterResendOTP(payload)
-	if err != nil {
-		log.Error("error found when call register resend otp service", nlogger.Error(err), nlogger.Context(ctx))
 		return nil, err
 	}
 
@@ -471,27 +368,24 @@ func (h *Customer) UpdateNPWP(rx *nhttp.Request) (*nhttp.Response, error) {
 		return nil, ncore.TraceError("", err)
 	}
 
-	// Upload file payload
-	filePayload := dto.UploadRequest{
+	// Upload a file
+	npwpUploaded, err := svc.AssetUploadFile(dto.UploadRequest{
 		AssetType: constant.AssetNPWP,
 		File:      file,
-	}
-
-	// Upload a file
-	uploaded, err := svc.AssetUploadFile(filePayload)
+	})
 	if err != nil {
 		log.Error("error when call upload file service", nlogger.Error(err), nlogger.Context(ctx))
 		return nil, constant.UploadFileError.Wrap(err)
 	}
 
 	// Persist the avatar
-	err = svc.UpdateNPWP(userRefID, payload.NoNPWP, uploaded)
+	err = svc.UpdateNPWP(userRefID, payload.NoNPWP, npwpUploaded)
 	if err != nil {
 		log.Error("error when call update npwp service", nlogger.Error(err), nlogger.Context(ctx))
 		return nil, ncore.TraceError("", err)
 	}
 
-	return nhttp.Success().SetData(uploaded), nil
+	return nhttp.Success().SetData(npwpUploaded), nil
 }
 
 func (h *Customer) UpdateSID(rx *nhttp.Request) (*nhttp.Response, error) {
@@ -526,27 +420,24 @@ func (h *Customer) UpdateSID(rx *nhttp.Request) (*nhttp.Response, error) {
 		return nil, ncore.TraceError("", err)
 	}
 
-	// Upload file payload
-	filePayload := dto.UploadRequest{
+	// Upload a file
+	sidUploaded, err := svc.AssetUploadFile(dto.UploadRequest{
 		AssetType: constant.AssetNPWP,
 		File:      file,
-	}
-
-	// Upload a file
-	uploaded, err := svc.AssetUploadFile(filePayload)
+	})
 	if err != nil {
 		log.Error("error when call upload file service", nlogger.Error(err), nlogger.Context(ctx))
 		return nil, constant.UploadFileError.Wrap(err)
 	}
 
 	// Persist the avatar
-	err = svc.UpdateSID(userRefID, payload.NoSID, uploaded)
+	err = svc.UpdateSID(userRefID, payload.NoSID, sidUploaded)
 	if err != nil {
 		log.Error("error when call update SID service", nlogger.Error(err), nlogger.Context(ctx))
 		return nil, ncore.TraceError("", err)
 	}
 
-	return nhttp.Success().SetData(uploaded), nil
+	return nhttp.Success().SetData(sidUploaded), nil
 }
 
 func (h *Customer) CheckStatus(rx *nhttp.Request) (*nhttp.Response, error) {
@@ -609,10 +500,10 @@ func (s *Service) validateTokenAndRetrieveUserRefID(tokenString string) (string,
 
 	accessToken, _ := token.Get("access_token")
 
-	tokenId, _ := token.Get("id")
+	tokenID, _ := token.Get("id")
 
 	// Session token
-	key := fmt.Sprintf("%s:%s:%s", constant.Prefix, constant.CacheTokenJWT, tokenId)
+	key := fmt.Sprintf("%s:%s:%s", constant.Prefix, constant.CacheTokenJWT, tokenID)
 
 	tokenFromCache, err := s.CacheGet(key)
 	if err != nil {
@@ -624,7 +515,7 @@ func (s *Service) validateTokenAndRetrieveUserRefID(tokenString string) (string,
 		return "", s.responses.GetError("E_AUTH_11")
 	}
 
-	userRefId := nval.ParseStringFallback(tokenId, "")
+	userRefID := nval.ParseStringFallback(tokenID, "")
 
-	return userRefId, nil
+	return userRefID, nil
 }

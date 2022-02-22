@@ -26,7 +26,6 @@ type Common struct {
 }
 
 func (h *Common) GetAPIStatus(_ *nhttp.Request) (*nhttp.Response, error) {
-
 	res := nhttp.Success().
 		SetData(map[string]string{
 			"appVersion":     h.manifest.AppVersion,
@@ -37,7 +36,6 @@ func (h *Common) GetAPIStatus(_ *nhttp.Request) (*nhttp.Response, error) {
 }
 
 func (h *Common) ValidateClient(r *nhttp.Request) (*nhttp.Response, error) {
-
 	// Get subject from headers
 	subjectID := r.Header.Get(constant.SubjectIDHeader)
 	subjectRefID, ok := nval.ParseInt64(subjectID)
@@ -46,7 +44,7 @@ func (h *Common) ValidateClient(r *nhttp.Request) (*nhttp.Response, error) {
 		return nil, errors.New("x-subject-id is required")
 	}
 
-	//Get subject role
+	// Get subject role
 	subjectRole := r.Header.Get(constant.SubjectRoleHeader)
 	role := constant.AdminModifierRole
 	if subjectRole != constant.AdminModifierRole {
@@ -80,8 +78,8 @@ func GetSubject(rx *nhttp.Request) (*dto.Subject, error) {
 	return subject, nil
 }
 
-func GetRequestId(rx *nhttp.Request) string {
-	reqId, ok := rx.GetContextValue(nhttp.RequestIdKey).(string)
+func GetRequestID(rx *nhttp.Request) string {
+	reqID, ok := rx.GetContextValue(nhttp.RequestIDKey).(string)
 	if !ok {
 		// Generate new request id
 		id, err := uuid.NewUUID()
@@ -91,5 +89,5 @@ func GetRequestId(rx *nhttp.Request) string {
 		return id.String()
 	}
 
-	return reqId
+	return reqID
 }

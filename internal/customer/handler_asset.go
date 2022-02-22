@@ -13,7 +13,7 @@ type Asset struct {
 }
 
 func NewAsset(h *Handler) *Asset {
-	h.Config.AssetUrl = h.Config.MinioUrl + "/" + h.Config.MinioBucket
+	h.Config.AssetURL = h.Config.MinioURL + "/" + h.Config.MinioBucket
 
 	return &Asset{h}
 }
