@@ -9,7 +9,6 @@ import (
 	"github.com/nbs-go/nlogger"
 	"regexp"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/constant"
-	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/convert"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/model"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/dto"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/ncore"
@@ -24,31 +23,14 @@ func (s *Service) Login(payload dto.LoginRequest) (*dto.LoginResponse, error) {
 	// Check if user exists
 	t := time.Now()
 	customer, err := s.repo.FindCustomerByEmailOrPhone(payload.Email)
-	if err != nil && err != sql.ErrNoRows {
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		s.log.Error("failed to retrieve customer", nlogger.Error(err), nlogger.Context(ctx))
 		return nil, ncore.TraceError("error find customer by email", err)
 	}
 
 	// Handle null Profile
 	if customer.Profile == nil {
-		customer.Profile = &model.CustomerProfile{
-			MaidenName:         "",
-			Gender:             "",
-			Nationality:        "",
-			DateOfBirth:        "",
-			PlaceOfBirth:       "",
-			IdentityPhotoFile:  "",
-			IdentityExpiredAt:  "",
-			Religion:           "",
-			MarriageStatus:     "",
-			NPWPNumber:         "",
-			NPWPPhotoFile:      "",
-			NPWPUpdatedAt:      0,
-			ProfileUpdatedAt:   0,
-			CifLinkUpdatedAt:   0,
-			CifUnlinkUpdatedAt: 0,
-			SidPhotoFile:       "",
-		}
+		customer.Profile = model.EmptyCustomerProfile
 		// Update profile json
 		err = s.repo.UpdateCustomerByPhone(customer)
 		if err != nil {
@@ -58,15 +40,15 @@ func (s *Service) Login(payload dto.LoginRequest) (*dto.LoginResponse, error) {
 	}
 
 	// Check on external database
-	if err != nil && err == sql.ErrNoRows {
+	if err != nil && errors.Is(err, sql.ErrNoRows) {
 		// If data not found on internal database check on external database.
 		user, errExternal := s.repoExternal.FindUserExternalByEmailOrPhone(payload.Email)
-		if errExternal != nil && errExternal != sql.ErrNoRows {
+		if errExternal != nil && !errors.Is(errExternal, sql.ErrNoRows) {
 			s.log.Error("error found when query find by email or phone", nlogger.Error(err), nlogger.Context(ctx))
 			return nil, ncore.TraceError("failed to query to external database", err)
 		}
 
-		if errExternal == sql.ErrNoRows {
+		if errors.Is(errExternal, sql.ErrNoRows) {
 			s.log.Debug("Phone or email is not registered")
 			return nil, s.responses.GetError("E_AUTH_10")
 		}
@@ -80,7 +62,7 @@ func (s *Service) Login(payload dto.LoginRequest) (*dto.LoginResponse, error) {
 	}
 
 	// Get credential customer
-	credential, err := s.repo.FindCredentialByCustomerID(customer.Id)
+	credential, err := s.repo.FindCredentialByCustomerID(customer.ID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			s.log.Error("failed to retrieve credential not found", nlogger.Error(err), nlogger.Context(ctx))
@@ -93,23 +75,23 @@ func (s *Service) Login(payload dto.LoginRequest) (*dto.LoginResponse, error) {
 	// Check if account isn't blocked
 	blockedUntil := ntime.ChangeTimezone(credential.BlockedUntilAt.Time, constant.WIB)
 	now := ntime.ChangeTimezone(t, constant.WIB)
-	if credential.BlockedUntilAt.Valid != false && blockedUntil.After(now) {
+	if credential.BlockedUntilAt.Valid && blockedUntil.After(now) {
 		// Set response if blocked
 		message := "Akun dikunci hingga %v karena gagal login %v kali. Hubungi call center jika ini bukan kamu"
 		timeBlocked := ntime.ChangeTimezone(credential.BlockedUntilAt.Time, constant.WIB).Format("02-Jan-2006 15:04:05")
-		setResponse := ncore.Success.HttpStatus(401).SetMessage(message, timeBlocked, credential.WrongPasswordCount)
+		setResponse := ncore.Success.HTTPStatus(401).SetMessage(message, timeBlocked, credential.WrongPasswordCount)
 		return nil, &setResponse
 	}
 
 	// Counter wrong password count
 	passwordRequest := stringToMD5(payload.Password)
 	if credential.Password != passwordRequest {
-		errB := s.handleWrongPassword(credential, customer)
+		errB := s.HandleWrongPassword(credential, customer)
 		return nil, errB
 	}
 
 	// get userRefId from external DB
-	if customer.UserRefId.Valid == false {
+	if !customer.UserRefID.Valid {
 		registerPayload := &dto.CustomerSynchronizeRequest{
 			Name:        customer.FullName,
 			Email:       customer.Email,
@@ -124,7 +106,7 @@ func (s *Service) Login(payload dto.LoginRequest) (*dto.LoginResponse, error) {
 			return nil, ncore.TraceError("error found when sync to pds api", errInternal)
 		}
 		// set userRefId
-		customer.UserRefId = sql.NullString{
+		customer.UserRefID = sql.NullString{
 			Valid:  true,
 			String: nval.ParseStringFallback(resultSync.UserAiid, ""),
 		}
@@ -138,7 +120,7 @@ func (s *Service) Login(payload dto.LoginRequest) (*dto.LoginResponse, error) {
 
 	// Get token from cache
 	var token string
-	cacheTokenKey := fmt.Sprintf("%v:%v:%v", constant.Prefix, constant.CacheTokenJWT, customer.UserRefId.String)
+	cacheTokenKey := fmt.Sprintf("%v:%v:%v", constant.Prefix, constant.CacheTokenJWT, customer.UserRefID.String)
 	token, err = s.setTokenAuthentication(customer, payload.Agen, payload.Version, cacheTokenKey)
 	if err != nil {
 		s.log.Error("error found when get access token from cache", nlogger.Error(err), nlogger.Context(ctx))
@@ -146,7 +128,7 @@ func (s *Service) Login(payload dto.LoginRequest) (*dto.LoginResponse, error) {
 	}
 
 	// Check account is first login or not
-	countAuditLog, err := s.repo.CountAuditLogin(customer.Id)
+	countAuditLog, err := s.repo.CountAuditLogin(customer.ID)
 	if err != nil {
 		s.log.Error("error found when count audit login", nlogger.Error(err), nlogger.Context(ctx))
 		return nil, ncore.TraceError("error when count audit login", err)
@@ -160,9 +142,9 @@ func (s *Service) Login(payload dto.LoginRequest) (*dto.LoginResponse, error) {
 
 	// Prepare to insert audit login
 	auditLogin := model.AuditLogin{
-		CustomerId:   customer.Id,
-		ChannelId:    GetChannelByAgen(payload.Agen),
-		DeviceId:     payload.DeviceId,
+		CustomerID:   customer.ID,
+		ChannelID:    GetChannelByAgen(payload.Agen),
+		DeviceID:     payload.DeviceID,
 		IP:           payload.IP,
 		Latitude:     payload.Latitude,
 		Longitude:    payload.Longitude,
@@ -173,12 +155,7 @@ func (s *Service) Login(payload dto.LoginRequest) (*dto.LoginResponse, error) {
 		Browser:      payload.Browser,
 		UseBiometric: payload.UseBiometric,
 		Status:       1,
-		Metadata:     []byte("{}"),
-		ItemMetadata: model.NewItemMetadata(
-			convert.ModifierDTOToModel(
-				dto.Modifier{ID: "", Role: "", FullName: ""},
-			),
-		),
+		BaseField:    model.EmptyBaseField,
 	}
 
 	// Persist audit login
@@ -191,12 +168,12 @@ func (s *Service) Login(payload dto.LoginRequest) (*dto.LoginResponse, error) {
 	// Check is force update password
 	validatePassword := s.validatePassword(payload.Password)
 	isForceUpdatePassword := false
-	if validatePassword.IsValid != true {
+	if !validatePassword.IsValid {
 		isForceUpdatePassword = true
 	}
 
 	// Get data address
-	address, err := s.repo.FindAddressByCustomerId(customer.Id)
+	address, err := s.repo.FindAddressByCustomerId(customer.ID)
 	if errors.Is(err, sql.ErrNoRows) {
 		address = &model.Address{}
 	} else if err != nil {
@@ -205,7 +182,7 @@ func (s *Service) Login(payload dto.LoginRequest) (*dto.LoginResponse, error) {
 	}
 
 	// Get data verification
-	verification, err := s.repo.FindVerificationByCustomerID(customer.Id)
+	verification, err := s.repo.FindVerificationByCustomerID(customer.ID)
 	if errors.Is(err, sql.ErrNoRows) {
 		verification = &model.Verification{}
 	} else if err != nil {
@@ -214,8 +191,8 @@ func (s *Service) Login(payload dto.LoginRequest) (*dto.LoginResponse, error) {
 	}
 
 	// Get financial data
-	financial, err := s.repo.FindFinancialDataByCustomerID(customer.Id)
-	if err != nil && err != sql.ErrNoRows {
+	financial, err := s.repo.FindFinancialDataByCustomerID(customer.ID)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return nil, ncore.TraceError("error when count audit login", err)
 	}
 
@@ -223,8 +200,8 @@ func (s *Service) Login(payload dto.LoginRequest) (*dto.LoginResponse, error) {
 	if len(customer.Cif) == 0 {
 		gs = false
 	} else {
-		//  gold saving account
-		goldSaving, errGs := s.getListAccountNumber(customer.Cif, customer.UserRefId.String)
+		// Get gold saving account
+		goldSaving, errGs := s.getListAccountNumber(customer.Cif, customer.UserRefID.String)
 		if errGs != nil {
 			return nil, ncore.TraceError("error when get list gold saving account", err)
 		}
@@ -294,14 +271,14 @@ func (s *Service) syncInternalToExternal(payload *dto.CustomerSynchronizeRequest
 
 func (s *Service) syncExternalToInternal(user *model.User) (*model.Customer, error) {
 	// prepare customer
-	customer, err := convert.ModelUserToCustomer(user)
+	customer, err := model.UserToCustomer(user)
 	if err != nil {
 		s.log.Error("failed to convert to model customer", nlogger.Error(err), nlogger.Context(s.ctx))
 		return nil, err
 	}
 
 	// Check has userPin or not
-	userPin, err := s.repoExternal.FindUserPINByCustomerID(customer.Id)
+	userPin, err := s.repoExternal.FindUserPINByCustomerID(customer.ID)
 	if errors.Is(err, sql.ErrNoRows) {
 		userPin = &model.UserPin{}
 	} else if err != nil {
@@ -319,45 +296,45 @@ func (s *Service) syncExternalToInternal(user *model.User) (*model.Customer, err
 	}
 
 	// Prepare credential
-	credential, err := convert.ModelUserToCredential(user, userPin)
+	credential, err := model.UserToCredential(user, userPin)
 	if err != nil {
 		s.log.Error("failed convert to credential model", nlogger.Error(err), nlogger.Context(s.ctx))
 		return nil, err
 	}
 
 	// Prepare financial data
-	financialData, err := convert.ModelUserToFinancialData(user)
+	financialData, err := model.UserToFinancialData(user)
 	if err != nil {
 		s.log.Error("failed convert to financial data", nlogger.Error(err), nlogger.Context(s.ctx))
 		return nil, err
 	}
 
 	// Prepare verification
-	verification, err := convert.ModelUserToVerification(user)
+	verification, err := model.UserToVerification(user)
 	if err != nil {
 		s.log.Error("failed convert to verification", nlogger.Error(err), nlogger.Context(s.ctx))
 		return nil, err
 	}
 
 	// Prepare address
-	address, err := convert.ModelUserToAddress(user, addressExternal)
+	address, err := model.UserToAddress(user, addressExternal)
 	if err != nil {
 		s.log.Error("failed convert address", nlogger.Error(err), nlogger.Context(s.ctx))
 		return nil, err
 	}
 
 	// Persist customer data
-	customerId, err := s.repo.CreateCustomer(customer)
+	customerID, err := s.repo.CreateCustomer(customer)
 	if err != nil {
 		s.log.Error("failed to persist customer", nlogger.Error(err), nlogger.Context(s.ctx))
 		return nil, err
 	}
 
 	// Set credential customer id to last inserted
-	credential.CustomerId = customerId
-	financialData.CustomerId = customerId
-	verification.CustomerId = customerId
-	address.CustomerId = customerId
+	credential.CustomerID = customerID
+	financialData.CustomerID = customerID
+	verification.CustomerID = customerID
+	address.CustomerID = customerID
 
 	// persist credential
 	err = s.repo.InsertOrUpdateCredential(credential)
@@ -387,7 +364,7 @@ func (s *Service) syncExternalToInternal(user *model.User) (*model.Customer, err
 		return nil, err
 	}
 
-	customer, err = s.repo.FindCustomerByID(customerId)
+	customer, err = s.repo.FindCustomerByID(customerID)
 	if err != nil {
 		s.log.Error("failed to retrieve customer not found", nlogger.Error(err), nlogger.Context(s.ctx))
 		return nil, s.responses.GetError("E_RES_1")
@@ -407,18 +384,18 @@ func (s *Service) composeLoginResponse(data dto.LoginVO) (*dto.LoginResponse, er
 
 	// Get asset url
 	// -- Avatar URL
-	avatarUrl := s.AssetGetPublicUrl(constant.AssetAvatarProfile, customer.Photos.FileName)
+	avatarURL := s.AssetGetPublicURL(constant.AssetAvatarProfile, customer.Photos.FileName)
 	// -- NPWP URL
-	npwpUrl := s.AssetGetPublicUrl(constant.AssetNPWP, customer.Profile.NPWPPhotoFile)
+	npwpURL := s.AssetGetPublicURL(constant.AssetNPWP, customer.Profile.NPWPPhotoFile)
 	// -- KTP URL
-	ktpURL := s.AssetGetPublicUrl(constant.AssetKTP, customer.Profile.IdentityPhotoFile)
+	ktpURL := s.AssetGetPublicURL(constant.AssetKTP, customer.Profile.IdentityPhotoFile)
 	// -- SID URL
-	sidUrl := s.AssetGetPublicUrl(constant.AssetNPWP, customer.Profile.SidPhotoFile)
+	sidURL := s.AssetGetPublicURL(constant.AssetNPWP, customer.Profile.SidPhotoFile)
 
 	return &dto.LoginResponse{
 		User: &dto.LoginUserVO{
 			CustomerVO: dto.CustomerVO{
-				ID:                        customer.UserRefId.String,
+				ID:                        customer.UserRefID.String,
 				IsKYC:                     nval.ParseStringFallback(verification.KycVerifiedStatus, "0"),
 				Cif:                       customer.Cif,
 				Nama:                      customer.FullName,
@@ -429,10 +406,10 @@ func (s *Service) composeLoginResponse(data dto.LoginVO) (*dto.LoginResponse, er
 				TempatLahir:               profile.PlaceOfBirth,
 				TglLahir:                  profile.DateOfBirth,
 				Alamat:                    address.Line.String,
-				IDProvinsi:                address.ProvinceId.Int64,
-				IDKabupaten:               address.CityId.Int64,
-				IDKecamatan:               address.DistrictId.Int64,
-				IDKelurahan:               address.SubDistrictId.Int64,
+				IDProvinsi:                address.ProvinceID.Int64,
+				IDKabupaten:               address.CityID.Int64,
+				IDKecamatan:               address.DistrictID.Int64,
+				IDKelurahan:               address.SubDistrictID.Int64,
 				Kelurahan:                 address.DistrictName.String,
 				Provinsi:                  address.ProvinceName.String,
 				Kabupaten:                 address.CityName.String,
@@ -444,12 +421,12 @@ func (s *Service) composeLoginResponse(data dto.LoginVO) (*dto.LoginResponse, er
 				Kewarganegaraan:           profile.Nationality,
 				JenisIdentitas:            fmt.Sprintf("%v", customer.IdentityType),
 				NoIdentitas:               customer.IdentityNumber,
-				Avatar:                    avatarUrl,
 				TglExpiredIdentitas:       profile.IdentityExpiredAt,
 				NoNPWP:                    profile.NPWPNumber,
-				FotoNPWP:                  npwpUrl,
+				Avatar:                    avatarURL,
+				FotoNPWP:                  npwpURL,
+				FotoSid:                   sidURL,
 				NoSid:                     customer.Sid,
-				FotoSid:                   sidUrl,
 				StatusKawin:               profile.MarriageStatus,
 				Norek:                     financial.AccountNumber,
 				Saldo:                     nval.ParseStringFallback(financial.Balance, "0"),
@@ -470,7 +447,6 @@ func (s *Service) composeLoginResponse(data dto.LoginVO) (*dto.LoginResponse, er
 }
 
 func (s *Service) setTokenAuthentication(customer *model.Customer, agen string, version string, cacheTokenKey string) (string, error) {
-
 	var accessToken string
 	accessToken, err := s.CacheGet(cacheTokenKey)
 	if err != nil {
@@ -491,18 +467,18 @@ func (s *Service) setTokenAuthentication(customer *model.Customer, agen string, 
 		accessToken = cacheToken
 	}
 
-	channelId := GetChannelByAgen(agen)
+	channelID := GetChannelByAgen(agen)
 	now := time.Now()
 
 	// Generate JWT
 	token, err := jwt.NewBuilder().
-		Claim("id", customer.UserRefId.String).
+		Claim("id", customer.UserRefID.String).
 		Claim("email", customer.Email).
 		Claim("nama", customer.FullName).
 		Claim("no_hp", customer.Phone).
 		Claim("access_token", accessToken).
 		Claim("agen", agen).
-		Claim("channelId", channelId).
+		Claim("channelId", channelID).
 		Claim("version", version).
 		IssuedAt(now).
 		Expiration(now.Add(time.Second * time.Duration(s.config.ClientConfig.JWTExpiry))).
@@ -575,7 +551,7 @@ func (s *Service) validatePassword(password string) *dto.ValidatePassword {
 	return &validation
 }
 
-func (s *Service) handleWrongPassword(credential *model.Credential, customer *model.Customer) error {
+func (s *Service) HandleWrongPassword(credential *model.Credential, customer *model.Customer) error {
 	var resp error
 	t := time.Now()
 
@@ -583,7 +559,7 @@ func (s *Service) handleWrongPassword(credential *model.Credential, customer *mo
 	var Metadata dto.MetadataCredential
 	err := json.Unmarshal(credential.Metadata, &Metadata)
 	if err != nil {
-		s.log.Error("error found when unmarshal metadata credential", nlogger.Error(err), nlogger.Context(s.ctx))
+		s.log.Error("error found when unmarshal metadata credential", nlogger.Error(err))
 		return ncore.TraceError("error found when unmarshal metadata credential", err)
 	}
 	// Parse time from metadata string to time
@@ -609,11 +585,12 @@ func (s *Service) handleWrongPassword(credential *model.Credential, customer *mo
 	case constant.Warn2XWrongPassword:
 		resp = s.responses.GetError("E_AUTH_6")
 		credential.WrongPasswordCount = wrongCount
+		break
 	case constant.Warn4XWrongPassword:
 		resp = s.responses.GetError("E_AUTH_7")
 		credential.WrongPasswordCount = wrongCount
+		break
 	case constant.MinWrongPassword:
-
 		// Set block account
 		hour := 1 // Block for 1 hours
 		duration := time.Hour * time.Duration(hour)
@@ -631,7 +608,7 @@ func (s *Service) handleWrongPassword(credential *model.Credential, customer *mo
 		// Set response if blocked for 1 hour
 		message := "Akun dikunci hingga %v WIB karena gagal login %v kali. Hubungi call center jika ini bukan kamu"
 		timeBlocked := ntime.ChangeTimezone(credential.BlockedUntilAt.Time, constant.WIB).Format("02-Jan-2006 15:04:05")
-		setResponse := ncore.Success.HttpStatus(401).SetMessage(message, timeBlocked, credential.WrongPasswordCount)
+		setResponse := ncore.Success.HTTPStatus(401).SetMessage(message, timeBlocked, credential.WrongPasswordCount)
 		resp = &setResponse
 
 		// Send OTP To Phone Number
@@ -639,19 +616,18 @@ func (s *Service) handleWrongPassword(credential *model.Credential, customer *mo
 			PhoneNumber: customer.Phone,
 			RequestType: constant.RequestTypeBlockOneHour,
 		}
-		_, err := s.SendOTP(request)
-		if err != nil {
-			s.log.Debug("error found when sending otp block one hour", nlogger.Error(err), nlogger.Context(s.ctx))
+		_, errOTP := s.SendOTP(request)
+		if errOTP != nil {
+			s.log.Debug("error found when sending otp block one hour", nlogger.Error(errOTP))
 		}
 
 		// Send Notification Blocked Login One Hour
 		// TODO Refactor
-		err = s.SendNotificationBlock(dto.NotificationBlock{
+		_ = s.SendNotificationBlock(dto.NotificationBlock{
 			Customer:     customer,
 			Message:      fmt.Sprintf(message, timeBlocked, credential.WrongPasswordCount),
 			LastTryLogin: ntime.NewTimeWIB(tryLoginAt).Format("02-Jan-2006 15:04:05"),
 		})
-
 		break
 	case constant.MaxWrongPassword:
 		// Set block account
@@ -671,7 +647,7 @@ func (s *Service) handleWrongPassword(credential *model.Credential, customer *mo
 		// Set response if blocked for 24 hour
 		message := "Akun dikunci hingga %v WIB karena gagal login %v kali. Hubungi call center jika ini bukan kamu"
 		timeBlocked := ntime.ChangeTimezone(credential.BlockedUntilAt.Time, constant.WIB).Format("02-Jan-2006 15:04:05")
-		setResponse := ncore.Success.HttpStatus(401).SetMessage(message, timeBlocked, credential.WrongPasswordCount)
+		setResponse := ncore.Success.HTTPStatus(401).SetMessage(message, timeBlocked, credential.WrongPasswordCount)
 		resp = &setResponse
 
 		// Send OTP To Phone Number
@@ -679,13 +655,13 @@ func (s *Service) handleWrongPassword(credential *model.Credential, customer *mo
 			PhoneNumber: customer.Phone,
 			RequestType: constant.RequestTypeBlockOneDay,
 		}
-		_, err := s.SendOTP(request)
-		if err != nil {
-			s.log.Debug("Error when sending otp block one hour", nlogger.Error(err), nlogger.Context(s.ctx))
+		_, errOTP := s.SendOTP(request)
+		if errOTP != nil {
+			s.log.Debug("Error when sending otp block one hour", nlogger.Error(errOTP))
 		}
 
 		// Send Notification Blocked Login One Day
-		err = s.SendNotificationBlock(dto.NotificationBlock{
+		_ = s.SendNotificationBlock(dto.NotificationBlock{
 			Customer:     customer,
 			Message:      fmt.Sprintf(message, timeBlocked, credential.WrongPasswordCount),
 			LastTryLogin: ntime.NewTimeWIB(tryLoginAt).Format("02-Jan-2006 15:04:05"),
@@ -720,7 +696,6 @@ func (s *Service) handleWrongPassword(credential *model.Credential, customer *mo
 }
 
 func GetChannelByAgen(agen string) string {
-
 	// Generalize agen
 	agen = strings.ToLower(agen)
 

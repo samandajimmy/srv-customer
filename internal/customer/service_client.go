@@ -36,7 +36,7 @@ type PostDataPayload struct {
 
 func (s *Service) clientRestSwitching() *nclient.Nclient {
 	s.client.ClientId = s.config.CoreClientID
-	s.client.BaseUrl = s.config.CoreApiURL
+	s.client.BaseUrl = s.config.CoreAPIURL
 
 	return s.client
 }
@@ -95,7 +95,6 @@ func (s *Service) RestSwitchingPostData(payload PostDataPayload) (*ResponseSwitc
 			return nil, err
 		}
 		invalidResponse = responseSwitching.Error
-
 	}
 
 	responseSwitching, err := s.restSwitchingSuccessResponse(restResponse)
@@ -136,7 +135,6 @@ func (s *Service) restSwitchingErrorResponse(restResponse *http.Response) (*Resp
 
 // restSwitchingGetToken Get Access Token from rest switching service (PDS)
 func (s *Service) restSwitchingGetToken() (string, error) {
-
 	token, err := s.CacheGet(cacheKeyRestSwitching)
 	if err != nil {
 		return "", ncore.TraceError("error when get token from cache", err)
@@ -198,7 +196,6 @@ func (s *Service) restSwitchingNewToken() (string, error) {
 }
 
 func (s *Service) restSwitchingRefreshToken(responseError string, payload PostDataPayload) (*ResponseSwitchingSuccess, bool) {
-
 	if responseError == constant.RestSwitchingInvalidToken {
 		_, _ = s.restSwitchingNewToken()
 		resp, _ := s.RestSwitchingPostData(payload)
@@ -278,11 +275,10 @@ func (s *Service) pdsAPISuccessResponse(restResponse *http.Response) (*ResponseP
 // TODO Refactor
 
 func (s *Service) ClientPostData(endpoint string, body map[string]interface{}, header map[string]string) (*http.Response, error) {
-
 	client := nclient.NewNucleoClient(
 		s.config.CoreOauthUsername,
 		s.config.CoreClientID,
-		s.config.CoreApiURL,
+		s.config.CoreAPIURL,
 	)
 
 	data, err := client.PostData(endpoint, body, header)
@@ -293,12 +289,11 @@ func (s *Service) ClientPostData(endpoint string, body map[string]interface{}, h
 }
 
 func (s *Service) ClientCreateNotification(endpoint string, body map[string]interface{}, header map[string]string) (*http.Response, error) {
-
-	s.client.BaseUrl = s.config.NotificationServiceUrl
+	s.client.BaseUrl = s.config.NotificationServiceURL
 	client := nclient.NewNucleoClient(
 		s.config.CoreOauthUsername,
 		s.config.CoreClientID,
-		s.config.CoreApiURL,
+		s.config.CoreAPIURL,
 	)
 
 	data, err := client.PostData(endpoint, body, header)

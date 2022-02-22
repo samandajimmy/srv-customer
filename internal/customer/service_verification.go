@@ -5,7 +5,7 @@ import (
 	"errors"
 	"github.com/nbs-go/nlogger"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/constant"
-	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/convert"
+	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/model"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/dto"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/ncore"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/ntime"
@@ -16,6 +16,9 @@ import (
 func (s *Service) VerifyEmailCustomer(payload dto.VerificationPayload) (string, error) {
 	// Load view already verified
 	alreadyVerifiedView, err := nval.TemplateFile("", "already_verified.html")
+	if err != nil {
+		return "", err
+	}
 
 	// Get verification
 	ver, err := s.repo.FindVerificationByEmailToken(payload.VerificationToken)
@@ -29,7 +32,7 @@ func (s *Service) VerifyEmailCustomer(payload dto.VerificationPayload) (string, 
 	}
 
 	// Get customer
-	customer, err := s.repo.FindCustomerByID(ver.CustomerId)
+	customer, err := s.repo.FindCustomerByID(ver.CustomerID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			log.Error("failed to retrieve customer not found", nlogger.Error(err))
@@ -55,14 +58,13 @@ func (s *Service) VerifyEmailCustomer(payload dto.VerificationPayload) (string, 
 		Valid: true,
 	}
 	ver.EmailVerificationToken = ""
-	modifiedBy := convert.ModifierDTOToModel(dto.Modifier{
-		ID:       nval.ParseStringFallback(ver.CustomerId, "0"),
+	ver.UpdatedAt = time.Now()
+	ver.ModifiedBy = &model.Subject{
+		ID:       nval.ParseStringFallback(ver.CustomerID, "0"),
 		Role:     constant.UserModifierRole,
 		FullName: customer.FullName,
-	})
-	ver.UpdatedAt = time.Now()
-	ver.ModifiedBy = &modifiedBy
-	ver.Version += 1
+	}
+	ver.Version++
 
 	// Update verification
 	err = s.repo.UpdateVerificationByCustomerID(ver)

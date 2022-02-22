@@ -9,7 +9,6 @@ import (
 )
 
 func (s *Service) CacheGet(key string) (string, error) {
-
 	result, err := s.redis.Get(key)
 	if err != nil {
 		s.log.Error("error when get cache %v", key, nlogger.Error(err), nlogger.Context(s.ctx))
@@ -20,7 +19,6 @@ func (s *Service) CacheGet(key string) (string, error) {
 }
 
 func (s *Service) CacheSetThenGet(key string, value string, expire int64) (string, error) {
-
 	result, err := s.redis.SetThenGet(key, value, expire)
 	if err != nil {
 		s.log.Error("error when set cache %v", key, nlogger.Error(err), nlogger.Context(s.ctx))

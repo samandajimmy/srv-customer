@@ -1,7 +1,7 @@
 package customer
 
 import (
-	"crypto/md5"
+	"crypto/md5" //nolint:gosec
 	"fmt"
 	"github.com/rs/xid"
 	"strings"
@@ -10,7 +10,7 @@ import (
 
 func generateReferralCode(prefix string) string {
 	unique := xid.New().String()
-	rand := fmt.Sprintf("%s", unique[0:7])
+	rand := unique[0:6]
 
 	var referralCode string
 	if prefix == "PDS" {
@@ -20,7 +20,6 @@ func generateReferralCode(prefix string) string {
 	}
 
 	return strings.ToUpper(referralCode)
-
 }
 
 func monthsToUnix(month int) int64 {
@@ -34,5 +33,5 @@ func hoursToSeconds(hour int64) int64 {
 }
 
 func stringToMD5(str string) string {
-	return fmt.Sprintf("%x", md5.Sum([]byte(str)))
+	return fmt.Sprintf("%x", md5.Sum([]byte(str))) //nolint:gosec
 }

@@ -86,7 +86,7 @@ func (s *Service) SendNotificationRegister(data dto.NotificationRegister) error 
 	dataEmailVerification := &dto.EmailVerification{
 		FullName:        customer.FullName,
 		Email:           customer.Email,
-		VerificationUrl: fmt.Sprintf("%sauth/verify_email?t=%s", s.config.GetHttpBaseUrl(), verification.EmailVerificationToken),
+		VerificationURL: fmt.Sprintf("%sauth/verify_email?t=%s", s.config.GetHTTPBaseURL(), verification.EmailVerificationToken),
 	}
 	htmlMessage, err := nval.TemplateFile(dataEmailVerification, "email_verification.html")
 	if err != nil {
@@ -105,13 +105,14 @@ func (s *Service) SendNotificationRegister(data dto.NotificationRegister) error 
 		Attachment: "",
 		MimeType:   "",
 	}
-	_, err = s.SendEmail(emailPayload)
+	respEmail, err := s.SendEmail(emailPayload)
 	if err != nil {
 		log.Debugf("Error when send email verification. Payload %v", emailPayload)
 	}
+	defer respEmail.Body.Close()
 
 	// Send Notification Welcome
-	id, _ := nval.ParseString(rand.Intn(100)) // TODO: insert data to notification
+	id, _ := nval.ParseString(rand.Intn(100)) //nolint:gosec
 	var dataWelcomeMessage = map[string]string{
 		"title": "Verifikasi Email",
 		"body":  fmt.Sprintf(`Hai %v, Selamat datang di Pegadaian Digital Service`, customer.FullName),
@@ -125,26 +126,26 @@ func (s *Service) SendNotificationRegister(data dto.NotificationRegister) error 
 		Token: data.Payload.FcmToken,
 		Data:  dataWelcomeMessage,
 	}
-	_, err = s.SendNotification(welcomeMessage)
+	respSend, err := s.SendNotification(welcomeMessage)
 	if err != nil {
 		s.log.Debugf("Error when send notification message.", nlogger.Error(err), nlogger.Context(s.ctx))
 	}
+	defer respSend.Body.Close()
 
 	return nil
 }
 
 func (s *Service) SendNotificationBlock(data dto.NotificationBlock) error {
-
 	customer := data.Customer.(*model.Customer)
 
-	baseUrl := s.config.GetHttpBaseUrl()
+	baseURL := s.config.GetHTTPBaseURL()
 	// Send Email Block
 	dataBlockEmail := &dto.EmailBlock{
 		Title:        "Notifikasi Keamanan Pegadaian Digital",
 		Text:         "Notifikasi Keamanan Pegadaian Digital",
 		Message:      data.Message,
 		LastTryLogin: data.LastTryLogin,
-		BaseUrl:      baseUrl,
+		BaseURL:      baseURL,
 	}
 	htmlMessage, err := nval.TemplateFile(dataBlockEmail, "email_blocked_login.html")
 	if err != nil {
@@ -163,10 +164,11 @@ func (s *Service) SendNotificationBlock(data dto.NotificationBlock) error {
 		Attachment: "",
 		MimeType:   "",
 	}
-	_, err = s.SendEmail(emailPayload)
+	sendEmail, err := s.SendEmail(emailPayload)
 	if err != nil {
 		s.log.Debugf("Error when send email block account. Payload %v", emailPayload)
 	}
+	defer sendEmail.Body.Close()
 
 	return nil
 }

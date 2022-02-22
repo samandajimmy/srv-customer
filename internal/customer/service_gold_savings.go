@@ -3,15 +3,12 @@ package customer
 import (
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"github.com/nbs-go/nlogger"
-	"github.com/rs/xid"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/constant"
-	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/convert"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/model"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/dto"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/ncore"
-	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nsql"
-	"strings"
 )
 
 // Tabungan Emas Service
@@ -30,7 +27,6 @@ func (s *Service) validateCIF(cif string, id string) (bool, error) {
 }
 
 func (s *Service) getPrimaryAccountNumber(financial *model.FinancialData, list []dto.AccountSavingVO) *dto.AccountSavingVO {
-
 	if len(list) == 0 {
 		return nil
 	}
@@ -59,7 +55,7 @@ func (s *Service) getListAccountNumber(cif string, userRefId string) (*dto.GoldS
 
 	// get customer from repo
 	customer, err := s.repo.FindCustomerByPhoneOrCIF(cif)
-	if err != nil && err != sql.ErrNoRows {
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		s.log.Error("error found when get customer repo", nlogger.Error(err), nlogger.Context(ctx))
 		return nil, ncore.TraceError("failed get customer repo", err)
 	}
@@ -95,29 +91,17 @@ func (s *Service) getListAccountNumber(cif string, userRefId string) (*dto.GoldS
 	}
 
 	// Get financial data
-	financialData, err := s.repo.FindFinancialDataByCustomerID(customer.Id)
-	if err != nil && err != sql.ErrNoRows {
+	financialData, err := s.repo.FindFinancialDataByCustomerID(customer.ID)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		s.log.Error("error found when get financial data repo", nlogger.Error(err), nlogger.Context(ctx))
 		return nil, ncore.TraceError("error found get financial data", err)
 	}
 
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		// init model
-		itemMetaData := model.NewItemMetadata(convert.ModifierDTOToModel(dto.Modifier{ID: "", Role: "", FullName: ""}))
-		financialData = &model.FinancialData{
-			Xid:                       strings.ToUpper(xid.New().String()),
-			CustomerId:                customer.Id,
-			MainAccountNumber:         "",
-			AccountNumber:             "",
-			GoldSavingStatus:          0,
-			GoldCardApplicationNumber: "",
-			GoldCardAccountNumber:     "",
-			Balance:                   0,
-			Metadata:                  nsql.EmptyObjectJSON,
-			ItemMetadata:              itemMetaData,
-		}
+		financialData = model.EmptyFinancialData
+		financialData.CustomerID = customer.ID
 	}
-
 	// Set primary account saving
 	accountSaving.PrimaryRekening = s.getPrimaryAccountNumber(financialData, accountSaving.ListTabungan)
 
@@ -129,7 +113,7 @@ func (s *Service) getListAccountNumber(cif string, userRefId string) (*dto.GoldS
 	}
 
 	// Set gold saving to cache
-	err = s.CacheSetGoldSavings(customer.UserRefId.String, accountSaving)
+	err = s.CacheSetGoldSavings(customer.UserRefID.String, accountSaving)
 	if err != nil {
 		s.log.Error("error found when set gold saving to cache", nlogger.Error(err), nlogger.Context(ctx))
 		return nil, ncore.TraceError("error when set gold saving to cache", err)
@@ -139,7 +123,6 @@ func (s *Service) getListAccountNumber(cif string, userRefId string) (*dto.GoldS
 }
 
 func (s *Service) UpdateIsOpenGoldSavings(fd *model.FinancialData, as *dto.GoldSavingVO, c *model.Customer) error {
-
 	// Update is open te
 	if as != nil {
 		if len(as.ListTabungan) > 0 {
@@ -159,14 +142,12 @@ func (s *Service) UpdateIsOpenGoldSavings(fd *model.FinancialData, as *dto.GoldS
 		if err != nil {
 			return err
 		}
-
 	}
 
 	return nil
 }
 
 func (s *Service) updateReferralCode(customer *model.Customer, financialData *model.FinancialData) error {
-
 	// Set Prefix Referral code
 	prefixReferralCode := "PDS"
 
@@ -176,12 +157,12 @@ func (s *Service) updateReferralCode(customer *model.Customer, financialData *mo
 		for {
 			newReferralCode = generateReferralCode(prefixReferralCode)
 			_, err := s.repo.ReferralCodeExists(newReferralCode)
-			if err != nil && err != sql.ErrNoRows {
+			if err != nil && !errors.Is(err, sql.ErrNoRows) {
 				s.log.Error("error found when check referral code repo", nlogger.Error(err), nlogger.Context(s.ctx))
 				return ncore.TraceError("err", err)
 			}
 
-			if err == sql.ErrNoRows {
+			if errors.Is(err, sql.ErrNoRows) {
 				break
 			}
 		}

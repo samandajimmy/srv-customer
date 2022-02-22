@@ -33,12 +33,12 @@ func (s *Service) AssetUploadFile(req dto.UploadRequest) (*dto.UploadResponse, e
 	}
 
 	// Resolve file url
-	fileUrl := s.buildUrl(dest)
+	fileURL := s.buildURL(dest)
 
 	// Compose response
 	resp := dto.UploadResponse{
 		FileName: fileName,
-		FileUrl:  fileUrl,
+		FileURL:  fileURL,
 		MimeType: req.File.MimeType,
 		FileSize: req.File.Header.Size,
 	}
@@ -80,7 +80,7 @@ func (s *Service) AssetUploadRule(assetType int) (*nhttp.UploadRule, error) {
 	return &rule, nil
 }
 
-func (s *Service) AssetGetPublicUrl(assetType constant.AssetType, fileName string) string {
+func (s *Service) AssetGetPublicURL(assetType constant.AssetType, fileName string) string {
 	// If file name is empty, return empty
 	if fileName == "" {
 		return ""
@@ -95,11 +95,11 @@ func (s *Service) AssetGetPublicUrl(assetType constant.AssetType, fileName strin
 	// Set file path
 	filePath := dir + fileName
 
-	return s.buildUrl(filePath)
+	return s.buildURL(filePath)
 }
 
-func (s *Service) buildUrl(filePath string) string {
-	return s.config.AssetUrl + "/" + filePath
+func (s *Service) buildURL(filePath string) string {
+	return s.config.AssetURL + "/" + filePath
 }
 
 func (s *Service) AssetDirectory(assetType int) (string, error) {

@@ -7,11 +7,9 @@ import (
 	"github.com/nbs-go/nlogger"
 	"github.com/rs/xid"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/constant"
-	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/convert"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/model"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/dto"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/ncore"
-	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nsql"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nval"
 	"strings"
 	"time"
@@ -22,36 +20,36 @@ func (s *Service) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCus
 	ctx := s.ctx
 
 	// Set Registration ID and Phone Number
-	registrationId := payload.RegistrationId
+	registrationID := payload.RegistrationID
 	phoneNumber := payload.PhoneNumber
 
 	// Validate exist
 	var customer *model.Customer
 	customer, err := s.repo.FindCustomerByEmail(payload.Email)
-	if err != nil && err != sql.ErrNoRows {
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		s.log.Error("error found when get customer by email", nlogger.Error(err), nlogger.Context(ctx))
 		return nil, s.responses.GetError("E_REG_1")
 	}
 
-	if err != nil && err == sql.ErrNoRows {
+	if err != nil && errors.Is(err, sql.ErrNoRows) {
 		customer = nil
 	}
 
 	if customer != nil {
-		s.log.Debugf("Email already registered: %s", registrationId)
+		s.log.Debugf("Email already registered: %s", registrationID)
 		return nil, s.responses.GetError("E_REG_2")
 	}
 
 	// Find registerID
-	registerOTP, err := s.repo.FindVerificationOTPByRegistrationIDAndPhone(registrationId, phoneNumber)
+	registerOTP, err := s.repo.FindVerificationOTPByRegistrationIDAndPhone(registrationID, phoneNumber)
 	if err != nil {
-		s.log.Errorf("Registration ID not found: %s", registrationId)
+		s.log.Errorf("Registration ID not found: %s", registrationID)
 		return nil, s.responses.GetError("E_REG_1")
 	}
 
 	// Get data user
 	customer, err = s.repo.FindCustomerByPhone(phoneNumber)
-	if err != nil && err != sql.ErrNoRows {
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		s.log.Error("error found when get customer", nlogger.Error(err))
 		return nil, s.responses.GetError("E_REG_1")
 	}
@@ -63,7 +61,7 @@ func (s *Service) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCus
 	defer s.repo.ReleaseTx(tx, &err)
 
 	var customerXID string
-	var customerId int64
+	var customerID int64
 
 	// Update name if customer exists
 	if customer != nil {
@@ -77,12 +75,10 @@ func (s *Service) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCus
 
 		// Update customerId and CustomerXID
 		customerXID = customer.CustomerXID
-		customerId = customer.Id
+		customerID = customer.ID
 	} else {
 		// Create new profile
 		customerXID = strings.ToUpper(xid.New().String())
-		metaData := model.NewItemMetadata(convert.ModifierDTOToModel(dto.Modifier{ID: "", Role: "", FullName: ""}))
-
 		profile := &dto.CustomerProfileVO{
 			MaidenName:         "",
 			Gender:             "",
@@ -108,14 +104,13 @@ func (s *Service) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCus
 			Status:         0,
 			IdentityType:   0,
 			IdentityNumber: "",
-			UserRefId:      sql.NullString{},
+			UserRefID:      sql.NullString{},
 			Cif:            "",
 			Sid:            "",
 			ReferralCode:   "",
 			Profile:        model.ToCustomerProfile(profile),
 			Photos:         nil,
-			Metadata:       nsql.EmptyObjectJSON,
-			ItemMetadata:   metaData,
+			BaseField:      model.EmptyBaseField,
 		}
 
 		// Persist Customer
@@ -124,7 +119,7 @@ func (s *Service) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCus
 			s.log.Errorf("error when persist customer: %s", payload.Name, nlogger.Error(errInsert), nlogger.Context(ctx))
 			return nil, ncore.TraceError("failed to persist customer", errInsert)
 		}
-		customerId = lastInsertId
+		customerID = lastInsertId
 		customer = insertCustomer
 		customerXID = customer.CustomerXID
 	}
@@ -139,7 +134,7 @@ func (s *Service) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCus
 	// Prepare verification model
 	verification := &model.Verification{
 		Xid:                             strings.ToUpper(xid.New().String()),
-		CustomerId:                      customerId,
+		CustomerID:                      customerID,
 		KycVerifiedStatus:               0,
 		KycVerifiedAt:                   sql.NullTime{},
 		EmailVerificationToken:          nval.RandomString(78),
@@ -149,8 +144,7 @@ func (s *Service) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCus
 		DukcapilVerifiedAt:              sql.NullTime{},
 		FinancialTransactionStatus:      0,
 		FinancialTransactionActivatedAt: sql.NullTime{},
-		Metadata:                        nsql.EmptyObjectJSON,
-		ItemMetadata:                    model.NewItemMetadata(convert.ModifierDTOToModel(dto.Modifier{ID: "", Role: "", FullName: ""})),
+		BaseField:                       model.EmptyBaseField,
 	}
 
 	// Update verification
@@ -172,11 +166,14 @@ func (s *Service) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCus
 		return nil, ncore.TraceError("", err)
 	}
 
+	credentialBaseField := model.EmptyBaseField
+	credentialBaseField.Metadata = metadata
+
 	// Create credential
 	credentialXID := strings.ToUpper(xid.New().String())
 	credentialInsert := &model.Credential{
 		Xid:                 credentialXID,
-		CustomerId:          customerId,
+		CustomerID:          customerID,
 		Password:            nval.MD5(payload.Password),
 		NextPasswordResetAt: sql.NullTime{},
 		Pin:                 "",
@@ -191,9 +188,8 @@ func (s *Service) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCus
 		BlockedAt:           sql.NullTime{},
 		BlockedUntilAt:      sql.NullTime{},
 		BiometricLogin:      0,
-		BiometricDeviceId:   "",
-		Metadata:            metadata,
-		ItemMetadata:        model.NewItemMetadata(convert.ModifierDTOToModel(dto.Modifier{ID: "", Role: "", FullName: ""})),
+		BiometricDeviceID:   "",
+		BaseField:           credentialBaseField,
 	}
 
 	// Insert or update credential
@@ -205,7 +201,7 @@ func (s *Service) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCus
 
 	// Insert OTP
 	insertOTP := &model.OTP{
-		CustomerId: customerId,
+		CustomerID: customerID,
 		Content:    "",
 		Type:       "registrasi_user",
 		Data:       "",
@@ -223,12 +219,11 @@ func (s *Service) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCus
 	// Init model access session
 	insertAccessSession := &model.AccessSession{
 		Xid:                  customerXID,
-		CustomerId:           customerId,
+		CustomerID:           customerID,
 		ExpiredAt:            time.Now().Add(time.Hour),
 		NotificationToken:    payload.FcmToken,
 		NotificationProvider: 1,
-		Metadata:             nsql.EmptyObjectJSON,
-		ItemMetadata:         model.NewItemMetadata(convert.ModifierDTOToModel(dto.Modifier{ID: "", Role: "", FullName: ""})),
+		BaseField:            model.EmptyBaseField,
 	}
 
 	// Create access session
@@ -254,10 +249,10 @@ func (s *Service) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCus
 	}
 
 	// Delete OTP RegistrationId
-	err = s.repo.DeleteVerificationOTP(registerOTP.RegistrationId, customer.Phone)
+	err = s.repo.DeleteVerificationOTP(registerOTP.RegistrationID, customer.Phone)
 	if err != nil {
 		s.log.Errorf("error when remove verificationOTP: %s. Phone Number : %s.",
-			registerOTP.RegistrationId, customer.Phone, nlogger.Error(err), nlogger.Context(ctx),
+			registerOTP.RegistrationID, customer.Phone, nlogger.Error(err), nlogger.Context(ctx),
 		)
 		return nil, s.responses.GetError("E_REG_1")
 	}
@@ -275,36 +270,10 @@ func (s *Service) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCus
 		s.log.Error("error when send notification register", nlogger.Context(ctx))
 	}
 
-	return &dto.RegisterNewCustomerResponse{
-		LoginResponse: loginResponse,
-		// TODO EKYC
-		Ekyc: &dto.EKyc{
-			AccountType: "",
-			Status:      "",
-			Screen:      "",
-		},
-		// TODO GPoint null response by default
-		GPoint: nil,
-		// TODO GCash
-		GCash: &dto.GCash{
-			TotalSaldo: 0,
-			Va: []dto.GCashVa{{
-				ID:             "",
-				UserAIID:       "",
-				Amount:         "",
-				KodeBank:       "",
-				TrxID:          "",
-				TglExpired:     "",
-				VirtualAccount: "",
-				VaNumber:       "",
-				CreatedAt:      "",
-				LastUpdate:     "",
-				NamaBank:       "",
-				Thumbnail:      "",
-			}},
-			VaAvailable: []string{},
-		},
-	}, nil
+	// Compose response
+	resp := s.composeRegisterResponse(loginResponse)
+
+	return resp, nil
 }
 
 // Register Send OTP
@@ -464,7 +433,7 @@ func (s *Service) RegisterStepTwo(payload dto.RegisterStepTwo) (*dto.RegisterSte
 	vOTP := &model.VerificationOTP{
 		CreatedAt:      time.Now(),
 		Phone:          payload.PhoneNumber,
-		RegistrationId: xid.New().String(),
+		RegistrationID: xid.New().String(),
 	}
 	_, err = s.repo.CreateVerificationOTP(vOTP)
 	if err != nil {
@@ -473,6 +442,39 @@ func (s *Service) RegisterStepTwo(payload dto.RegisterStepTwo) (*dto.RegisterSte
 	}
 
 	return &dto.RegisterStepTwoResponse{
-		RegisterId: vOTP.RegistrationId,
+		RegisterID: vOTP.RegistrationID,
 	}, nil
+}
+
+func (s *Service) composeRegisterResponse(loginResponse *dto.LoginResponse) *dto.RegisterNewCustomerResponse {
+	return &dto.RegisterNewCustomerResponse{
+		LoginResponse: loginResponse,
+		// TODO EKYC
+		Ekyc: &dto.EKyc{
+			AccountType: "",
+			Status:      "",
+			Screen:      "",
+		},
+		// TODO GPoint null response by default
+		GPoint: nil,
+		// TODO GCash
+		GCash: &dto.GCash{
+			TotalSaldo: 0,
+			Va: []dto.GCashVa{{
+				ID:             "",
+				UserAIID:       "",
+				Amount:         "",
+				KodeBank:       "",
+				TrxID:          "",
+				TglExpired:     "",
+				VirtualAccount: "",
+				VaNumber:       "",
+				CreatedAt:      "",
+				LastUpdate:     "",
+				NamaBank:       "",
+				Thumbnail:      "",
+			}},
+			VaAvailable: []string{},
+		},
+	}
 }
