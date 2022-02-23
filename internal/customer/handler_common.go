@@ -64,13 +64,13 @@ func (h *Common) ValidateClient(r *nhttp.Request) (*nhttp.Response, error) {
 		Metadata: nil,
 	}
 
-	r.SetContextValue(constant.SubjectKey, &subject)
+	r.SetContextValue(constant.SubjectContextKey, &subject)
 
 	return nhttp.Continue(), nil
 }
 
 func GetSubject(rx *nhttp.Request) (*dto.Subject, error) {
-	v := rx.GetContextValue(constant.SubjectKey)
+	v := rx.GetContextValue(constant.SubjectContextKey)
 	subject, ok := v.(*dto.Subject)
 	if !ok {
 		return nil, ncore.NewError("no subject found in request context")
@@ -79,7 +79,7 @@ func GetSubject(rx *nhttp.Request) (*dto.Subject, error) {
 }
 
 func GetRequestID(rx *nhttp.Request) string {
-	reqID, ok := rx.GetContextValue(nhttp.RequestIDKey).(string)
+	reqID, ok := rx.GetContextValue(nhttp.RequestIDContextKey).(string)
 	if !ok {
 		// Generate new request id
 		id, err := uuid.NewUUID()

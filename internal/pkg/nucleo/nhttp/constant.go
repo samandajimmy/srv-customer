@@ -8,10 +8,19 @@ const (
 
 	// Map keys
 
-	MetadataKey        = "metadata"
-	HTTPStatusRespKey  = "http_status"
-	RequestMetadataKey = "request_metadata"
-	RequestIDKey       = "requestId"
+	MetadataKey       = "metadata"
+	HTTPStatusRespKey = "http_status"
 
 	NotApplicable = "N/A"
+)
+
+// Context Key
+
+type ContextKey uint8
+
+const (
+	_ ContextKey = iota
+	RequestIDContextKey
+	HTTPStatusRespContextKey
+	RequestMetadataContextKey
 )

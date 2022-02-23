@@ -43,7 +43,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		// If an error occurred, then write error response
 		httpStatus = h.contentWriter.WriteError(w, err)
-		rx.SetContextValue(HTTPStatusRespKey, httpStatus)
+		rx.SetContextValue(HTTPStatusRespContextKey, httpStatus)
 		return
 	}
 
@@ -51,7 +51,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if result == nil {
 		httpStatus = http.StatusNoContent
 		w.WriteHeader(httpStatus)
-		rx.SetContextValue(HTTPStatusRespKey, httpStatus)
+		rx.SetContextValue(HTTPStatusRespContextKey, httpStatus)
 		return
 	}
 
@@ -103,7 +103,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		httpStatus = h.contentWriter.Write(w, statusHTTP, result)
 	}
 
-	rx.SetContextValue(HTTPStatusRespKey, httpStatus)
+	rx.SetContextValue(HTTPStatusRespContextKey, httpStatus)
 }
 
 func HandleErrorNotFound(_ *Request) (*Response, error) {

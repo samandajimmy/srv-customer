@@ -28,7 +28,7 @@ func (rc *RepositoryContext) CreateCustomer(row *model.Customer) (int64, error) 
 
 func (rc *RepositoryContext) FindCustomerByID(id int64) (*model.Customer, error) {
 	var row model.Customer
-	err := rc.stmt.Customer.FindById.GetContext(rc.ctx, &row, id)
+	err := rc.stmt.Customer.FindByID.GetContext(rc.ctx, &row, id)
 	if err != nil {
 		return nil, err
 	}

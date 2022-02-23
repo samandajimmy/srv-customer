@@ -7,12 +7,6 @@ const (
 )
 
 const (
-	SubjectKey   = "subject"
-	BuildHashKey = "build_hash"
-	UserRefID    = "user_ref_id"
-)
-
-const (
 	SubjectIDHeader   = "x-subject-id"
 	SubjectNameHeader = "x-subject-name"
 	SubjectRoleHeader = "x-subject-role"
@@ -35,4 +29,15 @@ var AssetDirs = map[AssetType]string{
 
 const (
 	KeyUserFile = "userfile"
+)
+
+// Context Key
+
+type ContextKey uint8
+
+const (
+	_ ContextKey = iota
+	RequestIDContextKey
+	SubjectContextKey
+	UserRefIDContextKey
 )

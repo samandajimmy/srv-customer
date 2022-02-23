@@ -16,7 +16,7 @@ type Customer struct {
 	UpdateByPhone      *sqlx.NamedStmt
 	UpdateByUserRefID  *sqlx.NamedStmt
 	FindByRefID        *sqlx.Stmt
-	FindById           *sqlx.Stmt
+	FindByID           *sqlx.Stmt
 	FindByPhoneOrCIF   *sqlx.Stmt
 	FindByPhone        *sqlx.Stmt
 	FindByEmail        *sqlx.Stmt
@@ -32,12 +32,12 @@ func NewCustomer(db *nsql.DatabaseContext) *Customer {
 	// Init query
 	insert := fmt.Sprintf(`%s ON CONFLICT DO NOTHING RETURNING "id"`, sb.Insert())
 
-	findById := query.Select(query.Column("*")).
+	findByID := query.Select(query.Column("*")).
 		From(CustomerSchema).
 		Where(query.Equal(query.Column(CustomerSchema.PrimaryKey()))).
 		Build()
 
-	findByRefId := query.Select(query.Column("*")).
+	findByRefID := query.Select(query.Column("*")).
 		From(CustomerSchema).
 		Where(query.Equal(query.Column("userRefId"))).
 		Build()
@@ -84,7 +84,7 @@ func NewCustomer(db *nsql.DatabaseContext) *Customer {
 		Where(query.Equal(query.Column("cif"))).
 		Build()
 
-	updateByUserRefId := query.
+	updateByUserRefID := query.
 		Update(CustomerSchema, "*").
 		Where(query.Equal(query.Column("userRefId"))).
 		Build()
@@ -96,15 +96,15 @@ func NewCustomer(db *nsql.DatabaseContext) *Customer {
 
 	return &Customer{
 		Insert:             db.PrepareNamedFmtRebind(insert),
-		FindById:           db.PrepareFmtRebind(findById),
-		FindByRefID:        db.PrepareFmtRebind(findByRefId),
+		FindByID:           db.PrepareFmtRebind(findByID),
+		FindByRefID:        db.PrepareFmtRebind(findByRefID),
 		FindByPhone:        db.PrepareFmtRebind(findByPhone),
 		FindByPhoneOrCIF:   db.PrepareFmtRebind(findByPhoneOrCIF),
 		FindByEmail:        db.PrepareFmtRebind(findByEmail),
 		ReferralCodeExist:  db.PrepareFmtRebind(referralCodeExist),
 		FindByEmailOrPhone: db.PrepareFmtRebind(findByEmailOrPhone),
 		UpdateByCIF:        db.PrepareNamedFmtRebind(updateByCif),
-		UpdateByUserRefID:  db.PrepareNamedFmtRebind(updateByUserRefId),
+		UpdateByUserRefID:  db.PrepareNamedFmtRebind(updateByUserRefID),
 		UpdateByPhone:      db.PrepareNamedFmtRebind(updateByPhone),
 	}
 }

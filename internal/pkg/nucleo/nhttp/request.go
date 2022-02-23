@@ -29,7 +29,7 @@ func (r *Request) ParseJSONBody(dest interface{}) error {
 /// SetContextValue set value to context.Context in http.Request
 /// Value is accessible chain of http.Handler
 
-func (r *Request) SetContextValue(k string, v interface{}) {
+func (r *Request) SetContextValue(k interface{}, v interface{}) {
 	ctx := context.WithValue(r.Context(), k, v)
 	*r.Request = *r.WithContext(ctx)
 }
@@ -37,7 +37,7 @@ func (r *Request) SetContextValue(k string, v interface{}) {
 /// GetContextValue get value to context.Context
 /// Value is accessible chain of http.Handler
 
-func (r *Request) GetContextValue(k string) interface{} {
+func (r *Request) GetContextValue(k interface{}) interface{} {
 	return r.Context().Value(k)
 }
 
@@ -59,16 +59,16 @@ func (r *Request) GetMetadata(k string) interface{} {
 /// continue
 
 func (r *Request) End(httpStatus int) {
-	r.SetContextValue(HTTPStatusRespKey, httpStatus)
+	r.SetContextValue(HTTPStatusRespContextKey, httpStatus)
 }
 
 func (r *Request) HasEnded() bool {
-	v := r.GetContextValue(HTTPStatusRespKey)
+	v := r.GetContextValue(HTTPStatusRespContextKey)
 	return v != nil
 }
 
 func (r *Request) GetClientIP() string {
-	metadata, ok := r.Context().Value(RequestMetadataKey).(RequestMetadata)
+	metadata, ok := r.Context().Value(RequestMetadataContextKey).(RequestMetadata)
 	if !ok {
 		return NotApplicable
 	}

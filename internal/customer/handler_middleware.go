@@ -37,13 +37,13 @@ func (h *Middlewares) AuthUser(rx *nhttp.Request) (*nhttp.Response, error) {
 		return nil, err
 	}
 
-	rx.SetContextValue(constant.UserRefID, userRefID)
+	rx.SetContextValue(constant.UserRefIDContextKey, userRefID)
 
 	return nhttp.Continue(), nil
 }
 
 func getUserRefID(rx *nhttp.Request) (string, error) {
-	v := rx.GetContextValue(constant.UserRefID)
+	v := rx.GetContextValue(constant.UserRefIDContextKey)
 
 	userRefID, ok := v.(string)
 	if !ok {
