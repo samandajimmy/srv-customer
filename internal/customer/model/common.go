@@ -11,12 +11,12 @@ import (
 	"time"
 )
 
-var EmptyBaseField = NewBaseField(&Subject{ID: "", Role: "", FullName: ""})
+var EmptyBaseField = NewBaseField(&Modifier{ID: "", Role: "", FullName: ""})
 
 type BaseField struct {
 	CreatedAt  time.Time       `db:"createdAt"`
 	UpdatedAt  time.Time       `db:"updatedAt"`
-	ModifiedBy *Subject        `db:"modifiedBy"`
+	ModifiedBy *Modifier       `db:"modifiedBy"`
 	Version    int64           `db:"version"`
 	Metadata   json.RawMessage `db:"metadata"`
 }
@@ -24,19 +24,15 @@ type BaseField struct {
 type NullBaseField struct {
 	CreatedAt  pq.NullTime      `db:"createdAt"`
 	UpdatedAt  pq.NullTime      `db:"updatedAt"`
-	ModifiedBy *Subject         `db:"modifiedBy"`
+	ModifiedBy *Modifier        `db:"modifiedBy"`
 	Version    sql.NullInt64    `db:"version"`
 	Metadata   *json.RawMessage `db:"metadata"`
 }
 
-type Subject struct {
-	ID       string `json:"id"`
-	Role     string `json:"role"`
-	FullName string `json:"fullName"`
-}
-
-func NewBaseField(modifiedBy *Subject) BaseField {
+func NewBaseField(modifiedBy *Modifier) BaseField {
+	// Init timestamp
 	t := time.Now()
+
 	return BaseField{
 		CreatedAt:  t,
 		UpdatedAt:  t,
@@ -46,12 +42,10 @@ func NewBaseField(modifiedBy *Subject) BaseField {
 	}
 }
 
-type EmptyModifier = Subject
-
 type Modifier struct {
 	ID       string `json:"id"`
 	Role     string `json:"role"`
-	FullName string `json:"full_name"`
+	FullName string `json:"fullName"`
 }
 
 func (m *Modifier) Scan(src interface{}) error {
@@ -62,63 +56,19 @@ func (m *Modifier) Value() (driver.Value, error) {
 	return json.Marshal(m)
 }
 
-type ItemMetadata struct {
-	CreatedAt  time.Time `db:"createdAt"`
-	UpdatedAt  time.Time `db:"updatedAt"`
-	ModifiedBy *Modifier `db:"modifiedBy"`
-	Version    int64     `db:"version"`
-}
-
-func (m ItemMetadata) Upgrade(modifiedBy Modifier, opts ...time.Time) ItemMetadata {
-	var t time.Time
-	if len(opts) > 0 {
-		t = opts[0]
-	} else {
-		t = time.Now()
-	}
-
-	return ItemMetadata{
-		CreatedAt:  m.CreatedAt,
-		UpdatedAt:  t,
-		ModifiedBy: &modifiedBy,
-		Version:    m.Version + 1,
-	}
-}
-
-func NewItemMetadata(modifiedBy Modifier) ItemMetadata {
-	// Init timestamp
-	t := time.Now()
-
-	return ItemMetadata{
-		CreatedAt:  t,
-		UpdatedAt:  t,
-		ModifiedBy: &modifiedBy,
-		Version:    1,
-	}
-}
-
-func ModifierModelToDTO(model Modifier) dto.Modifier {
-	return dto.Modifier{
+func ToModifierDTO(model *Modifier) *dto.Modifier {
+	return &dto.Modifier{
 		ID:       model.ID,
 		Role:     model.Role,
 		FullName: model.FullName,
 	}
 }
 
-func ModifierDTOToModel(dto dto.Modifier) Modifier {
-	return Modifier{
+func ToModifier(dto *dto.Modifier) *Modifier {
+	return &Modifier{
 		ID:       dto.ID,
 		Role:     dto.Role,
 		FullName: dto.FullName,
-	}
-}
-
-func ItemMetadataModelToResponse(model ItemMetadata) dto.ItemMetadataResponse {
-	return dto.ItemMetadataResponse{
-		UpdatedAt:  model.UpdatedAt.Unix(),
-		CreatedAt:  model.CreatedAt.Unix(),
-		ModifiedBy: ModifierModelToDTO(*model.ModifiedBy),
-		Version:    model.Version,
 	}
 }
 

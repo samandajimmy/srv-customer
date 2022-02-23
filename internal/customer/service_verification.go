@@ -59,7 +59,7 @@ func (s *Service) VerifyEmailCustomer(payload dto.VerificationPayload) (string, 
 	}
 	ver.EmailVerificationToken = ""
 	ver.UpdatedAt = time.Now()
-	ver.ModifiedBy = &model.Subject{
+	ver.ModifiedBy = &model.Modifier{
 		ID:       nval.ParseStringFallback(ver.CustomerID, "0"),
 		Role:     constant.UserModifierRole,
 		FullName: customer.FullName,
