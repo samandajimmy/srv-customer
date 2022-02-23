@@ -84,6 +84,8 @@ var OTPReachResendLimitError = b.NewError("E_OTP_3", "Mohon tunggu 300 detik lag
 	nhttp.WithStatus(http.StatusBadRequest))
 var ExpiredOTPError = b.NewError("E_OTP_4", "otp has been expired",
 	nhttp.WithStatus(http.StatusBadRequest))
+var InvalidOTPError = b.NewError("E_OTP_5", "OTP yang dimasukan tidak valid",
+	nhttp.WithStatus(http.StatusBadRequest))
 
 // PIN Errors
 

@@ -12,6 +12,7 @@ import (
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/model"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/dto"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nhttp"
+	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/dto"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nval"
 	"time"
 )
@@ -485,4 +486,25 @@ func handleErrorRepository(errRepo error, errMsg error) error {
 		return errMsg
 	}
 	return errRepo
+}
+
+func (s *Service) SendOTPResetPassword(payload dto.OTPResetPasswordPayload) (string, error) {
+	// Send OTP To Phone Number
+	resp, err := s.SendOTP(dto.SendOTPRequest{
+		PhoneNumber: payload.Email,
+		RequestType: constant.RequestResetPassword,
+	})
+	if err != nil {
+		s.log.Error("error found when call send OTP service", nlogger.Error(err), nlogger.Context(s.ctx))
+		return "", errx.Trace(err)
+	}
+
+	s.log.Debugf("Debug: reset password message %s", resp.Message)
+
+	if resp.ResponseCode != "00" {
+		s.log.Error("error rest switching otp reset pin", nlogger.Context(s.ctx))
+		return "", constant.InvalidOTPError.Trace()
+	}
+
+	return "Resend OTP Successfully", nil
 }

@@ -222,3 +222,15 @@ func PostForgetPin(p *dto.ForgetPinPayload) error {
 
 	return nil
 }
+
+func PostSendOTPPassword(p *dto.OTPResetPasswordPayload) error {
+	err := validation.ValidateStruct(p,
+		validation.Field(&p.Email, validation.Required),
+	)
+
+	if err != nil {
+		return nhttp.BadRequestError.Trace(errx.Source(err))
+	}
+
+	return nil
+}
