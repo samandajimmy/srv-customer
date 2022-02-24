@@ -269,11 +269,16 @@ func (s *Service) CheckStatus(userRefID string) (*dto.CheckStatusResponse, error
 		return nil, ncore.TraceError("", err)
 	}
 
+	// Check pin available
+	var pinAvailable = false
+	if credential.Pin != "" {
+		pinAvailable = true
+	}
 	var status = &dto.CheckStatusResponse{
 		Cif:                    customer.Cif,
 		EmailVerified:          nval.ParseBooleanFallback(verification.EmailVerifiedStatus, false),
-		KycVerified:            false,
-		PinAvailable:           nval.ParseBooleanFallback(credential.Pin, false),
+		KycVerified:            nval.ParseBooleanFallback(verification.KycVerifiedStatus, false),
+		PinAvailable:           pinAvailable,
 		AktifasiTransFinansial: nval.ParseStringFallback(verification.FinancialTransactionStatus, "0"),
 	}
 
