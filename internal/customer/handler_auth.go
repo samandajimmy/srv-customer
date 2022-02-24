@@ -28,6 +28,7 @@ func (h *Auth) ValidateClient(rx *nhttp.Request) (*nhttp.Response, error) {
 
 	// Init service
 	svc := h.NewService(rx.Context())
+	defer svc.Close()
 
 	// Authentication app
 	err = svc.ValidateClient(payload)
