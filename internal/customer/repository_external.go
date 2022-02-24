@@ -2,6 +2,7 @@ package customer
 
 import (
 	"context"
+	"encoding/base64"
 	"github.com/nbs-go/nlogger"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/statement"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/ncore"
@@ -9,13 +10,16 @@ import (
 )
 
 func NewRepositoryExternal(config *DatabaseConfig) (*RepositoryExternal, error) {
+	// Password Decode
+	password, _ := base64.StdEncoding.DecodeString(config.DatabasePass)
+
 	// Init db
 	db, err := nsql.NewDatabase(nsql.Config{
 		Driver:          config.DatabaseDriver,
 		Host:            config.DatabaseHost,
 		Port:            config.DatabasePort,
 		Username:        config.DatabaseUser,
-		Password:        config.DatabasePass,
+		Password:        string(password),
 		Database:        config.DatabaseName,
 		MaxIdleConn:     config.DatabaseMaxIdleConn,
 		MaxOpenConn:     config.DatabaseMaxOpenConn,
