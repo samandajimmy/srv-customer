@@ -10,6 +10,7 @@ import (
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/model"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/dto"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/ncore"
+	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nhttp"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nval"
 	"time"
 )
@@ -145,72 +146,110 @@ func (s *Service) UpdatePassword(userRefID string, payload dto.UpdatePasswordReq
 	return nil
 }
 
-func (s *Service) UpdateAvatar(userRefID string, uploaded *dto.UploadResponse) error {
+func (s *Service) UpdateAvatar(payload dto.UpdateUserFile) (*dto.UploadResponse, error) {
+	// Set payload avatar
+	payloadUserFile := dto.UploadUserFilePayload{
+		Request:   payload.Request,
+		AssetType: payload.AssetType,
+	}
+
+	// Upload Userfile
+	userFile, err := s.uploadUserFile(payloadUserFile)
+	if err != nil {
+		s.log.Error("error found when upload user file", nlogger.Error(err))
+		return nil, err
+	}
+
 	// Find customer
-	customer, err := s.repo.FindCustomerByUserRefID(userRefID)
+	customer, err := s.repo.FindCustomerByUserRefID(payload.UserRefID)
 	if err != nil {
 		s.log.Error("error when find current customer", nlogger.Error(err))
-		return ncore.TraceError("", err)
+		return nil, ncore.TraceError("", err)
 	}
 
 	// Remove old avatar if exist
 	if photo := customer.Photos; photo != nil && photo.FileName != "" {
-		_ = s.AssetRemoveFile(photo.FileName, constant.AssetAvatarProfile)
+		_ = s.AssetRemoveFile(photo.FileName, payload.AssetType)
 	}
 
-	// Create new photo
-	newPhoto := &model.CustomerPhoto{
+	// Update photo entity
+	customer.Photos = &model.CustomerPhoto{
 		Xid:      xid.New().String(),
-		FileName: uploaded.FileName,
-		FileSize: uploaded.FileSize,
-		Mimetype: uploaded.MimeType,
+		FileName: userFile.FileName,
+		FileSize: userFile.FileSize,
+		Mimetype: userFile.MimeType,
 	}
-
-	customer.Photos = newPhoto
+	// Update timestamp profile
 	customer.Profile.ProfileUpdatedAt = time.Now().Unix()
 
 	// Persist
-	err = s.repo.UpdateCustomerByUserRefID(customer, userRefID)
+	err = s.repo.UpdateCustomerByUserRefID(customer, payload.UserRefID)
 	if err != nil {
 		s.log.Error("error when update photo profile", nlogger.Error(err))
-		return ncore.TraceError("", err)
+		return nil, ncore.TraceError("", err)
 	}
 
-	return nil
+	return userFile, nil
 }
 
-func (s *Service) UpdateIdentity(userRefID string, uploaded *dto.UploadResponse) error {
-	// Find customer
-	customer, err := s.repo.FindCustomerByUserRefID(userRefID)
-	if err != nil {
-		s.log.Error("error when find current customer", nlogger.Error(err))
-		return ncore.TraceError("", err)
+func (s *Service) UpdateIdentity(payload dto.UpdateUserFile) (*dto.UploadResponse, error) {
+	// Set payload avatar
+	payloadUserFile := dto.UploadUserFilePayload{
+		Request:   payload.Request,
+		AssetType: payload.AssetType,
 	}
 
-	// Remove old avatar if exist
+	// Upload Userfile
+	userFile, err := s.uploadUserFile(payloadUserFile)
+	if err != nil {
+		s.log.Error("error found when upload user file", nlogger.Error(err))
+		return nil, err
+	}
+
+	// Find customer
+	customer, err := s.repo.FindCustomerByUserRefID(payload.UserRefID)
+	if err != nil {
+		s.log.Error("error when find current customer", nlogger.Error(err))
+		return nil, ncore.TraceError("", err)
+	}
+
+	// Remove old identity if exist
 	if oldFile := customer.Profile.IdentityPhotoFile; oldFile != "" {
-		_ = s.AssetRemoveFile(oldFile, constant.AssetKTP)
+		_ = s.AssetRemoveFile(oldFile, payload.AssetType)
 	}
 
 	// Update identity photo
-	customer.Profile.IdentityPhotoFile = uploaded.FileName
+	customer.Profile.IdentityPhotoFile = userFile.FileName
 
 	// Persist
-	err = s.repo.UpdateCustomerByUserRefID(customer, userRefID)
+	err = s.repo.UpdateCustomerByUserRefID(customer, payload.UserRefID)
 	if err != nil {
 		s.log.Error("error when update identity photo", nlogger.Error(err))
-		return ncore.TraceError("", err)
+		return nil, ncore.TraceError("", err)
 	}
 
-	return nil
+	return userFile, nil
 }
 
-func (s *Service) UpdateNPWP(userRefID string, npwpNumber string, uploaded *dto.UploadResponse) error {
+func (s *Service) UpdateNPWP(payload dto.UpdateNPWPRequest) (*dto.UploadResponse, error) {
+	// Set payload avatar
+	payloadUserFile := dto.UploadUserFilePayload{
+		Request:   payload.Request,
+		AssetType: constant.AssetNPWP,
+	}
+
+	// Upload Userfile
+	userFile, err := s.uploadUserFile(payloadUserFile)
+	if err != nil {
+		s.log.Error("error found when upload user file", nlogger.Error(err))
+		return nil, err
+	}
+
 	// Find customer
-	customer, err := s.repo.FindCustomerByUserRefID(userRefID)
+	customer, err := s.repo.FindCustomerByUserRefID(payload.UserRefID)
 	if err != nil {
 		s.log.Error("error when find current customer", nlogger.Error(err))
-		return ncore.TraceError("", err)
+		return nil, ncore.TraceError("", err)
 	}
 
 	// remove old file if exist
@@ -219,26 +258,39 @@ func (s *Service) UpdateNPWP(userRefID string, npwpNumber string, uploaded *dto.
 	}
 
 	// Update NPWP entity
-	customer.Profile.NPWPPhotoFile = uploaded.FileName
-	customer.Profile.NPWPNumber = npwpNumber
+	customer.Profile.NPWPPhotoFile = userFile.FileName
+	customer.Profile.NPWPNumber = payload.NoNPWP
 	customer.Profile.NPWPUpdatedAt = time.Now().Unix()
 
 	// Persist
-	err = s.repo.UpdateCustomerByUserRefID(customer, userRefID)
+	err = s.repo.UpdateCustomerByUserRefID(customer, payload.UserRefID)
 	if err != nil {
 		s.log.Error("error found when update NPWP", nlogger.Error(err))
-		return ncore.TraceError("", err)
+		return nil, ncore.TraceError("", err)
 	}
 
-	return nil
+	return userFile, nil
 }
 
-func (s *Service) UpdateSID(userRefID string, sidNumber string, uploaded *dto.UploadResponse) error {
+func (s *Service) UpdateSID(payload dto.UpdateSIDRequest) (*dto.UploadResponse, error) {
+	// Set payload avatar
+	payloadUserFile := dto.UploadUserFilePayload{
+		Request:   payload.Request,
+		AssetType: constant.AssetNPWP,
+	}
+
+	// Upload Userfile
+	userFile, err := s.uploadUserFile(payloadUserFile)
+	if err != nil {
+		s.log.Error("error found when upload user file", nlogger.Error(err))
+		return nil, err
+	}
+
 	// Find customer
-	customer, err := s.repo.FindCustomerByUserRefID(userRefID)
+	customer, err := s.repo.FindCustomerByUserRefID(payload.UserRefID)
 	if err != nil {
 		s.log.Error("error when find current customer", nlogger.Error(err))
-		return ncore.TraceError("", err)
+		return nil, ncore.TraceError("", err)
 	}
 
 	// remove old file if exist
@@ -246,19 +298,19 @@ func (s *Service) UpdateSID(userRefID string, sidNumber string, uploaded *dto.Up
 		_ = s.AssetRemoveFile(oldFile, constant.AssetNPWP)
 	}
 
-	// Update NPWP entity
-	customer.Profile.SidPhotoFile = uploaded.FileName
-	customer.Sid = sidNumber
+	// Update SID entity
+	customer.Profile.SidPhotoFile = userFile.FileName
+	customer.Sid = payload.NoSID
 	customer.Profile.NPWPUpdatedAt = time.Now().Unix()
 
 	// Persist
-	err = s.repo.UpdateCustomerByUserRefID(customer, userRefID)
+	err = s.repo.UpdateCustomerByUserRefID(customer, payload.UserRefID)
 	if err != nil {
-		s.log.Error("error found when update NPWP", nlogger.Error(err))
-		return ncore.TraceError("", err)
+		s.log.Error("error found when update SID", nlogger.Error(err))
+		return nil, ncore.TraceError("", err)
 	}
 
-	return nil
+	return nil, nil
 }
 
 func (s *Service) CheckStatus(userRefID string) (*dto.CheckStatusResponse, error) {
@@ -339,6 +391,29 @@ func (s *Service) profileUpdateKyc(customerInquiry *dto.CustomerInquiryVO, verif
 	status.KycVerified = nval.ParseBooleanFallback(verification.KycVerifiedStatus, false)
 
 	return status, nil
+}
+
+func (s *Service) uploadUserFile(payload dto.UploadUserFilePayload) (*dto.UploadResponse, error) {
+	// Parse multipart file
+	file, err := nhttp.GetFile(payload.Request, constant.KeyUserFile, nhttp.MaxFileSizeImage, nhttp.MimeTypesImage)
+	if err != nil {
+		return nil, ncore.TraceError("", err)
+	}
+
+	// Upload file payload
+	filePayload := dto.UploadRequest{
+		AssetType: payload.AssetType,
+		File:      file,
+	}
+
+	// Upload a file
+	uploaded, err := s.AssetUploadFile(filePayload)
+	if err != nil {
+		s.log.Error("error found when call service", nlogger.Error(err))
+		return nil, constant.UploadFileError.Wrap(err)
+	}
+
+	return uploaded, nil
 }
 
 // Endpoint POST /customer/inquiry

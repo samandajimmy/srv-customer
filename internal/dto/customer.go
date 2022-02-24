@@ -3,6 +3,8 @@ package dto
 import (
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/go-ozzo/ozzo-validation/v4/is"
+	"net/http"
+	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/constant"
 )
 
 type ValidatePassword struct {
@@ -332,11 +334,26 @@ type UpdatePasswordRequest struct {
 }
 
 type UpdateNPWPRequest struct {
-	NoNPWP string
+	Request   *http.Request
+	NoNPWP    string
+	UserRefID string
 }
 
 type UpdateSIDRequest struct {
-	NoSID string
+	Request   *http.Request
+	NoSID     string
+	UserRefID string
+}
+
+type UpdateUserFile struct {
+	Request   *http.Request
+	UserRefID string
+	AssetType constant.AssetType
+}
+
+type UploadUserFilePayload struct {
+	Request   *http.Request
+	AssetType constant.AssetType
 }
 
 type CheckStatusResponse struct {

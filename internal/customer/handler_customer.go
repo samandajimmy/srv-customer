@@ -263,33 +263,18 @@ func (h *Customer) UpdateAvatar(rx *nhttp.Request) (*nhttp.Response, error) {
 	svc := h.NewService(ctx)
 	defer svc.Close()
 
-	// Parse multipart file
-	file, err := nhttp.GetFile(rx.Request, constant.KeyUserFile, nhttp.MaxFileSizeImage, nhttp.MimeTypesImage)
-	if err != nil {
-		return nil, ncore.TraceError("", err)
-	}
-
-	// Upload file payload
-	filePayload := dto.UploadRequest{
+	// Call service
+	resp, err := svc.UpdateAvatar(dto.UpdateUserFile{
+		Request:   rx.Request,
+		UserRefID: userRefID,
 		AssetType: constant.AssetAvatarProfile,
-		File:      file,
-	}
-
-	// Upload a file
-	uploaded, err := svc.AssetUploadFile(filePayload)
-	if err != nil {
-		log.Error("error found when call service", nlogger.Error(err), nlogger.Context(ctx))
-		return nil, constant.UploadFileError.Wrap(err)
-	}
-
-	// Persist the avatar
-	err = svc.UpdateAvatar(userRefID, uploaded)
+	})
 	if err != nil {
 		log.Error("error when call update avatar service", nlogger.Error(err), nlogger.Context(ctx))
 		return nil, ncore.TraceError("", err)
 	}
 
-	return nhttp.Success().SetData(uploaded), nil
+	return nhttp.Success().SetData(resp), nil
 }
 
 func (h *Customer) UpdateKTP(rx *nhttp.Request) (*nhttp.Response, error) {
@@ -306,50 +291,32 @@ func (h *Customer) UpdateKTP(rx *nhttp.Request) (*nhttp.Response, error) {
 	// Init service
 	svc := h.NewService(ctx)
 	defer svc.Close()
-
-	// Parse multipart file
-	file, err := nhttp.GetFile(rx.Request, constant.KeyUserFile, nhttp.MaxFileSizeImage, nhttp.MimeTypesImage)
-	if err != nil {
-		return nil, ncore.TraceError("", err)
-	}
-
-	// Upload file payload
-	filePayload := dto.UploadRequest{
+	// Call service
+	resp, err := svc.UpdateIdentity(dto.UpdateUserFile{
+		Request:   rx.Request,
+		UserRefID: userRefID,
 		AssetType: constant.AssetKTP,
-		File:      file,
-	}
-
-	// Upload a file
-	uploaded, err := svc.AssetUploadFile(filePayload)
-	if err != nil {
-		log.Error("error when call upload file service", nlogger.Error(err), nlogger.Context(ctx))
-		return nil, constant.UploadFileError.Wrap(err)
-	}
-
-	// Persist the identity file
-	err = svc.UpdateIdentity(userRefID, uploaded)
+	})
 	if err != nil {
 		log.Error("error when call update avatar service", nlogger.Error(err), nlogger.Context(ctx))
 		return nil, ncore.TraceError("", err)
 	}
 
-	return nhttp.Success().SetData(uploaded), nil
+	return nhttp.Success().SetData(resp), nil
 }
 
 func (h *Customer) UpdateNPWP(rx *nhttp.Request) (*nhttp.Response, error) {
 	// Get context
 	ctx := rx.Context()
-
 	// Get user UserRefID
 	userRefID, err := getUserRefID(rx)
 	if err != nil {
 		log.Error("error user auth", nlogger.Error(err), nlogger.Context(ctx))
 		return nil, ncore.TraceError("", err)
 	}
-
 	var payload dto.UpdateNPWPRequest
 	// Get payload
-	payload.NoNPWP = rx.FormValue("no_npwp")
+	number := rx.FormValue("no_npwp")
 	// Validate payload
 	err = payload.Validate()
 	if err != nil {
@@ -357,51 +324,35 @@ func (h *Customer) UpdateNPWP(rx *nhttp.Request) (*nhttp.Response, error) {
 		data := nvalidate.Message(err.Error())
 		return nhttp.UnprocessableEntity(data), nil
 	}
-
 	// Init service
 	svc := h.NewService(ctx)
 	defer svc.Close()
-
-	// Parse multipart file
-	file, err := nhttp.GetFile(rx.Request, constant.KeyUserFile, nhttp.MaxFileSizeImage, nhttp.MimeTypesImage)
-	if err != nil {
-		return nil, ncore.TraceError("", err)
-	}
-
-	// Upload a file
-	npwpUploaded, err := svc.AssetUploadFile(dto.UploadRequest{
-		AssetType: constant.AssetNPWP,
-		File:      file,
+	// Call service
+	resp, err := svc.UpdateNPWP(dto.UpdateNPWPRequest{
+		Request:   rx.Request,
+		NoNPWP:    number,
+		UserRefID: userRefID,
 	})
-	if err != nil {
-		log.Error("error when call upload file service", nlogger.Error(err), nlogger.Context(ctx))
-		return nil, constant.UploadFileError.Wrap(err)
-	}
-
-	// Persist the avatar
-	err = svc.UpdateNPWP(userRefID, payload.NoNPWP, npwpUploaded)
 	if err != nil {
 		log.Error("error when call update npwp service", nlogger.Error(err), nlogger.Context(ctx))
 		return nil, ncore.TraceError("", err)
 	}
 
-	return nhttp.Success().SetData(npwpUploaded), nil
+	return nhttp.Success().SetData(resp), nil
 }
 
 func (h *Customer) UpdateSID(rx *nhttp.Request) (*nhttp.Response, error) {
 	// Get context
 	ctx := rx.Context()
-
 	// Get user UserRefID
 	userRefID, err := getUserRefID(rx)
 	if err != nil {
 		log.Error("error user auth", nlogger.Error(err), nlogger.Context(ctx))
 		return nil, ncore.TraceError("", err)
 	}
-
-	var payload dto.UpdateSIDRequest
 	// Get payload
-	payload.NoSID = rx.FormValue("no_sid")
+	var payload dto.UpdateSIDRequest
+	number := rx.FormValue("no_sid")
 	// Validate payload
 	err = payload.Validate()
 	if err != nil {
@@ -409,35 +360,21 @@ func (h *Customer) UpdateSID(rx *nhttp.Request) (*nhttp.Response, error) {
 		data := nvalidate.Message(err.Error())
 		return nhttp.UnprocessableEntity(data), nil
 	}
-
 	// Init service
 	svc := h.NewService(ctx)
 	defer svc.Close()
-
-	// Parse multipart file
-	file, err := nhttp.GetFile(rx.Request, constant.KeyUserFile, nhttp.MaxFileSizeImage, nhttp.MimeTypesImage)
-	if err != nil {
-		return nil, ncore.TraceError("", err)
-	}
-
-	// Upload a file
-	sidUploaded, err := svc.AssetUploadFile(dto.UploadRequest{
-		AssetType: constant.AssetNPWP,
-		File:      file,
+	// Call service
+	resp, err := svc.UpdateSID(dto.UpdateSIDRequest{
+		Request:   rx.Request,
+		NoSID:     number,
+		UserRefID: userRefID,
 	})
-	if err != nil {
-		log.Error("error when call upload file service", nlogger.Error(err), nlogger.Context(ctx))
-		return nil, constant.UploadFileError.Wrap(err)
-	}
-
-	// Persist the avatar
-	err = svc.UpdateSID(userRefID, payload.NoSID, sidUploaded)
 	if err != nil {
 		log.Error("error when call update SID service", nlogger.Error(err), nlogger.Context(ctx))
 		return nil, ncore.TraceError("", err)
 	}
 
-	return nhttp.Success().SetData(sidUploaded), nil
+	return nhttp.Success().SetData(resp), nil
 }
 
 func (h *Customer) CheckStatus(rx *nhttp.Request) (*nhttp.Response, error) {
