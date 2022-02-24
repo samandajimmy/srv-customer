@@ -48,7 +48,7 @@ func (jw JSONContentWriter) WriteView(w http.ResponseWriter, httpStatus int, vie
 
 func (jw JSONContentWriter) WriteError(w http.ResponseWriter, err error) int {
 	var apiErr *ncore.Response
-	ok := errors.Is(err, apiErr)
+	ok := errors.As(err, &apiErr)
 	if !ok {
 		// If assert type fail, create wrap error to an internal error
 		apiErr = ncore.InternalError.Wrap(err)
