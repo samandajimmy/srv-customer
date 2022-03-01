@@ -202,7 +202,7 @@ configure: --permit-exec --copy-env vendor
 .PHONY: servers
 servers:
 	@-$(__LOCAL__CMD_DOCKER_COMPOSE) build
-	@-$(__LOCAL__CMD_DOCKER_COMPOSE) up -d db-pg13
+	@-$(__LOCAL__CMD_DOCKER_COMPOSE) up -d db minio
 
 ## serve: Run server in development mode
 .PHONY: serve

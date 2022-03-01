@@ -10,8 +10,7 @@ services:
   # ------------------------------
   # Shared Backing Service section
   # ------------------------------
-  db-pg13:
-    container_name: "l-${PROJECT_SLUG}-${PG13_SLUG}-db"
+  db:
     image: postgres:13-alpine
     ports:
       - "127.0.0.1:${PG13_DB_PORT}:5432"
@@ -23,6 +22,19 @@ services:
       - ./.tmp/db:/var/lib/postgresql/data
     networks:
       local:
+
+  minio:
+    image: minio/minio
+    ports:
+      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:9001:9001"
+    environment:
+      - MINIO_ROOT_USER=miniodev
+      - MINIO_ROOT_PASSWORD=miniodev
+    command: server /data --console-address :9001
+    volumes:
+      - .tmp/minio/data:/data
+      - .tmp/minio/config:/root/.minio
 
   # ----------------
   # Services section
