@@ -17,11 +17,16 @@ func (s *Service) SendNotification(payload dto.NotificationPayload) (*http.Respo
 
 	// Set payload
 	reqBody := map[string]interface{}{
-		"title": payload.Title,
-		"body":  payload.Body,
-		"image": payload.Image,
-		"token": payload.Token,
-		"data":  payload.Data,
+		"userId": "",
+		"options": map[string]interface{}{
+			"fcm": map[string]interface{}{
+				"title":    payload.Title,
+				"body":     payload.Body,
+				"imageUrl": payload.Image,
+				"token":    payload.Token,
+				"data":     payload.Data,
+			},
+		},
 	}
 
 	// Set header
@@ -30,9 +35,14 @@ func (s *Service) SendNotification(payload dto.NotificationPayload) (*http.Respo
 		"Content-Type": "application/json",
 	}
 
-	// TODO: Refactor endpoint & payload data for [Notification Service]
-	// Send Notification
-	resp, err := s.ClientPostData("/push-notification", reqBody, reqHeader)
+	sp := &NotificationPostDataPayload{
+		URL:    "/notifications",
+		Data:   reqBody,
+		Header: &reqHeader,
+	}
+
+	// Create Notification
+	resp, err := s.CreateNotificationPostData(sp)
 	if err != nil {
 		log.Error("Error when send notification")
 		return resp, ncore.TraceError("error", err)
@@ -48,15 +58,20 @@ func (s *Service) SendEmail(payload dto.EmailPayload) (*http.Response, error) {
 	var result *http.Response
 	// Set payload
 	reqBody := map[string]interface{}{
-		"from": map[string]string{
-			"name":  payload.From.Name,
-			"email": payload.From.Email,
+		"userId": "N/A",
+		"options": map[string]interface{}{
+			"smtp": map[string]interface{}{
+				"from": map[string]string{
+					"name":  payload.From.Name,
+					"email": payload.From.Email,
+				},
+				"to":         payload.To,
+				"subject":    payload.Subject,
+				"message":    payload.Message,
+				"attachment": payload.Attachment,
+				"mimeType":   payload.MimeType,
+			},
 		},
-		"to":         payload.To,
-		"subject":    payload.Subject,
-		"message":    payload.Message,
-		"attachment": payload.Attachment,
-		"mimeType":   payload.MimeType,
 	}
 
 	// Set header
@@ -65,8 +80,14 @@ func (s *Service) SendEmail(payload dto.EmailPayload) (*http.Response, error) {
 		"Content-Type": "application/json",
 	}
 
+	sp := &NotificationPostDataPayload{
+		URL:    "/notifications",
+		Data:   reqBody,
+		Header: &reqHeader,
+	}
+
 	// Send email
-	resp, err := s.ClientPostData("/send-email", reqBody, reqHeader)
+	resp, err := s.CreateNotificationPostData(sp)
 	if err != nil {
 		s.log.Errorf("Error when send email. %v", err)
 		return resp, err
@@ -126,9 +147,10 @@ func (s *Service) SendNotificationRegister(data dto.NotificationRegister) error 
 		Token: data.Payload.FcmToken,
 		Data:  dataWelcomeMessage,
 	}
+
 	respSend, err := s.SendNotification(welcomeMessage)
 	if err != nil {
-		s.log.Debugf("Error when send notification message.", nlogger.Error(err), nlogger.Context(s.ctx))
+		s.log.Debugf("error found when send notification message.", nlogger.Error(err))
 	}
 	defer respSend.Body.Close()
 

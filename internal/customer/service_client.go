@@ -1,6 +1,7 @@
 package customer
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"github.com/imdario/mergo"
@@ -272,33 +273,43 @@ func (s *Service) pdsAPISuccessResponse(restResponse *http.Response) (*ResponseP
 
 // PDS API Section End
 
-// TODO Refactor
-
-func (s *Service) ClientPostData(endpoint string, body map[string]interface{}, header map[string]string) (*http.Response, error) {
-	client := nclient.NewNucleoClient(
-		s.config.CoreOauthUsername,
-		s.config.CoreClientID,
-		s.config.CoreAPIURL,
-	)
-
-	data, err := client.PostData(endpoint, body, header)
-	if err != nil {
-		return nil, err
-	}
-	return data, nil
+type NotificationPostDataPayload struct {
+	URL    string
+	Data   map[string]interface{}
+	Header *map[string]string
 }
 
-func (s *Service) ClientCreateNotification(endpoint string, body map[string]interface{}, header map[string]string) (*http.Response, error) {
+// Notification Service Section Start
+func (s *Service) clientNotification() *nclient.Nclient {
 	s.client.BaseUrl = s.config.NotificationServiceURL
-	client := nclient.NewNucleoClient(
-		s.config.CoreOauthUsername,
-		s.config.CoreClientID,
-		s.config.CoreAPIURL,
-	)
 
-	data, err := client.PostData(endpoint, body, header)
+	return s.client
+}
+
+func (s *Service) CreateNotificationPostData(payload *NotificationPostDataPayload) (*http.Response, error) {
+	rawBasicAuth := fmt.Sprintf("%s:%s", s.config.NotificationServiceAppXid, s.config.NotificationServiceAppAPIKey)
+	basicAuth := base64.StdEncoding.EncodeToString([]byte(rawBasicAuth))
+
+	// Set request header
+	reqHeader := map[string]string{
+		"Authorization": fmt.Sprintf("Basic %s", basicAuth),
+		"Accept":        "application/json",
+		"Content-Type":  "application/json",
+	}
+
+	if payload.Header != nil {
+		// Merge Request Header
+		err := mergo.Merge(&reqHeader, payload.Header)
+		if err != nil {
+			return nil, ncore.TraceError("failed merge request header", err)
+		}
+	}
+
+	_, err := s.clientNotification().PostData(payload.URL, payload.Data, reqHeader)
 	if err != nil {
 		return nil, err
 	}
-	return data, nil
+	return nil, nil
 }
+
+// Notification Service Section End

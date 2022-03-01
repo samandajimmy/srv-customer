@@ -36,15 +36,6 @@ type ResponsePdsAPI struct {
 
 var log = nlogger.Get()
 
-func NewNucleoClient(channelId string, clientId string, baseUrl string) *Nclient {
-	return &Nclient{
-		ChannelID: channelId,
-		ClientId:  clientId,
-		Client:    http.Client{},
-		BaseUrl:   baseUrl,
-	}
-}
-
 func (c *Nclient) PostData(endpoint string, body map[string]interface{}, header map[string]string) (*http.Response, error) {
 	var result *http.Response
 	var payload *bytes.Buffer

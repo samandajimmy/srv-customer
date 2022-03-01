@@ -11,7 +11,6 @@ type Config struct {
 	ServerConfig
 	DatabaseConfig
 	DatabaseExternal DatabaseConfig
-	SMTPConfig
 	EmailConfig
 	MinioConfig
 	ClientConfig
@@ -41,13 +40,6 @@ type ServerConfig struct {
 	TrustProxy string  `envconfig:"SERVER_TRUST_PROXY"`
 	Debug      string  `envconfig:"LOG_LEVEL"`
 	AssetURL   string
-}
-
-type SMTPConfig struct {
-	SMTPHost     string `envconfig:"SMTP_HOST"`
-	SMTPPort     string `envconfig:"SMTP_PORT"`
-	SMTPUsername string `envconfig:"SMTP_USERNAME"`
-	SMTPPassword string `envconfig:"SMTP_PASSWORD"`
 }
 
 type EmailConfig struct {
@@ -89,8 +81,10 @@ type MinioConfig struct {
 }
 
 type ClientEndpointConfig struct {
-	NotificationServiceURL string `envconfig:"NOTIFICATION_SERVICE_URL"`
-	PdsAPIServiceURL       string `envconfig:"PDS_API_SERVICE_URL"`
+	NotificationServiceURL       string `envconfig:"NOTIFICATION_SERVICE_URL"`
+	NotificationServiceAppXid    string `envconfig:"NOTIFICATION_SERVICE_APP_XID"`
+	NotificationServiceAppAPIKey string `envconfig:"NOTIFICATION_SERVICE_APP_API_KEY"`
+	PdsAPIServiceURL             string `envconfig:"PDS_API_SERVICE_URL"`
 }
 
 func (s *ServerConfig) GetListenPort() string {
