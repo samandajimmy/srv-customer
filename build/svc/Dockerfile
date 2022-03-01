@@ -2,7 +2,7 @@
 # Build Stage
 # -----------
 
-FROM artifactory.pegadaian.co.id:8084/golang:1.16 as builder
+FROM artifactory.pegadaian.co.id:8084/golang:1.17 as builder
 
 # Set-up go proxy
 ENV GO111MODULE=on \
@@ -30,7 +30,7 @@ RUN ls -la && make release
 # Deploy Stage
 # ------------
 
-FROM artifactory.pegadaian.co.id:8084/alpine:3.14
+FROM artifactory.pegadaian.co.id:8084/alpine:3.15
 
 ARG ARG_PORT=3000
 
