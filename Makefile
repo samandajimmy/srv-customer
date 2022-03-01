@@ -15,7 +15,7 @@ PROJECT_CONFIG := .env
 PROJECT_CONFIG_RELEASE := .env
 PROJECT_WEB_TEMPLATES = web/templates
 PROJECT_WEB_STATIC = web/static
-PROJECT_DOCKERFILE_DIR ?= ${PROJECT_ROOT}/deployments/pds-svc
+PROJECT_DOCKERFILE_DIR ?= ${PROJECT_ROOT}/build/svc
 OUTPUT_DIR := ${PROJECT_ROOT}/bin
 DOCTOR_CMD := ${PROJECT_ROOT}/scripts/doctor.sh
 
@@ -63,7 +63,6 @@ IMAGE_APP_TAG ?= $(CI_COMMIT_REF_SLUG)
 
 # Project Directories, configurable value using env
 PROJECT_CONFIG?=$(PROJECT_WORKDIR)/.env
-DEPLOYMENT_DIR=$(PROJECT_ROOT)/deployments
 SCRIPTS_DIR=$(PROJECT_ROOT)/tools
 
 # -------------------
@@ -117,7 +116,6 @@ DOCKER_ARG_BUILD_SIGNATURE ?= $(PROJECT_RELEASE_BUILD_SIGNATURE)
 
 # Project Directories, configurable value using env
 PROJECT_CONFIG?=$(PROJECT_WORKDIR)/.env
-DEPLOYMENT_DIR=$(PROJECT_ROOT)/deployments
 PROTO_SRC_DIR=$(PROJECT_ROOT)/api/proto
 PROTO_OUT_DIR=$(PROJECT_ROOT)/internal/dto
 SCRIPTS_DIR=$(PROJECT_ROOT)/tools
