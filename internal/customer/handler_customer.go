@@ -308,32 +308,34 @@ func (h *Customer) UpdateKTP(rx *nhttp.Request) (*nhttp.Response, error) {
 func (h *Customer) UpdateNPWP(rx *nhttp.Request) (*nhttp.Response, error) {
 	// Get context
 	ctx := rx.Context()
+
 	// Get user UserRefID
 	userRefID, err := getUserRefID(rx)
 	if err != nil {
 		log.Error("error user auth", nlogger.Error(err), nlogger.Context(ctx))
 		return nil, ncore.TraceError("", err)
 	}
-	var payload dto.UpdateNPWPRequest
+
 	// Get payload
-	number := rx.FormValue("no_npwp")
+	payload := dto.UpdateNPWPRequest{
+		Request:   rx.Request,
+		NoNPWP:    rx.FormValue("no_npwp"),
+		UserRefID: userRefID,
+	}
+
 	// Validate payload
-	payload.NoNPWP = number
 	err = payload.Validate()
 	if err != nil {
 		log.Error("unprocessable entity", nlogger.Error(err), nlogger.Context(ctx))
 		data := nvalidate.Message(err.Error())
 		return nhttp.UnprocessableEntity(data), nil
 	}
+
 	// Init service
 	svc := h.NewService(ctx)
 	defer svc.Close()
 	// Call service
-	resp, err := svc.UpdateNPWP(dto.UpdateNPWPRequest{
-		Request:   rx.Request,
-		NoNPWP:    number,
-		UserRefID: userRefID,
-	})
+	resp, err := svc.UpdateNPWP(payload)
 	if err != nil {
 		log.Error("error when call update npwp service", nlogger.Error(err), nlogger.Context(ctx))
 		return nil, ncore.TraceError("", err)
