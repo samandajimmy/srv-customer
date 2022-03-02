@@ -335,13 +335,13 @@ type UpdatePasswordRequest struct {
 
 type UpdateNPWPRequest struct {
 	Request   *http.Request
-	NoNPWP    string
+	NoNPWP    string `json:"no_npwp"`
 	UserRefID string
 }
 
 type UpdateSIDRequest struct {
 	Request   *http.Request
-	NoSID     string
+	NoSID     string `json:"no_sid"`
 	UserRefID string
 }
 
