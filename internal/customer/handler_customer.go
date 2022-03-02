@@ -318,6 +318,7 @@ func (h *Customer) UpdateNPWP(rx *nhttp.Request) (*nhttp.Response, error) {
 	// Get payload
 	number := rx.FormValue("no_npwp")
 	// Validate payload
+	payload.NoNPWP = number
 	err = payload.Validate()
 	if err != nil {
 		log.Error("unprocessable entity", nlogger.Error(err), nlogger.Context(ctx))
@@ -354,6 +355,7 @@ func (h *Customer) UpdateSID(rx *nhttp.Request) (*nhttp.Response, error) {
 	var payload dto.UpdateSIDRequest
 	number := rx.FormValue("no_sid")
 	// Validate payload
+	payload.NoSID = number
 	err = payload.Validate()
 	if err != nil {
 		log.Error("unprocessable entity", nlogger.Error(err), nlogger.Context(ctx))
