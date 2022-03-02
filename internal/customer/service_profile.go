@@ -310,7 +310,7 @@ func (s *Service) UpdateSID(payload dto.UpdateSIDRequest) (*dto.UploadResponse, 
 		return nil, ncore.TraceError("", err)
 	}
 
-	return nil, nil
+	return userFile, nil
 }
 
 func (s *Service) CheckStatus(userRefID string) (*dto.CheckStatusResponse, error) {
