@@ -3,9 +3,9 @@ package customer
 import (
 	"database/sql"
 	"errors"
+	"github.com/nbs-go/errx"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/constant"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/model"
-	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/ncore"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nsql"
 )
 
@@ -26,7 +26,7 @@ func (rc *RepositoryContext) FindCredentialByCustomerID(id int64) (*model.Creden
 func (rc *RepositoryContext) DeleteCredential(id string) error {
 	result, err := rc.stmt.Credential.DeleteByID.ExecContext(rc.ctx, id)
 	if err != nil {
-		return ncore.TraceError("failed to delete credential", err)
+		return errx.Trace(err)
 	}
 	if !nsql.IsUpdated(result) {
 		return constant.ResourceNotFoundError
@@ -37,7 +37,7 @@ func (rc *RepositoryContext) DeleteCredential(id string) error {
 func (rc *RepositoryContext) UpdateCredential(row *model.Credential) error {
 	result, err := rc.stmt.Credential.Update.ExecContext(rc.ctx, row)
 	if err != nil {
-		return ncore.TraceError("failed to update credential", err)
+		return errx.Trace(err)
 	}
 	if !nsql.IsUpdated(result) {
 		return constant.ResourceNotFoundError
@@ -56,13 +56,13 @@ func (rc *RepositoryContext) InsertOrUpdateCredential(row *model.Credential) err
 	if credential != nil {
 		err = rc.UpdateCredential(credential)
 		if err != nil {
-			return ncore.TraceError("cannot update credential.", err)
+			return errx.Trace(err)
 		}
 		return nil
 	} else {
 		err = rc.CreateCredential(row)
 		if err != nil {
-			return ncore.TraceError("cannot insert credential.", err)
+			return errx.Trace(err)
 		}
 		return nil
 	}
@@ -80,7 +80,7 @@ func (rc *RepositoryContext) UpdatePassword(customerId int64, password string) e
 		Password:   password,
 	})
 	if err != nil {
-		return ncore.TraceError("failed to update password", err)
+		return errx.Trace(err)
 	}
 
 	// If not updated, then return stale error

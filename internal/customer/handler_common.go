@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/google/uuid"
+	"github.com/nbs-go/errx"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/constant"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/dto"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/ncore"
@@ -73,7 +74,7 @@ func GetSubject(rx *nhttp.Request) (*dto.Subject, error) {
 	v := rx.GetContextValue(constant.SubjectContextKey)
 	subject, ok := v.(*dto.Subject)
 	if !ok {
-		return nil, ncore.NewError("no subject found in request context")
+		return nil, errx.Trace(errors.New("no subject found in request context"))
 	}
 	return subject, nil
 }

@@ -1,29 +1,22 @@
 package nhttp
 
-import (
-	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/ncore"
-)
-
 type ResponseFlag = int
 
 const (
 	EndRequest = ResponseFlag(iota)
 	ContinueRequest
-	ViewRequest
 )
 
-func NewResponse() *Response {
-	return &Response{
-		Header:       make(map[string]string),
-		responseFlag: EndRequest,
-	}
-}
+const (
+	SuccessCode    = "OK"
+	SuccessMessage = "Success"
+)
 
 func OK() *Response {
 	return &Response{
 		Success:      true,
-		Code:         ncore.Success.Code,
-		Message:      ncore.Success.Message,
+		Code:         SuccessCode,
+		Message:      SuccessMessage,
 		Data:         nil,
 		Header:       make(map[string]string),
 		responseFlag: EndRequest,
@@ -33,41 +26,8 @@ func OK() *Response {
 func Success() *Response {
 	return &Response{
 		Success:      true,
-		Code:         ncore.Success.Code,
-		Message:      ncore.Success.Message,
-		Header:       make(map[string]string),
-		responseFlag: EndRequest,
-	}
-}
-
-func View() *Response {
-	return &Response{
-		Success:      true,
-		Code:         ncore.Success.Code,
-		Message:      ncore.Success.Message,
-		Header:       make(map[string]string),
-		Data:         "",
-		responseFlag: ViewRequest,
-	}
-}
-
-func BadRequest(data interface{}) *Response {
-	return &Response{
-		Success:      true,
-		Code:         BadRequestError.Code,
-		Message:      BadRequestError.Message,
-		Data:         data,
-		Header:       make(map[string]string),
-		responseFlag: EndRequest,
-	}
-}
-
-func UnprocessableEntity(data interface{}) *Response {
-	return &Response{
-		Success:      false,
-		Code:         UnprocessableEntityError.Code,
-		Message:      UnprocessableEntityError.Message,
-		Data:         data,
+		Code:         SuccessCode,
+		Message:      SuccessMessage,
 		Header:       make(map[string]string),
 		responseFlag: EndRequest,
 	}

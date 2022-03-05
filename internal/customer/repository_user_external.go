@@ -4,9 +4,9 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/nbs-go/errx"
 	"github.com/nbs-go/nlogger"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/model"
-	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/ncore"
 )
 
 func (rc *RepositoryContext) FindUserExternalByEmailOrPhone(email string) (*model.User, error) {
@@ -31,7 +31,7 @@ func (rc *RepositoryContext) FindUserExternalAddressByCustomerID(id int64) (*mod
 	err := rc.conn.SelectContext(rc.ctx, &row, q)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		rc.log.Error("error found when get address external", nlogger.Error(err), nlogger.Context(rc.ctx))
-		return nil, ncore.TraceError("error when find user external", err)
+		return nil, errx.Trace(err)
 	}
 
 	return &row[0], nil

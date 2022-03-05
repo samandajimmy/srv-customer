@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/nbs-go/errx"
 	"io/ioutil"
 	"mime/multipart"
 	"net/http"
@@ -11,8 +12,6 @@ import (
 
 	"github.com/nbs-go/nlogger"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nval"
-
-	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/ncore"
 )
 
 type Nclient struct {
@@ -37,7 +36,6 @@ type ResponsePdsAPI struct {
 var log = nlogger.Get()
 
 func (c *Nclient) PostData(endpoint string, body map[string]interface{}, header map[string]string) (*http.Response, error) {
-	var result *http.Response
 	var payload *bytes.Buffer
 
 	// Get body request
@@ -49,7 +47,7 @@ func (c *Nclient) PostData(endpoint string, body map[string]interface{}, header 
 	request, err := http.NewRequest("POST", baseURLWithEndpoint, payload)
 	if err != nil {
 		log.Errorf("Error when make new request. err: %s", err)
-		return result, ncore.TraceError("Error when make new request", err)
+		return nil, errx.Trace(err)
 	}
 
 	// Set header
@@ -61,17 +59,14 @@ func (c *Nclient) PostData(endpoint string, body map[string]interface{}, header 
 	resp, err := c.Client.Do(request)
 	if err != nil {
 		log.Errorf("Error when request client. err: %s", err)
-		return result, ncore.TraceError("Error when request client", err)
+		return nil, errx.Trace(err)
 	}
 
 	if resp.StatusCode != http.StatusOK {
 		fmt.Println(GetResponseString(resp))
 	}
 
-	// Set result
-	result = resp
-
-	return result, nil
+	return resp, nil
 }
 
 func GetResponseString(response *http.Response) string {

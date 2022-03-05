@@ -2,7 +2,6 @@ package nhttp
 
 import (
 	"net/http"
-	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/ncore"
 	"time"
 )
 
@@ -72,12 +71,12 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// If Code is not set, then set to success code
 	if result.Code == "" {
-		result.Code = ncore.Success.Code
+		result.Code = SuccessCode
 	}
 
 	// If Code is not set, then set to success message
 	if result.Message == "" {
-		result.Message = ncore.Success.Message
+		result.Message = SuccessMessage
 	}
 
 	// Set status http by result code
@@ -95,13 +94,8 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		statusHTTP = http.StatusOK
 	}
 
-	if result.responseFlag == ViewRequest {
-		// Write response html
-		httpStatus = h.contentWriter.WriteView(w, statusHTTP, result.Data)
-	} else {
-		// Write standard response json
-		httpStatus = h.contentWriter.Write(w, statusHTTP, result)
-	}
+	// Write standard response json
+	httpStatus = h.contentWriter.Write(w, statusHTTP, result)
 
 	rx.SetContextValue(HTTPStatusRespContextKey, httpStatus)
 }

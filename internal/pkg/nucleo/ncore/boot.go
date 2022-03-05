@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/kelseyhightower/envconfig"
 	gonanoid "github.com/matoous/go-nanoid/v2"
-	"path"
 )
 
 type BootOptions struct {
@@ -15,8 +14,6 @@ type BootOptions struct {
 	NodeID      string      // Process Node Identifier
 	// Boot options
 	EnvPrefix string
-	// ResponseMapFile
-	ResponseMapFile string
 }
 
 func Boot(destConfig interface{}, destConfigExternal interface{}, args ...BootOptions) *Core {
@@ -31,15 +28,8 @@ func Boot(destConfig interface{}, destConfigExternal interface{}, args ...BootOp
 		NodeID:      options.NodeID,
 	}
 
-	// Load responses
-	responses, err := loadResponseMap(options.ResponseMapFile)
-	if err != nil {
-		panic(err)
-	}
-	core.Responses = responses
-
 	// Load config
-	err = envconfig.Process(options.EnvPrefix, destConfig)
+	err := envconfig.Process(options.EnvPrefix, destConfig)
 	if err != nil {
 		panic(err)
 	}
@@ -72,11 +62,6 @@ func getBootOptions(args []BootOptions) BootOptions {
 			panic(fmt.Errorf("failed to generate NodeId. Error = %w", err))
 		}
 		options.NodeID = nodeID
-	}
-
-	// If config file is not set, then set default
-	if options.ResponseMapFile == "" {
-		options.ResponseMapFile = path.Join(options.WorkDir, "responses.yml")
 	}
 
 	return options

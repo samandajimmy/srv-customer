@@ -1,9 +1,9 @@
 package customer
 
 import (
+	"github.com/nbs-go/errx"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/constant"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/model"
-	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/ncore"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nsql"
 )
 
@@ -28,7 +28,7 @@ func (rc *RepositoryContext) FindVerificationOTPByRegistrationIDAndPhone(id stri
 func (rc *RepositoryContext) DeleteVerificationOTP(id string, phone string) error {
 	result, err := rc.stmt.VerificationOTP.Delete.ExecContext(rc.ctx, id, phone)
 	if err != nil {
-		return ncore.TraceError("failed to delete verification otp", err)
+		return errx.Trace(err)
 	}
 	if !nsql.IsUpdated(result) {
 		return constant.ResourceNotFoundError

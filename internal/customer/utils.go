@@ -4,6 +4,7 @@ import (
 	"crypto/md5" //nolint:gosec
 	"fmt"
 	"github.com/rs/xid"
+	"io"
 	"strings"
 	"time"
 )
@@ -29,4 +30,11 @@ func monthsToUnix(month int) int64 {
 
 func stringToMD5(str string) string {
 	return fmt.Sprintf("%x", md5.Sum([]byte(str))) //nolint:gosec
+}
+
+func handleClose(c io.ReadCloser) {
+	err := c.Close()
+	if err != nil {
+		log.Errorf("an error occurred on closing io. Error = %s", err)
+	}
 }

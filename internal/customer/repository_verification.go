@@ -3,9 +3,9 @@ package customer
 import (
 	"database/sql"
 	"errors"
+	"github.com/nbs-go/errx"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/constant"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/model"
-	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/ncore"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nsql"
 )
 
@@ -20,7 +20,7 @@ func (rc *RepositoryContext) InsertVerification(row *model.Verification) error {
 func (rc *RepositoryContext) UpdateVerification(row *model.Verification) error {
 	result, err := rc.stmt.Verification.Update.ExecContext(rc.ctx, row)
 	if err != nil {
-		return ncore.TraceError("failed to update verification", err)
+		return errx.Trace(err)
 	}
 	if !nsql.IsUpdated(result) {
 		return constant.ResourceNotFoundError
@@ -43,7 +43,7 @@ func (rc *RepositoryContext) FindVerificationByEmailToken(token string) (*model.
 func (rc *RepositoryContext) DeleteVerification(id string) error {
 	result, err := rc.stmt.Verification.DeleteByID.ExecContext(rc.ctx, id)
 	if err != nil {
-		return ncore.TraceError("failed to delete verification", err)
+		return errx.Trace(err)
 	}
 	if !nsql.IsUpdated(result) {
 		return constant.ResourceNotFoundError
@@ -54,7 +54,7 @@ func (rc *RepositoryContext) DeleteVerification(id string) error {
 func (rc *RepositoryContext) UpdateVerificationByCustomerID(row *model.Verification) error {
 	result, err := rc.stmt.Verification.Update.ExecContext(rc.ctx, row)
 	if err != nil {
-		return ncore.TraceError("failed to update verification", err)
+		return errx.Trace(err)
 	}
 	if !nsql.IsUpdated(result) {
 		return constant.ResourceNotFoundError
@@ -66,13 +66,13 @@ func (rc *RepositoryContext) InsertOrUpdateVerification(row *model.Verification)
 	// find by customer id
 	verification, err := rc.FindVerificationByCustomerID(row.CustomerID)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		return ncore.TraceError("cannot find verification by customerId", err)
+		return errx.Trace(err)
 	}
 
 	if err != nil && errors.Is(err, sql.ErrNoRows) {
 		err = rc.InsertVerification(row)
 		if err != nil {
-			return ncore.TraceError("cannot insert verification", err)
+			return errx.Trace(err)
 		}
 
 		return nil
@@ -80,7 +80,7 @@ func (rc *RepositoryContext) InsertOrUpdateVerification(row *model.Verification)
 
 	err = rc.UpdateVerification(verification)
 	if err != nil {
-		return ncore.TraceError("cannot update verification", err)
+		return errx.Trace(err)
 	}
 
 	return nil

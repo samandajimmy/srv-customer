@@ -18,7 +18,7 @@ RUN apt install git make \
 
 # Here we copy the rest of the source code
 WORKDIR /usr/src/app
-COPY Makefile go.mod responses.yml ./
+COPY Makefile go.mod ./
 COPY .git ./.git
 COPY cmd ./cmd
 COPY internal ./internal

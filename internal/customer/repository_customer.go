@@ -3,12 +3,12 @@ package customer
 import (
 	"database/sql"
 	"errors"
+	"github.com/nbs-go/errx"
 	"github.com/nbs-go/nlogger"
 	"github.com/rs/xid"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/constant"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/model"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/dto"
-	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/ncore"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nsql"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nval"
 	"strings"
@@ -86,7 +86,7 @@ func (rc *RepositoryContext) UpdateCustomerByCIF(customer *model.Customer, cif s
 		Cif:      cif,
 	})
 	if err != nil {
-		return ncore.TraceError("cannot update customer by cif", err)
+		return errx.Trace(err)
 	}
 	if !nsql.IsUpdated(result) {
 		return constant.ResourceNotFoundError
@@ -97,7 +97,7 @@ func (rc *RepositoryContext) UpdateCustomerByCIF(customer *model.Customer, cif s
 func (rc *RepositoryContext) UpdateCustomerProfile(customer *model.Customer, payload dto.UpdateProfileRequest) error {
 	tx, err := rc.conn.BeginTxx(rc.ctx, nil)
 	if err != nil {
-		return ncore.TraceError("", err)
+		return errx.Trace(err)
 	}
 	defer rc.ReleaseTx(tx, &err)
 
@@ -119,7 +119,7 @@ func (rc *RepositoryContext) UpdateCustomerProfile(customer *model.Customer, pay
 	address, errAddress := rc.FindAddressByCustomerId(customer.ID)
 	if errAddress != nil && !errors.Is(errAddress, sql.ErrNoRows) {
 		rc.log.Error("error when get customer data", nlogger.Error(err))
-		return ncore.TraceError("", err)
+		return errx.Trace(err)
 	}
 
 	// Update address model
@@ -150,7 +150,7 @@ func (rc *RepositoryContext) UpdateCustomerProfile(customer *model.Customer, pay
 		ID:       customer.ID,
 	})
 	if err != nil {
-		return ncore.TraceError("", err)
+		return errx.Trace(err)
 	}
 	if !nsql.IsUpdated(customerUpdate) {
 		return constant.ResourceNotFoundError
@@ -158,7 +158,7 @@ func (rc *RepositoryContext) UpdateCustomerProfile(customer *model.Customer, pay
 
 	err = rc.InsertOrUpdateAddress(address)
 	if err != nil {
-		return ncore.TraceError("", err)
+		return errx.Trace(err)
 	}
 
 	return nil
@@ -167,7 +167,7 @@ func (rc *RepositoryContext) UpdateCustomerProfile(customer *model.Customer, pay
 func (rc *RepositoryContext) UpdateCustomerByPhone(customer *model.Customer) error {
 	result, err := rc.stmt.Customer.UpdateByPhone.ExecContext(rc.ctx, customer)
 	if err != nil {
-		return ncore.TraceError("cannot update customer by phone", err)
+		return errx.Trace(err)
 	}
 	if !nsql.IsUpdated(result) {
 		return constant.ResourceNotFoundError
@@ -182,7 +182,7 @@ func (rc *RepositoryContext) UpdateCustomerByUserRefID(customer *model.Customer,
 	})
 	if err != nil {
 		rc.log.Error("error found when update customer by UserRefID", nlogger.Error(err))
-		return ncore.TraceError("cannot update customer by phone", err)
+		return errx.Trace(err)
 	}
 	if !nsql.IsUpdated(result) {
 		return constant.ResourceNotFoundError
@@ -196,19 +196,19 @@ func (rc *RepositoryContext) FindCombineCustomerDataByUserRefID(userRefID string
 	customer, err := rc.FindCustomerByUserRefID(userRefID)
 	if err != nil {
 		rc.log.Error("error when find current customer", nlogger.Error(err))
-		return nil, nil, nil, ncore.TraceError("", err)
+		return nil, nil, nil, errx.Trace(err)
 	}
 	// Find Verification
 	verification, err := rc.FindVerificationByCustomerID(customer.ID)
 	if err != nil {
 		rc.log.Error("error when get verification", nlogger.Error(err))
-		return nil, nil, nil, ncore.TraceError("", err)
+		return nil, nil, nil, errx.Trace(err)
 	}
 	// Find Credential
 	credential, err := rc.FindCredentialByCustomerID(customer.ID)
 	if err != nil {
 		rc.log.Error("error when get credential", nlogger.Error(err))
-		return nil, nil, nil, ncore.TraceError("", err)
+		return nil, nil, nil, errx.Trace(err)
 	}
 
 	return customer, verification, credential, nil

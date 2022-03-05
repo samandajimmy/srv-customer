@@ -1,9 +1,9 @@
 package customer
 
 import (
+	"github.com/nbs-go/errx"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/constant"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/model"
-	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/ncore"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nsql"
 )
 
@@ -19,7 +19,7 @@ func (rc *RepositoryContext) UpdateAccessSession(accessSession *model.AccessSess
 	result, err := rc.stmt.AccessSession.Update.ExecContext(rc.ctx, accessSession)
 
 	if err != nil {
-		return ncore.TraceError("failed to update access session", err)
+		return errx.Trace(err)
 	}
 
 	// If not updated, then return stale error

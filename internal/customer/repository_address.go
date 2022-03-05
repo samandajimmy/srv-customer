@@ -2,10 +2,10 @@ package customer
 
 import (
 	"database/sql"
+	"github.com/nbs-go/errx"
 	"github.com/nbs-go/nlogger"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/constant"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/model"
-	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/ncore"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nsql"
 )
 
@@ -23,7 +23,7 @@ func (rc *RepositoryContext) CreateAddress(row *model.Address) error {
 func (rc *RepositoryContext) UpdateAddress(row *model.Address) error {
 	result, err := rc.stmt.Address.Update.ExecContext(rc.ctx, row)
 	if err != nil {
-		return ncore.TraceError("failed to update address", err)
+		return errx.Trace(err)
 	}
 	if !nsql.IsUpdated(result) {
 		return constant.ResourceNotFoundError
@@ -35,7 +35,7 @@ func (rc *RepositoryContext) FindAddressPrimary(customerId int64) (*model.Addres
 	var row model.Address
 	err := rc.stmt.Address.FindPrimaryByCustomerID.GetContext(rc.ctx, &row, customerId)
 	if err != nil {
-		return nil, ncore.TraceError("failed to find primary address", err)
+		return nil, errx.Trace(err)
 	}
 	return &row, nil
 }
@@ -43,14 +43,14 @@ func (rc *RepositoryContext) FindAddressPrimary(customerId int64) (*model.Addres
 func (rc *RepositoryContext) InsertOrUpdateAddress(row *model.Address) error {
 	address, err := rc.FindAddressByCustomerId(row.CustomerID)
 	if err != nil && err != sql.ErrNoRows {
-		return ncore.TraceError("error when find address by ID", err)
+		return errx.Trace(err)
 	}
 
 	if err != sql.ErrNoRows {
 		err = rc.UpdateAddress(address)
 		if err != nil {
 			rc.log.Error("cannot update address.", nlogger.Error(err), nlogger.Context(rc.ctx))
-			return ncore.TraceError("", err)
+			return errx.Trace(err)
 		}
 		return nil
 
@@ -58,7 +58,7 @@ func (rc *RepositoryContext) InsertOrUpdateAddress(row *model.Address) error {
 		err = rc.CreateAddress(row)
 		if err != nil {
 			rc.log.Error("cannot create address.", nlogger.Error(err), nlogger.Context(rc.ctx))
-			return ncore.TraceError("", err)
+			return errx.Trace(err)
 		}
 		return nil
 	}

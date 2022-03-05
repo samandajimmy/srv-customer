@@ -1,10 +1,10 @@
 package customer
 
 import (
+	"github.com/nbs-go/errx"
 	"github.com/nbs-go/nlogger"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/dto"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nhttp"
-	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nvalidate"
 )
 
 func (h *Customer) SendOTP(rx *nhttp.Request) (*nhttp.Response, error) {
@@ -23,8 +23,7 @@ func (h *Customer) SendOTP(rx *nhttp.Request) (*nhttp.Response, error) {
 	err = payload.Validate()
 	if err != nil {
 		log.Error("unprocessable Entity", nlogger.Error(err), nlogger.Context(ctx))
-		data := nvalidate.Message(err.Error())
-		return nhttp.UnprocessableEntity(data), nil
+		return nil, nhttp.BadRequestError.Trace(errx.Source(err))
 	}
 
 	// Init service
@@ -57,8 +56,7 @@ func (h *Customer) VerifyOTP(rx *nhttp.Request) (*nhttp.Response, error) {
 	err = payload.Validate()
 	if err != nil {
 		log.Error("unprocessable entity", nlogger.Error(err), nlogger.Context(ctx))
-		data := nvalidate.Message(err.Error())
-		return nhttp.UnprocessableEntity(data), nil
+		return nil, nhttp.BadRequestError.Trace(errx.Source(err))
 	}
 
 	// Init service
@@ -91,8 +89,7 @@ func (h *Customer) ResendOTP(rx *nhttp.Request) (*nhttp.Response, error) {
 	err = payload.Validate()
 	if err != nil {
 		log.Error("unprocessable entity", nlogger.Error(err), nlogger.Context(ctx))
-		data := nvalidate.Message(err.Error())
-		return nhttp.UnprocessableEntity(data), nil
+		return nil, nhttp.BadRequestError.Trace(errx.Source(err))
 	}
 
 	// Init service

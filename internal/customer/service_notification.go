@@ -2,13 +2,13 @@ package customer
 
 import (
 	"fmt"
+	"github.com/nbs-go/errx"
 	"github.com/nbs-go/nlogger"
 	"math/rand"
 	"net/http"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/constant"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/model"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/dto"
-	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/ncore"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nval"
 )
 
@@ -45,7 +45,7 @@ func (s *Service) SendNotification(payload dto.NotificationPayload) (*http.Respo
 	resp, err := s.CreateNotificationPostData(sp)
 	if err != nil {
 		log.Error("Error when send notification")
-		return resp, ncore.TraceError("error", err)
+		return resp, errx.Trace(err)
 	}
 
 	// Set result
@@ -130,7 +130,7 @@ func (s *Service) SendNotificationRegister(data dto.NotificationRegister) error 
 	if err != nil {
 		log.Debugf("Error when send email verification. Payload %v", emailPayload)
 	}
-	defer respEmail.Body.Close()
+	defer handleClose(respEmail.Body)
 
 	// Send Notification Welcome
 	id, _ := nval.ParseString(rand.Intn(100)) //nolint:gosec
@@ -152,7 +152,7 @@ func (s *Service) SendNotificationRegister(data dto.NotificationRegister) error 
 	if err != nil {
 		s.log.Debugf("error found when send notification message.", nlogger.Error(err))
 	}
-	defer respSend.Body.Close()
+	defer handleClose(respSend.Body)
 
 	return nil
 }
@@ -190,7 +190,7 @@ func (s *Service) SendNotificationBlock(data dto.NotificationBlock) error {
 	if err != nil {
 		s.log.Debugf("Error when send email block account. Payload %v", emailPayload)
 	}
-	defer sendEmail.Body.Close()
+	defer handleClose(sendEmail.Body)
 
 	return nil
 }

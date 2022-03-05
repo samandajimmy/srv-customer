@@ -3,13 +3,12 @@ package customer
 import (
 	"fmt"
 	"github.com/lestrrat-go/jwx/jwt"
+	"github.com/nbs-go/errx"
 	"github.com/nbs-go/nlogger"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/constant"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/dto"
-	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/ncore"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nhttp"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nval"
-	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nvalidate"
 )
 
 type Customer struct {
@@ -36,8 +35,7 @@ func (h *Customer) PostLogin(rx *nhttp.Request) (*nhttp.Response, error) {
 	err = payload.Validate()
 	if err != nil {
 		log.Error("unprocessable entity", nlogger.Error(err), nlogger.Context(ctx))
-		data := nvalidate.Message(err.Error())
-		return nhttp.UnprocessableEntity(data), nil
+		return nil, nhttp.BadRequestError.Trace(errx.Source(err))
 	}
 
 	// Init service
@@ -70,8 +68,7 @@ func (h *Customer) PostRegister(rx *nhttp.Request) (*nhttp.Response, error) {
 	err = payload.Validate()
 	if err != nil {
 		log.Error("unprocessable entity", nlogger.Error(err), nlogger.Context(ctx))
-		data := nvalidate.Message(err.Error())
-		return nhttp.UnprocessableEntity(data), nil
+		return nil, nhttp.BadRequestError.Trace(errx.Source(err))
 	}
 
 	// Init service
@@ -82,8 +79,7 @@ func (h *Customer) PostRegister(rx *nhttp.Request) (*nhttp.Response, error) {
 	validatePassword := svc.validatePassword(payload.Password)
 	if !validatePassword.IsValid {
 		err = fmt.Errorf("password: %s", validatePassword.Message)
-		data := nvalidate.Message(err.Error())
-		return nhttp.UnprocessableEntity(data), nil
+		return nil, nhttp.BadRequestError.Trace(errx.Source(err))
 	}
 
 	// Call service
@@ -104,7 +100,7 @@ func (h *Customer) GetProfile(rx *nhttp.Request) (*nhttp.Response, error) {
 	userRefID, err := getUserRefID(rx)
 	if err != nil {
 		log.Errorf("error: %v", err, nlogger.Error(err), nlogger.Context(ctx))
-		return nil, ncore.TraceError("", err)
+		return nil, errx.Trace(err)
 	}
 
 	// Init service
@@ -129,7 +125,7 @@ func (h *Customer) UpdateProfile(rx *nhttp.Request) (*nhttp.Response, error) {
 	userRefID, err := getUserRefID(rx)
 	if err != nil {
 		log.Errorf("error: %v", err, nlogger.Error(err), nlogger.Context(ctx))
-		return nil, ncore.TraceError("", err)
+		return nil, errx.Trace(err)
 	}
 
 	// Get payload
@@ -144,8 +140,7 @@ func (h *Customer) UpdateProfile(rx *nhttp.Request) (*nhttp.Response, error) {
 	err = payload.Validate()
 	if err != nil {
 		log.Error("unprocessable entity", nlogger.Error(err), nlogger.Context(ctx))
-		data := nvalidate.Message(err.Error())
-		return nhttp.UnprocessableEntity(data), nil
+		return nil, nhttp.BadRequestError.Trace(errx.Source(err))
 	}
 
 	// Init service
@@ -170,7 +165,7 @@ func (h *Customer) UpdatePasswordCheck(rx *nhttp.Request) (*nhttp.Response, erro
 	userRefID, err := getUserRefID(rx)
 	if err != nil {
 		log.Errorf("error: %v", err, nlogger.Error(err), nlogger.Context(ctx))
-		return nil, ncore.TraceError("", err)
+		return nil, errx.Trace(err)
 	}
 
 	// Get payload
@@ -185,8 +180,7 @@ func (h *Customer) UpdatePasswordCheck(rx *nhttp.Request) (*nhttp.Response, erro
 	err = payload.Validate()
 	if err != nil {
 		log.Error("unprocessable entity", nlogger.Error(err), nlogger.Context(ctx))
-		data := nvalidate.Message(err.Error())
-		return nhttp.UnprocessableEntity(data), nil
+		return nil, nhttp.BadRequestError.Trace(errx.Source(err))
 	}
 
 	// Init service
@@ -201,7 +195,7 @@ func (h *Customer) UpdatePasswordCheck(rx *nhttp.Request) (*nhttp.Response, erro
 	}
 
 	if !valid {
-		return nil, h.Responses.GetError("E_USR_1")
+		return nil, constant.InvalidPasswordError
 	}
 
 	return nhttp.Success().SetMessage("Password Sesuai"), nil
@@ -215,7 +209,7 @@ func (h *Customer) UpdatePassword(rx *nhttp.Request) (*nhttp.Response, error) {
 	userRefID, err := getUserRefID(rx)
 	if err != nil {
 		log.Errorf("error: %v", err, nlogger.Error(err), nlogger.Context(ctx))
-		return nil, ncore.TraceError("", err)
+		return nil, errx.Trace(err)
 	}
 
 	// Get payload
@@ -230,8 +224,7 @@ func (h *Customer) UpdatePassword(rx *nhttp.Request) (*nhttp.Response, error) {
 	err = payload.Validate()
 	if err != nil {
 		log.Error("unprocessable entity", nlogger.Error(err), nlogger.Context(ctx))
-		data := nvalidate.Message(err.Error())
-		return nhttp.UnprocessableEntity(data), nil
+		return nil, nhttp.BadRequestError.Trace(errx.Source(err))
 	}
 
 	// Init service
@@ -256,7 +249,7 @@ func (h *Customer) UpdateAvatar(rx *nhttp.Request) (*nhttp.Response, error) {
 	userRefID, err := getUserRefID(rx)
 	if err != nil {
 		log.Errorf("error: %v", err, nlogger.Error(err), nlogger.Context(ctx))
-		return nil, ncore.TraceError("", err)
+		return nil, errx.Trace(err)
 	}
 
 	// Init service
@@ -271,7 +264,7 @@ func (h *Customer) UpdateAvatar(rx *nhttp.Request) (*nhttp.Response, error) {
 	})
 	if err != nil {
 		log.Error("error when call update avatar service", nlogger.Error(err), nlogger.Context(ctx))
-		return nil, ncore.TraceError("", err)
+		return nil, errx.Trace(err)
 	}
 
 	return nhttp.Success().SetData(resp), nil
@@ -285,7 +278,7 @@ func (h *Customer) UpdateKTP(rx *nhttp.Request) (*nhttp.Response, error) {
 	userRefID, err := getUserRefID(rx)
 	if err != nil {
 		log.Error("error user auth", nlogger.Error(err), nlogger.Context(ctx))
-		return nil, ncore.TraceError("", err)
+		return nil, errx.Trace(err)
 	}
 
 	// Init service
@@ -299,7 +292,7 @@ func (h *Customer) UpdateKTP(rx *nhttp.Request) (*nhttp.Response, error) {
 	})
 	if err != nil {
 		log.Error("error when call update avatar service", nlogger.Error(err), nlogger.Context(ctx))
-		return nil, ncore.TraceError("", err)
+		return nil, errx.Trace(err)
 	}
 
 	return nhttp.Success().SetData(resp), nil
@@ -313,7 +306,7 @@ func (h *Customer) UpdateNPWP(rx *nhttp.Request) (*nhttp.Response, error) {
 	userRefID, err := getUserRefID(rx)
 	if err != nil {
 		log.Error("error user auth", nlogger.Error(err), nlogger.Context(ctx))
-		return nil, ncore.TraceError("", err)
+		return nil, errx.Trace(err)
 	}
 
 	// Get payload
@@ -327,8 +320,7 @@ func (h *Customer) UpdateNPWP(rx *nhttp.Request) (*nhttp.Response, error) {
 	err = payload.Validate()
 	if err != nil {
 		log.Error("unprocessable entity", nlogger.Error(err), nlogger.Context(ctx))
-		data := nvalidate.Message(err.Error())
-		return nhttp.UnprocessableEntity(data), nil
+		return nil, nhttp.BadRequestError.Trace(errx.Source(err))
 	}
 
 	// Init service
@@ -338,7 +330,7 @@ func (h *Customer) UpdateNPWP(rx *nhttp.Request) (*nhttp.Response, error) {
 	resp, err := svc.UpdateNPWP(payload)
 	if err != nil {
 		log.Error("error when call update npwp service", nlogger.Error(err), nlogger.Context(ctx))
-		return nil, ncore.TraceError("", err)
+		return nil, errx.Trace(err)
 	}
 
 	return nhttp.Success().SetData(resp), nil
@@ -351,7 +343,7 @@ func (h *Customer) UpdateSID(rx *nhttp.Request) (*nhttp.Response, error) {
 	userRefID, err := getUserRefID(rx)
 	if err != nil {
 		log.Error("error user auth", nlogger.Error(err), nlogger.Context(ctx))
-		return nil, ncore.TraceError("", err)
+		return nil, errx.Trace(err)
 	}
 	// Get payload
 	var payload dto.UpdateSIDRequest
@@ -361,8 +353,7 @@ func (h *Customer) UpdateSID(rx *nhttp.Request) (*nhttp.Response, error) {
 	err = payload.Validate()
 	if err != nil {
 		log.Error("unprocessable entity", nlogger.Error(err), nlogger.Context(ctx))
-		data := nvalidate.Message(err.Error())
-		return nhttp.UnprocessableEntity(data), nil
+		return nil, nhttp.BadRequestError.Trace(errx.Source(err))
 	}
 	// Init service
 	svc := h.NewService(ctx)
@@ -375,7 +366,7 @@ func (h *Customer) UpdateSID(rx *nhttp.Request) (*nhttp.Response, error) {
 	})
 	if err != nil {
 		log.Error("error when call update SID service", nlogger.Error(err), nlogger.Context(ctx))
-		return nil, ncore.TraceError("", err)
+		return nil, errx.Trace(err)
 	}
 
 	return nhttp.Success().SetData(resp), nil
@@ -389,7 +380,7 @@ func (h *Customer) CheckStatus(rx *nhttp.Request) (*nhttp.Response, error) {
 	userRefID, err := getUserRefID(rx)
 	if err != nil {
 		log.Errorf("error: %v", err, nlogger.Error(err), nlogger.Context(ctx))
-		return nil, ncore.TraceError("", err)
+		return nil, errx.Trace(err)
 	}
 
 	// Init service
@@ -453,7 +444,7 @@ func (s *Service) validateTokenAndRetrieveUserRefID(tokenString string) (string,
 	}
 
 	if accessToken != tokenFromCache {
-		return "", s.responses.GetError("E_AUTH_11")
+		return "", constant.InvalidTokenError
 	}
 
 	userRefID := nval.ParseStringFallback(tokenID, "")

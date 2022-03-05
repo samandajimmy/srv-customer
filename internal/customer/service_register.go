@@ -4,12 +4,12 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"github.com/nbs-go/errx"
 	"github.com/nbs-go/nlogger"
 	"github.com/rs/xid"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/constant"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/model"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/dto"
-	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/ncore"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nval"
 	"strings"
 	"time"
@@ -28,7 +28,7 @@ func (s *Service) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCus
 	customer, err := s.repo.FindCustomerByEmail(payload.Email)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		s.log.Error("error found when get customer by email", nlogger.Error(err), nlogger.Context(ctx))
-		return nil, s.responses.GetError("E_REG_1")
+		return nil, constant.RegistrationFailedError.Trace()
 	}
 
 	if err != nil && errors.Is(err, sql.ErrNoRows) {
@@ -37,26 +37,26 @@ func (s *Service) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCus
 
 	if customer != nil {
 		s.log.Debugf("Email already registered: %s", registrationID)
-		return nil, s.responses.GetError("E_REG_2")
+		return nil, constant.EmailHasBeenRegisteredError.Trace()
 	}
 
 	// Find registerID
 	registerOTP, err := s.repo.FindVerificationOTPByRegistrationIDAndPhone(registrationID, phoneNumber)
 	if err != nil {
 		s.log.Errorf("Registration ID not found: %s", registrationID)
-		return nil, s.responses.GetError("E_REG_1")
+		return nil, constant.RegistrationFailedError.Trace()
 	}
 
 	// Get data user
 	customer, err = s.repo.FindCustomerByPhone(phoneNumber)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		s.log.Error("error found when get customer", nlogger.Error(err))
-		return nil, s.responses.GetError("E_REG_1")
+		return nil, constant.RegistrationFailedError.Trace()
 	}
 
 	tx, err := s.repo.conn.BeginTxx(ctx, nil)
 	if err != nil {
-		return nil, ncore.TraceError("", err)
+		return nil, errx.Trace(err)
 	}
 	defer s.repo.ReleaseTx(tx, &err)
 
@@ -70,7 +70,7 @@ func (s *Service) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCus
 		err = s.repo.UpdateCustomerByPhone(customer)
 		if err != nil {
 			s.log.Error("error when update customer by phone", nlogger.Error(err), nlogger.Context(ctx))
-			return nil, s.responses.GetError("E_AUTH_5")
+			return nil, constant.UsedPhoneNumberError.Trace()
 		}
 
 		// Update customerId and CustomerXID
@@ -117,7 +117,7 @@ func (s *Service) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCus
 		lastInsertId, errInsert := s.repo.CreateCustomer(insertCustomer)
 		if errInsert != nil {
 			s.log.Errorf("error when persist customer: %s", payload.Name, nlogger.Error(errInsert), nlogger.Context(ctx))
-			return nil, ncore.TraceError("failed to persist customer", errInsert)
+			return nil, errx.Trace(errInsert)
 		}
 		customerID = lastInsertId
 		customer = insertCustomer
@@ -128,7 +128,7 @@ func (s *Service) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCus
 	err = s.repo.UpdateCustomerByPhone(customer)
 	if err != nil {
 		log.Errorf("error when update customer by phone: %s", payload.Name, nlogger.Error(err), nlogger.Context(ctx))
-		return nil, s.responses.GetError("E_REG_1")
+		return nil, constant.RegistrationFailedError.Trace()
 	}
 
 	// Prepare verification model
@@ -151,7 +151,7 @@ func (s *Service) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCus
 	err = s.repo.InsertOrUpdateVerification(verification)
 	if err != nil {
 		s.log.Errorf("error when persist customer verification. Customer Name: %s", payload.Name, nlogger.Error(err), nlogger.Context(ctx))
-		return nil, s.responses.GetError("E_REG_1")
+		return nil, constant.RegistrationFailedError.Trace()
 	}
 
 	// Set metadata credential
@@ -163,7 +163,7 @@ func (s *Service) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCus
 	metadata, err := json.Marshal(&Format)
 	if err != nil {
 		s.log.Error("error when marshal metadata", nlogger.Error(err), nlogger.Context(ctx))
-		return nil, ncore.TraceError("", err)
+		return nil, errx.Trace(err)
 	}
 
 	credentialBaseField := model.EmptyBaseField
@@ -196,7 +196,7 @@ func (s *Service) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCus
 	err = s.repo.InsertOrUpdateCredential(credentialInsert)
 	if err != nil {
 		s.log.Error("Error when persist customer credential", nlogger.Error(err), nlogger.Context(ctx))
-		return nil, s.responses.GetError("E_REG_1")
+		return nil, constant.RegistrationFailedError.Trace()
 	}
 
 	// Insert OTP
@@ -213,7 +213,7 @@ func (s *Service) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCus
 	err = s.repo.CreateOTP(insertOTP)
 	if err != nil {
 		s.log.Error("error when persist OTP", nlogger.Error(err), nlogger.Context(ctx))
-		return nil, ncore.TraceError("failed to persist OTP", err)
+		return nil, errx.Trace(err)
 	}
 
 	// Init model access session
@@ -230,7 +230,7 @@ func (s *Service) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCus
 	err = s.repo.CreateAccessSession(insertAccessSession)
 	if err != nil {
 		s.log.Error("error when persist access session", nlogger.Error(err), nlogger.Context(ctx))
-		return nil, s.responses.GetError("E_REG_1")
+		return nil, constant.RegistrationFailedError.Trace()
 	}
 
 	// Init payload Login
@@ -245,7 +245,7 @@ func (s *Service) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCus
 	loginResponse, err := s.Login(payloadLogin)
 	if err != nil {
 		s.log.Error("error found when call login service", nlogger.Error(err), nlogger.Context(ctx))
-		return nil, ncore.TraceError("failed to login", err)
+		return nil, errx.Trace(err)
 	}
 
 	// Delete OTP RegistrationId
@@ -254,7 +254,7 @@ func (s *Service) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCus
 		s.log.Errorf("error when remove verificationOTP: %s. Phone Number : %s.",
 			registerOTP.RegistrationID, customer.Phone, nlogger.Error(err), nlogger.Context(ctx),
 		)
-		return nil, s.responses.GetError("E_REG_1")
+		return nil, constant.RegistrationFailedError.Trace()
 	}
 
 	// TODO: Fix payload endpoint to unified create notification service
@@ -289,12 +289,12 @@ func (s *Service) RegisterStepOne(payload dto.RegisterStepOne) (*dto.RegisterSte
 			emailExist = nil
 		} else {
 			s.log.Error("error when find customer by email", nlogger.Error(err), nlogger.Context(ctx))
-			return nil, ncore.TraceError("error", err)
+			return nil, errx.Trace(err)
 		}
 	}
 	if emailExist != nil {
 		s.log.Debugf("email already registered. %s", payload.Email)
-		return nil, s.responses.GetError("E_REG_2")
+		return nil, constant.EmailHasBeenRegisteredError.Trace()
 	}
 
 	// validate phone
@@ -304,12 +304,12 @@ func (s *Service) RegisterStepOne(payload dto.RegisterStepOne) (*dto.RegisterSte
 			phoneExist = nil
 		} else {
 			s.log.Error("failed when find customer by phone", nlogger.Error(err), nlogger.Context(ctx))
-			return nil, ncore.TraceError("error", err)
+			return nil, errx.Trace(err)
 		}
 	}
 	if phoneExist != nil {
 		s.log.Debug("phone number already registered", nlogger.Error(err))
-		return nil, s.responses.GetError("E_REG_3")
+		return nil, constant.InvalidPasswordError.Trace()
 	}
 
 	sendOtpRequest := dto.SendOTPRequest{
@@ -321,11 +321,11 @@ func (s *Service) RegisterStepOne(payload dto.RegisterStepOne) (*dto.RegisterSte
 	resp, err := s.SendOTP(sendOtpRequest)
 	if err != nil {
 		s.log.Error("error found when call send OTP service", nlogger.Error(err), nlogger.Context(ctx))
-		return nil, ncore.TraceError("failed to send OTP", err)
+		return nil, errx.Trace(err)
 	}
 
 	if resp.ResponseCode == "15" {
-		return nil, s.responses.GetError("E_OTP_3")
+		return nil, constant.OTPReachResendLimitError.Trace()
 	}
 
 	if resp.Message != "" {
@@ -359,18 +359,18 @@ func (s *Service) RegisterResendOTP(payload dto.RegisterResendOTP) (*dto.Registe
 	}
 	if phoneExist != nil {
 		s.log.Debug("Phone already registered", nlogger.Error(err), nlogger.Context(ctx))
-		return nil, s.responses.GetError("E_REG_3")
+		return nil, constant.InvalidPasswordError.Trace()
 	}
 
 	// Send OTP To Phone Number
 	resp, err := s.SendOTP(request)
 	if err != nil {
 		s.log.Error("error when send otp", nlogger.Error(err), nlogger.Context(ctx))
-		return nil, ncore.TraceError("failed to send otp", err)
+		return nil, errx.Trace(err)
 	}
 
 	if resp.ResponseCode == "15" {
-		return nil, s.responses.GetError("E_OTP_3")
+		return nil, constant.OTPReachResendLimitError.Trace()
 	}
 
 	if resp.Message != "" {
@@ -399,34 +399,34 @@ func (s *Service) RegisterStepTwo(payload dto.RegisterStepTwo) (*dto.RegisterSte
 			phoneExist = nil
 		} else {
 			s.log.Error("error when find customer by phone", nlogger.Error(err), nlogger.Context(ctx))
-			return nil, ncore.TraceError("failed to find customer", err)
+			return nil, errx.Trace(err)
 		}
 	}
 	if phoneExist != nil {
 		s.log.Debug("phone already registered", nlogger.Error(err), nlogger.Context(ctx))
-		return nil, s.responses.GetError("E_REG_3")
+		return nil, constant.InvalidPasswordError.Trace()
 	}
 
 	// Verify OTP To Phone Number
 	resp, err := s.VerifyOTP(request)
 	if err != nil {
-		return nil, ncore.TraceError("error", err)
+		return nil, errx.Trace(err)
 	}
 
 	// handle Expired OTP
 	if resp.ResponseCode == "12" {
 		s.log.Errorf("Expired OTP. Phone Number : %s", payload.PhoneNumber, nlogger.Error(err), nlogger.Context(ctx))
-		return nil, s.responses.GetError("E_OTP_4")
+		return nil, constant.ExpiredOTPError.Trace()
 	}
 	// handle Wrong OTP
 	if resp.ResponseCode == "14" {
 		s.log.Errorf("Wrong OTP. Phone Number : %s", payload.PhoneNumber, nlogger.Error(err), nlogger.Context(ctx))
-		return nil, s.responses.GetError("E_OTP_1")
+		return nil, constant.IncorrectOTPError.Trace()
 	}
 
 	if resp.ResponseCode != "00" {
 		s.log.Errorf("Wrong OTP. Phone Number : %s", payload.PhoneNumber, nlogger.Error(err), nlogger.Context(ctx))
-		return nil, s.responses.GetError("E_OTP_1")
+		return nil, constant.IncorrectOTPError.Trace()
 	}
 
 	// insert verification otp
@@ -438,7 +438,7 @@ func (s *Service) RegisterStepTwo(payload dto.RegisterStepTwo) (*dto.RegisterSte
 	_, err = s.repo.CreateVerificationOTP(vOTP)
 	if err != nil {
 		s.log.Errorf("error when create verification otp. Phone %s", payload.PhoneNumber, nlogger.Error(err), nlogger.Context(ctx))
-		return nil, ncore.TraceError("failed to persist verification otp", err)
+		return nil, errx.Trace(err)
 	}
 
 	return &dto.RegisterStepTwoResponse{

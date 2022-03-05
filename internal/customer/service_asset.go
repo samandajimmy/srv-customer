@@ -1,11 +1,11 @@
 package customer
 
 import (
+	"github.com/nbs-go/errx"
 	"github.com/nbs-go/nlogger"
 	"github.com/rs/xid"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/constant"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/dto"
-	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/ncore"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nhttp"
 )
 
@@ -50,14 +50,14 @@ func (s *Service) AssetRemoveFile(fileName string, assetType constant.AssetType)
 	// Get directory based-on asset type
 	directory, err := s.AssetDirectory(assetType)
 	if err != nil {
-		return ncore.TraceError("", err)
+		return errx.Trace(err)
 	}
 
 	// Remove object
 	err = s.minio.Remove(directory + fileName)
 	if err != nil {
 		s.log.Error("error found when removing object", nlogger.Error(err), nlogger.Context(s.ctx))
-		return ncore.TraceError("", err)
+		return errx.Trace(err)
 	}
 
 	return nil
@@ -74,7 +74,7 @@ func (s *Service) AssetUploadRule(assetType int) (*nhttp.UploadRule, error) {
 			MimeTypes: nhttp.MimeTypesImage,
 		}
 	default:
-		return nil, s.responses.GetError("E_AST_1")
+		return nil, constant.UnknownAssetTypeError.Trace()
 	}
 
 	return &rule, nil
@@ -105,9 +105,8 @@ func (s *Service) buildURL(filePath string) string {
 func (s *Service) AssetDirectory(assetType int) (string, error) {
 	dir, ok := constant.AssetDirs[assetType]
 	if !ok {
-		err := s.responses.GetError("E_AST_1")
 		s.log.Errorf("unknown asset type: %d", assetType)
-		return "", err
+		return "", constant.UnknownAssetTypeError
 	}
 	dir += "/"
 	return dir, nil

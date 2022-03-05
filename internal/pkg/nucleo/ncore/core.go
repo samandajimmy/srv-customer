@@ -1,14 +1,10 @@
 package ncore
 
-const namespace = "nbs-go/nucleo/ncore"
-const wrappedErrorFmt = "\n  > %w"
-
 type Core struct {
-	Manifest    Manifest     // Application manifest
-	Environment Environment  // Process environment
-	WorkDir     string       // Working directory
-	NodeID      string       // Process Node Identifier
-	Responses   *ResponseMap // Contains list of response codes
+	Manifest    Manifest    // Application manifest
+	Environment Environment // Process environment
+	WorkDir     string      // Working directory
+	NodeID      string      // Process Node Identifier
 }
 
 func (c *Core) GetEnvironmentString() string {

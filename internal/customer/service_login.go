@@ -6,12 +6,13 @@ import (
 	"errors"
 	"fmt"
 	"github.com/lestrrat-go/jwx/jwt"
+	"github.com/nbs-go/errx"
 	"github.com/nbs-go/nlogger"
 	"regexp"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/constant"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/model"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/dto"
-	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/ncore"
+	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nhttp"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/ntime"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nval"
 	"strings"
@@ -25,7 +26,7 @@ func (s *Service) Login(payload dto.LoginRequest) (*dto.LoginResponse, error) {
 	customer, err := s.repo.FindCustomerByEmailOrPhone(payload.Email)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		s.log.Error("failed to retrieve customer", nlogger.Error(err), nlogger.Context(ctx))
-		return nil, ncore.TraceError("error find customer by email", err)
+		return nil, errx.Trace(err)
 	}
 
 	// Handle null Profile
@@ -35,7 +36,7 @@ func (s *Service) Login(payload dto.LoginRequest) (*dto.LoginResponse, error) {
 		err = s.repo.UpdateCustomerByPhone(customer)
 		if err != nil {
 			s.log.Error("error when update customer by phone", nlogger.Error(err), nlogger.Context(ctx))
-			return nil, ncore.TraceError("failed to update customer", err)
+			return nil, errx.Trace(err)
 		}
 	}
 
@@ -45,19 +46,19 @@ func (s *Service) Login(payload dto.LoginRequest) (*dto.LoginResponse, error) {
 		user, errExternal := s.repoExternal.FindUserExternalByEmailOrPhone(payload.Email)
 		if errExternal != nil && !errors.Is(errExternal, sql.ErrNoRows) {
 			s.log.Error("error found when query find by email or phone", nlogger.Error(err), nlogger.Context(ctx))
-			return nil, ncore.TraceError("failed to query to external database", err)
+			return nil, errx.Trace(err)
 		}
 
 		if errors.Is(errExternal, sql.ErrNoRows) {
 			s.log.Debug("Phone or email is not registered")
-			return nil, s.responses.GetError("E_AUTH_10")
+			return nil, constant.NoPhoneEmailError.Trace()
 		}
 
 		// sync data external to internal
 		customer, err = s.syncExternalToInternal(user)
 		if err != nil {
 			s.log.Error("error while sync data External to Internal", nlogger.Error(err), nlogger.Context(ctx))
-			return nil, ncore.TraceError("error sync data", err)
+			return nil, errx.Trace(err)
 		}
 	}
 
@@ -66,21 +67,21 @@ func (s *Service) Login(payload dto.LoginRequest) (*dto.LoginResponse, error) {
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			s.log.Error("failed to retrieve credential not found", nlogger.Error(err), nlogger.Context(ctx))
-			return nil, s.responses.GetError("E_AUTH_8")
+			return nil, constant.InvalidEmailPassInputError.Trace()
 		}
 		s.log.Error("failed to retrieve credential", nlogger.Error(err), nlogger.Context(ctx))
-		return nil, ncore.TraceError("error", err)
+		return nil, errx.Trace(err)
 	}
 
 	// Check if account isn't blocked
 	blockedUntil := ntime.ChangeTimezone(credential.BlockedUntilAt.Time, constant.WIB)
 	now := ntime.ChangeTimezone(t, constant.WIB)
 	if credential.BlockedUntilAt.Valid && blockedUntil.After(now) {
-		// Set response if blocked
+		// Compose custom message response
 		message := "Akun dikunci hingga %v karena gagal login %v kali. Hubungi call center jika ini bukan kamu"
 		timeBlocked := ntime.ChangeTimezone(credential.BlockedUntilAt.Time, constant.WIB).Format("02-Jan-2006 15:04:05")
-		setResponse := ncore.Success.HTTPStatus(401).SetMessage(message, timeBlocked, credential.WrongPasswordCount)
-		return nil, &setResponse
+		return nil, nhttp.UnauthorizedError.
+			AddMetadata(nhttp.MessageMetadata, fmt.Sprintf(message, timeBlocked, credential.WrongPasswordCount))
 	}
 
 	// Counter wrong password count
@@ -103,7 +104,7 @@ func (s *Service) Login(payload dto.LoginRequest) (*dto.LoginResponse, error) {
 		resultSync, errInternal := s.syncInternalToExternal(registerPayload)
 		if errInternal != nil {
 			s.log.Error("error found when sync to pds api", nlogger.Error(errInternal), nlogger.Context(ctx))
-			return nil, ncore.TraceError("error found when sync to pds api", errInternal)
+			return nil, errx.Trace(errInternal)
 		}
 		// set userRefId
 		customer.UserRefID = sql.NullString{
@@ -114,7 +115,7 @@ func (s *Service) Login(payload dto.LoginRequest) (*dto.LoginResponse, error) {
 		err = s.repo.UpdateCustomerByPhone(customer)
 		if err != nil {
 			s.log.Error("failed to update userRefId", nlogger.Error(err), nlogger.Context(ctx))
-			return nil, ncore.TraceError("update customer by phone", err)
+			return nil, errx.Trace(err)
 		}
 	}
 
@@ -124,14 +125,14 @@ func (s *Service) Login(payload dto.LoginRequest) (*dto.LoginResponse, error) {
 	token, err = s.setTokenAuthentication(customer, payload.Agen, payload.Version, cacheTokenKey)
 	if err != nil {
 		s.log.Error("error found when get access token from cache", nlogger.Error(err), nlogger.Context(ctx))
-		return nil, ncore.TraceError("failed to get token from cache", err)
+		return nil, errx.Trace(err)
 	}
 
 	// Check account is first login or not
 	countAuditLog, err := s.repo.CountAuditLogin(customer.ID)
 	if err != nil {
 		s.log.Error("error found when count audit login", nlogger.Error(err), nlogger.Context(ctx))
-		return nil, ncore.TraceError("error when count audit login", err)
+		return nil, errx.Trace(err)
 	}
 
 	// Set is first login is true or false.
@@ -162,7 +163,7 @@ func (s *Service) Login(payload dto.LoginRequest) (*dto.LoginResponse, error) {
 	err = s.repo.CreateAuditLogin(&auditLogin)
 	if err != nil {
 		s.log.Error("error found when create audit login", nlogger.Error(err), nlogger.Context(ctx))
-		return nil, s.responses.GetError("E_AUTH_1")
+		return nil, constant.InvalidCredentialError.Trace()
 	}
 
 	// Check is force update password
@@ -178,7 +179,7 @@ func (s *Service) Login(payload dto.LoginRequest) (*dto.LoginResponse, error) {
 		address = &model.Address{}
 	} else if err != nil {
 		s.log.Error("error found when get customer address", nlogger.Error(err), nlogger.Context(ctx))
-		return nil, s.responses.GetError("E_AUTH_8")
+		return nil, constant.InvalidEmailPassInputError.Trace()
 	}
 
 	// Get data verification
@@ -187,13 +188,13 @@ func (s *Service) Login(payload dto.LoginRequest) (*dto.LoginResponse, error) {
 		verification = &model.Verification{}
 	} else if err != nil {
 		s.log.Error("error found when get data verification", nlogger.Error(err), nlogger.Context(ctx))
-		return nil, s.responses.GetError("E_AUTH_8")
+		return nil, constant.InvalidEmailPassInputError.Trace()
 	}
 
 	// Get financial data
 	financial, err := s.repo.FindFinancialDataByCustomerID(customer.ID)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		return nil, ncore.TraceError("error when count audit login", err)
+		return nil, errx.Trace(err)
 	}
 
 	var gs interface{}
@@ -203,7 +204,7 @@ func (s *Service) Login(payload dto.LoginRequest) (*dto.LoginResponse, error) {
 		// Get gold saving account
 		goldSaving, errGs := s.getListAccountNumber(customer.Cif, customer.UserRefID.String)
 		if errGs != nil {
-			return nil, ncore.TraceError("error when get list gold saving account", err)
+			return nil, errx.Trace(err)
 		}
 
 		gs = &dto.GoldSavingVO{
@@ -246,13 +247,13 @@ func (s *Service) syncInternalToExternal(payload *dto.CustomerSynchronizeRequest
 	resp, err := s.SynchronizeCustomer(registerCustomer)
 	if err != nil {
 		log.Error("error found when sync data customer via API PDS", nlogger.Error(err), nlogger.Context(ctx))
-		return nil, ncore.TraceError("failed to sync data via API PDS", err)
+		return nil, errx.Trace(err)
 	}
 
 	// handle status error
 	if resp.Status != "success" {
 		log.Error("Get Error from SynchronizeCustomer.", nlogger.Error(err))
-		return nil, ncore.NewError(resp.Message)
+		return nil, nhttp.InternalError.Trace(errx.Errorf(resp.Message))
 	}
 
 	// parsing response
@@ -260,7 +261,7 @@ func (s *Service) syncInternalToExternal(payload *dto.CustomerSynchronizeRequest
 	err = json.Unmarshal(resp.Data, &user)
 	if err != nil {
 		log.Errorf("Cannot unmarshall data login pds. err: %v", err)
-		return nil, ncore.TraceError("error", err)
+		return nil, errx.Trace(err)
 	}
 
 	// set result
@@ -367,7 +368,7 @@ func (s *Service) syncExternalToInternal(user *model.User) (*model.Customer, err
 	customer, err = s.repo.FindCustomerByID(customerID)
 	if err != nil {
 		s.log.Error("failed to retrieve customer not found", nlogger.Error(err), nlogger.Context(s.ctx))
-		return nil, s.responses.GetError("E_RES_1")
+		return nil, constant.ResourceNotFoundError.Trace()
 	}
 
 	return customer, nil
@@ -496,7 +497,7 @@ func (s *Service) setTokenAuthentication(customer *model.Customer, agen string, 
 	signed, err := jwt.Sign(token, constant.JWTSignature, jwtKeyBytes)
 	if err != nil {
 		s.log.Error("failed to sign token", nlogger.Error(err), nlogger.Context(s.ctx))
-		return "", ncore.TraceError("failed to sign token", err)
+		return "", errx.Trace(err)
 	}
 	tokenString := string(signed)
 
@@ -552,7 +553,6 @@ func (s *Service) validatePassword(password string) *dto.ValidatePassword {
 }
 
 func (s *Service) HandleWrongPassword(credential *model.Credential, customer *model.Customer) error {
-	var resp error
 	t := time.Now()
 
 	// Unmarshalling metadata credential to get tryLoginAt
@@ -560,7 +560,7 @@ func (s *Service) HandleWrongPassword(credential *model.Credential, customer *mo
 	err := json.Unmarshal(credential.Metadata, &Metadata)
 	if err != nil {
 		s.log.Error("error found when unmarshal metadata credential", nlogger.Error(err))
-		return ncore.TraceError("error found when unmarshal metadata credential", err)
+		return errx.Trace(err)
 	}
 	// Parse time from metadata string to time
 	tryLoginAt, _ := time.Parse(time.RFC3339, Metadata.TryLoginAt)
@@ -583,10 +583,10 @@ func (s *Service) HandleWrongPassword(credential *model.Credential, customer *mo
 
 	switch wrongCount {
 	case constant.Warn2XWrongPassword:
-		resp = s.responses.GetError("E_AUTH_6")
+		err = constant.InvalidPhoneInput1Error.Trace()
 		credential.WrongPasswordCount = wrongCount
 	case constant.Warn4XWrongPassword:
-		resp = s.responses.GetError("E_AUTH_7")
+		err = constant.InvalidPhoneInput2Error.Trace()
 		credential.WrongPasswordCount = wrongCount
 	case constant.MinWrongPassword:
 		// Set block account
@@ -606,8 +606,8 @@ func (s *Service) HandleWrongPassword(credential *model.Credential, customer *mo
 		// Set response if blocked for 1 hour
 		message := "Akun dikunci hingga %v WIB karena gagal login %v kali. Hubungi call center jika ini bukan kamu"
 		timeBlocked := ntime.ChangeTimezone(credential.BlockedUntilAt.Time, constant.WIB).Format("02-Jan-2006 15:04:05")
-		setResponse := ncore.Success.HTTPStatus(401).SetMessage(message, timeBlocked, credential.WrongPasswordCount)
-		resp = &setResponse
+		err = nhttp.UnauthorizedError.
+			AddMetadata(nhttp.MessageMetadata, fmt.Sprintf(message, timeBlocked, credential.WrongPasswordCount))
 
 		// Send OTP To Phone Number
 		request := dto.SendOTPRequest{
@@ -644,8 +644,8 @@ func (s *Service) HandleWrongPassword(credential *model.Credential, customer *mo
 		// Set response if blocked for 24 hour
 		message := "Akun dikunci hingga %v WIB karena gagal login %v kali. Hubungi call center jika ini bukan kamu"
 		timeBlocked := ntime.ChangeTimezone(credential.BlockedUntilAt.Time, constant.WIB).Format("02-Jan-2006 15:04:05")
-		setResponse := ncore.Success.HTTPStatus(401).SetMessage(message, timeBlocked, credential.WrongPasswordCount)
-		resp = &setResponse
+		err = nhttp.UnauthorizedError.
+			AddMetadata(nhttp.MessageMetadata, fmt.Sprintf(message, timeBlocked, credential.WrongPasswordCount))
 
 		// Send OTP To Phone Number
 		request := dto.SendOTPRequest{
@@ -664,7 +664,7 @@ func (s *Service) HandleWrongPassword(credential *model.Credential, customer *mo
 			LastTryLogin: ntime.NewTimeWIB(tryLoginAt).Format("02-Jan-2006 15:04:05"),
 		})
 	default:
-		resp = s.responses.GetError("E_AUTH_8")
+		err = constant.InvalidEmailPassInputError.Trace()
 		credential.WrongPasswordCount = wrongCount
 	}
 
@@ -681,13 +681,13 @@ func (s *Service) HandleWrongPassword(credential *model.Credential, customer *mo
 	MetadataCredential, _ := json.Marshal(&Format)
 	credential.Metadata = MetadataCredential
 
-	err = s.repo.UpdateCredential(credential)
-	if err != nil {
+	uErr := s.repo.UpdateCredential(credential)
+	if uErr != nil {
 		s.log.Error("error when update credential.", nlogger.Error(err))
-		return ncore.TraceError("error when update credential.", err)
+		return errx.Trace(uErr)
 	}
 
-	return resp
+	return err
 }
 
 func GetChannelByAgen(agen string) string {

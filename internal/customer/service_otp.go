@@ -1,9 +1,9 @@
 package customer
 
 import (
+	"github.com/nbs-go/errx"
 	"github.com/nbs-go/nlogger"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/dto"
-	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/ncore"
 )
 
 func (s *Service) SendOTP(payload dto.SendOTPRequest) (*ResponseSwitchingSuccess, error) {
@@ -22,7 +22,7 @@ func (s *Service) SendOTP(payload dto.SendOTPRequest) (*ResponseSwitchingSuccess
 	r, err := s.RestSwitchingPostData(sp)
 	if err != nil {
 		s.log.Error("failed when send OTP", nlogger.Error(err), nlogger.Context(s.ctx))
-		return nil, ncore.TraceError("failed to send otp", err)
+		return nil, errx.Trace(err)
 	}
 
 	// Set result
@@ -48,7 +48,7 @@ func (s *Service) VerifyOTP(payload dto.VerifyOTPRequest) (*ResponseSwitchingSuc
 	r, err := s.RestSwitchingPostData(sp)
 	if err != nil {
 		s.log.Error("Error when verify otp request", nlogger.Error(err), nlogger.Context(s.ctx))
-		return nil, ncore.TraceError("failed to send verify otp", err)
+		return nil, errx.Trace(err)
 	}
 
 	// Set result

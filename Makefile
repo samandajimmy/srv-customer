@@ -10,7 +10,6 @@ DOCKER_NAMESPACE := artifactory.pegadaian.co.id:5443
 # -----------------
 PROJECT_ROOT ?= $(shell pwd)
 PROJECT_WORKDIR ?= ${PROJECT_ROOT}
-PROJECT_RESPONSES := responses.yml
 PROJECT_CONFIG := .env
 PROJECT_CONFIG_RELEASE := .env
 PROJECT_WEB_TEMPLATES = web/templates
@@ -34,15 +33,15 @@ DOCKER_CMD:=docker
 # ---
 BINARY_NAME:=customer
 PROJECT_MAIN_PKG=cmd/${BINARY_NAME}
-PROJECT_ENV_FILES:=$(addprefix ${PROJECT_ROOT}/,${PROJECT_CONFIG} ${PROJECT_RESPONSES})
-PROJECT_ENV_FILES_RELEASE:=$(addprefix ${PROJECT_ROOT}/,${PROJECT_CONFIG_RELEASE} ${PROJECT_RESPONSES})
+PROJECT_ENV_FILES:=$(addprefix ${PROJECT_ROOT}/,${PROJECT_CONFIG})
+PROJECT_ENV_FILES_RELEASE:=$(addprefix ${PROJECT_ROOT}/,${PROJECT_CONFIG_RELEASE})
 
 # ----------------------
 # Debug Output Variables
 # ----------------------
 DEBUG_DIR:=${OUTPUT_DIR}/debug
 DEBUG_BIN:=${DEBUG_DIR}/${BINARY_NAME}
-DEBUG_ENV_FILES:=$(addprefix ${DEBUG_DIR}/,${PROJECT_CONFIG} ${PROJECT_RESPONSES})
+DEBUG_ENV_FILES:=$(addprefix ${DEBUG_DIR}/,${PROJECT_CONFIG})
 
 # ------------------------
 # Release Output Variables
@@ -265,8 +264,6 @@ release: vendor
 	@CGO_ENABLED=0 GOOS=linux ${GO_BUILD} -a -v -mod=vendor \
 		-ldflags "-X main.AppVersion=${CI_COMMIT_TAG} -X main.BuildHash=${CI_COMMIT_SHA}" \
 		-o ${RELEASE_OUTPUT_DIR}/${BINARY_NAME} ${PROJECT_ROOT}/${PROJECT_MAIN_PKG}
-	@-echo "  > Copying error codes..."
-	@cp ${PROJECT_RESPONSES} ${RELEASE_OUTPUT_DIR}/
 	@-echo "  > Output: $(RELEASE_OUTPUT_DIR)"
 
 ## image: Build a docker image from release

@@ -2,9 +2,9 @@ package customer
 
 import (
 	"fmt"
+	"github.com/nbs-go/errx"
 	"github.com/nbs-go/nlogger"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/constant"
-	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/ncore"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nhttp"
 )
 
@@ -24,7 +24,7 @@ func (h *Middlewares) AuthUser(rx *nhttp.Request) (*nhttp.Response, error) {
 	tokenString, err := nhttp.ExtractBearerAuth(rx.Request)
 	if err != nil {
 		log.Error("error when extract token", nlogger.Error(err), nlogger.Context(ctx))
-		return nil, ncore.TraceError("failed to extract token", err)
+		return nil, errx.Trace(err)
 	}
 
 	// Init service

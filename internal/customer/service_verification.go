@@ -3,11 +3,11 @@ package customer
 import (
 	"database/sql"
 	"errors"
+	"github.com/nbs-go/errx"
 	"github.com/nbs-go/nlogger"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/constant"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/model"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/dto"
-	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/ncore"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/ntime"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nval"
 	"time"
@@ -25,10 +25,10 @@ func (s *Service) VerifyEmailCustomer(payload dto.VerificationPayload) (string, 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			s.log.Error("failed to retrieve verification not found", nlogger.Error(err))
-			return alreadyVerifiedView, s.responses.GetError("E_RES_1")
+			return "", constant.ResourceNotFoundError.Trace()
 		}
 		s.log.Errorf("failed to retrieve verification. error: %v", nlogger.Error(err))
-		return alreadyVerifiedView, ncore.TraceError("error", err)
+		return "", errx.Trace(err)
 	}
 
 	// Get customer
@@ -36,11 +36,11 @@ func (s *Service) VerifyEmailCustomer(payload dto.VerificationPayload) (string, 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			log.Error("failed to retrieve customer not found", nlogger.Error(err))
-			return alreadyVerifiedView, s.responses.GetError("E_RES_1")
+			return "", constant.ResourceNotFoundError.Trace()
 		}
 		s.log.Errorf("failed to retrieve customer. error: %v", nlogger.Error(err))
 
-		return alreadyVerifiedView, ncore.TraceError("error", err)
+		return alreadyVerifiedView, errx.Trace(err)
 	}
 
 	// If email already verified
@@ -70,10 +70,11 @@ func (s *Service) VerifyEmailCustomer(payload dto.VerificationPayload) (string, 
 	err = s.repo.UpdateVerificationByCustomerID(ver)
 	if err != nil {
 		s.log.Errorf("Error when update verification. %v", err)
-		return alreadyVerifiedView, ncore.TraceError("error when update verification", err)
+		return alreadyVerifiedView, errx.Trace(err)
 	}
 
 	// Load view email verification success
+	// TODO: Refactor to Controller
 	emailVerifiedView, err := nval.TemplateFile("", "email_verification_success.html")
 	if err != nil {
 		return alreadyVerifiedView, err

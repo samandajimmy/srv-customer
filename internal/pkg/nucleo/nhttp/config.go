@@ -3,9 +3,9 @@ package nhttp
 import (
 	"fmt"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
+	"github.com/nbs-go/errx"
 	"net/url"
 	"os"
-	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/ncore"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nval"
 	"strings"
 )
@@ -23,7 +23,7 @@ func (s ServerConfig) Validate() error {
 	err := s.LoadFromEnv()
 
 	if err != nil {
-		return ncore.TraceError("error when load from env", err)
+		return errx.Trace(err)
 	}
 
 	return validation.ValidateStruct(&s,

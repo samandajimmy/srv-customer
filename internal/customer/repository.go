@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 	"github.com/jmoiron/sqlx"
+	"github.com/nbs-go/errx"
 	"github.com/nbs-go/nlogger"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/statement"
-	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/ncore"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nsql"
 )
 
@@ -24,7 +24,7 @@ func NewRepository(config *DatabaseConfig) (*Repository, error) {
 		MaxConnLifetime: config.DatabaseMaxConnLifetime,
 	})
 	if err != nil {
-		return nil, ncore.TraceError("failed to init database", err)
+		return nil, errx.Trace(err)
 	}
 
 	// Init repo
@@ -47,7 +47,7 @@ func (r *Repository) WithContext(ctx context.Context) *RepositoryContext {
 	conn, err := r.db.GetConnection(ctx)
 	if err != nil {
 		log.Error("failed to retrieve connection to db", nlogger.Error(err))
-		panic(ncore.TraceError("failed to retrieve connection to db", err))
+		panic(errx.Trace(err))
 	}
 
 	return &RepositoryContext{
@@ -66,7 +66,7 @@ func (r *Repository) InitializeStatement(ctx context.Context) {
 		err := r.db.InitContext(ctx)
 		if err != nil {
 			log.Error("failed to initiate connection to db", nlogger.Error(err))
-			panic(ncore.TraceError("failed to initiate connection to db", err))
+			panic(errx.Trace(err))
 		}
 
 		// Empty statements to re-initialize

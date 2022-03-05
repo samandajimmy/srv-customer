@@ -5,12 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/imdario/mergo"
+	"github.com/nbs-go/errx"
 	"github.com/nbs-go/nlogger"
 	"net/http"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/constant"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/dto"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nclient"
-	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/ncore"
 )
 
 var cacheKeyRestSwitching = fmt.Sprintf("%s:%s", constant.Prefix, constant.CacheTokenSwitching)
@@ -51,7 +51,7 @@ func (s *Service) RestSwitchingPostData(payload PostDataPayload) (*ResponseSwitc
 	// Get access token
 	token, err := s.restSwitchingGetToken()
 	if err != nil {
-		return nil, ncore.TraceError("failed to get token ", err)
+		return nil, errx.Trace(err)
 	}
 
 	// Set request body
@@ -64,7 +64,7 @@ func (s *Service) RestSwitchingPostData(payload PostDataPayload) (*ResponseSwitc
 	err = mergo.Merge(&reqBody, payload.Data)
 	if err != nil {
 		s.log.Error("error when merge request body", nlogger.Error(err), nlogger.Context(ctx))
-		return nil, ncore.TraceError("failed merge request body", err)
+		return nil, errx.Trace(err)
 	}
 
 	// Set request header
@@ -78,16 +78,16 @@ func (s *Service) RestSwitchingPostData(payload PostDataPayload) (*ResponseSwitc
 		// Merge Request Header
 		err = mergo.Merge(&reqHeader, payload.Header)
 		if err != nil {
-			return nil, ncore.TraceError("failed merge request header", err)
+			return nil, errx.Trace(err)
 		}
 	}
 
 	// Sent Request Rest Switching
 	restResponse, err := s.clientRestSwitching().PostData(payload.Url, reqBody, reqHeader)
 	if err != nil {
-		return nil, ncore.TraceError("failed to send request rest switching", err)
+		return nil, errx.Trace(err)
 	}
-	defer restResponse.Body.Close()
+	defer handleClose(restResponse.Body)
 
 	var invalidResponse string
 	if restResponse.StatusCode == 401 {
@@ -117,7 +117,7 @@ func (s *Service) restSwitchingSuccessResponse(restResponse *http.Response) (*Re
 	err := json.NewDecoder(restResponse.Body).Decode(&responseSwitching)
 	if err != nil {
 		s.log.Error("error when get response rest switching.", nlogger.Error(err), nlogger.Context(s.ctx))
-		return nil, ncore.TraceError("cannot decode resp body", err)
+		return nil, errx.Trace(err)
 	}
 
 	return responseSwitching, nil
@@ -128,7 +128,7 @@ func (s *Service) restSwitchingErrorResponse(restResponse *http.Response) (*Resp
 	err := json.NewDecoder(restResponse.Body).Decode(&responseSwitching)
 	if err != nil {
 		s.log.Error("error when get response rest switching.", nlogger.Error(err), nlogger.Context(s.ctx))
-		return nil, ncore.TraceError("cannot decode resp body", err)
+		return nil, errx.Trace(err)
 	}
 
 	return responseSwitching, nil
@@ -138,7 +138,7 @@ func (s *Service) restSwitchingErrorResponse(restResponse *http.Response) (*Resp
 func (s *Service) restSwitchingGetToken() (string, error) {
 	token, err := s.CacheGet(cacheKeyRestSwitching)
 	if err != nil {
-		return "", ncore.TraceError("error when get token from cache", err)
+		return "", errx.Trace(err)
 	}
 
 	if token != "" {
@@ -147,7 +147,7 @@ func (s *Service) restSwitchingGetToken() (string, error) {
 
 	newToken, err := s.restSwitchingNewToken()
 	if err != nil {
-		return "", ncore.TraceError("failed get new rest switching token", err)
+		return "", errx.Trace(err)
 	}
 
 	return newToken, nil
@@ -176,7 +176,7 @@ func (s *Service) restSwitchingNewToken() (string, error) {
 	resp, err := s.clientRestSwitching().PostData("/oauth/token", reqBody, reqHeader)
 	if err != nil {
 		s.log.Error("Error when request oauth token")
-		return result, ncore.TraceError("error", err)
+		return result, errx.Trace(err)
 	}
 
 	// Decode response body from server.
@@ -231,7 +231,7 @@ func (s *Service) PdsPostData(payload PostDataPayload) (*ResponsePdsAPI, error) 
 	err := mergo.Merge(&reqBody, payload.Data)
 	if err != nil {
 		s.log.Error("error when merge request body", nlogger.Error(err), nlogger.Context(ctx))
-		return nil, ncore.TraceError("failed merge request body", err)
+		return nil, errx.Trace(err)
 	}
 
 	// Set request header
@@ -241,16 +241,16 @@ func (s *Service) PdsPostData(payload PostDataPayload) (*ResponsePdsAPI, error) 
 		// Merge Request Header
 		err = mergo.Merge(&reqHeader, payload.Header)
 		if err != nil {
-			return nil, ncore.TraceError("failed merge request header", err)
+			return nil, errx.Trace(err)
 		}
 	}
 
 	// Sent Request Rest Switching
 	restResponse, err := s.clientPDS().PostData(payload.Url, reqBody, reqHeader)
 	if err != nil {
-		return nil, ncore.TraceError("failed to send request PDS API", err)
+		return nil, errx.Trace(err)
 	}
-	defer restResponse.Body.Close()
+	defer handleClose(restResponse.Body)
 
 	response, err := s.pdsAPISuccessResponse(restResponse)
 	if err != nil {
@@ -265,7 +265,7 @@ func (s *Service) pdsAPISuccessResponse(restResponse *http.Response) (*ResponseP
 	err := json.NewDecoder(restResponse.Body).Decode(&responseSwitching)
 	if err != nil {
 		s.log.Error("error when get response rest switching.", nlogger.Error(err), nlogger.Context(s.ctx))
-		return nil, ncore.TraceError("cannot decode resp body", err)
+		return nil, errx.Trace(err)
 	}
 
 	return responseSwitching, nil
@@ -301,7 +301,7 @@ func (s *Service) CreateNotificationPostData(payload *NotificationPostDataPayloa
 		// Merge Request Header
 		err := mergo.Merge(&reqHeader, payload.Header)
 		if err != nil {
-			return nil, ncore.TraceError("failed merge request header", err)
+			return nil, errx.Trace(err)
 		}
 	}
 

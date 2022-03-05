@@ -1,6 +1,7 @@
 package customer
 
 import (
+	"github.com/nbs-go/errx"
 	"net/http"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nclient"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/ncore"
@@ -14,13 +15,13 @@ func NewHandler(core *ncore.Core, config *Config) (*Handler, error) {
 	// Init repository
 	repoInternal, err := NewRepository(&config.DatabaseConfig)
 	if err != nil {
-		return nil, ncore.TraceError("failed to internal service", err)
+		return nil, errx.Trace(err)
 	}
 
 	// Init additional repository
 	repoExternal, err := NewRepositoryExternal(&config.DatabaseExternal)
 	if err != nil {
-		return nil, ncore.TraceError("failed to external service", err)
+		return nil, errx.Trace(err)
 	}
 
 	// Init Redis
@@ -56,7 +57,7 @@ func NewHandler(core *ncore.Core, config *Config) (*Handler, error) {
 		BucketName:      config.MinioBucket,
 	})
 	if err != nil {
-		return nil, ncore.TraceError("failed to initialize minio client", err)
+		return nil, errx.Trace(err)
 	}
 
 	h := Handler{

@@ -15,7 +15,7 @@ func setUpRoute(router *nhttp.Router, handlers *HandlerMap) {
 	router.Handle(http.MethodPost, "/auth/login", router.HandleFunc(handlers.Customer.PostLogin))
 
 	// Verification
-	router.Handle(http.MethodGet, "/auth/verify_email", router.HandleFunc(handlers.Verification.VerifyEmail))
+	router.Handle(http.MethodGet, "/auth/verify_email", http.HandlerFunc(handlers.Verification.VerifyEmail))
 
 	// Register Step-1
 	router.Handle(http.MethodPost, "/register/step-1", router.HandleFunc(handlers.Customer.SendOTP))

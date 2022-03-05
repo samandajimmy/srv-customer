@@ -1,6 +1,10 @@
 package nhttp
 
 const (
+	pkgNamespace = "nhttp"
+)
+
+const (
 	// Header keys
 
 	ContentTypeHeader   = "Content-Type"
@@ -8,8 +12,7 @@ const (
 
 	// Map keys
 
-	MetadataKey       = "metadata"
-	HTTPStatusRespKey = "http_status"
+	MetadataKey = "metadata"
 
 	NotApplicable = "N/A"
 )
