@@ -50,14 +50,14 @@ func (s *DatabaseContext) PrepareTemplate(q string, values map[string]string) *s
 	return s.Prepare(q)
 }
 
-// PrepareFmt prepare sql statements from string format and rebind variable or exit app if fails or error
+// PrepareFmtRebind prepare sql statements from string format and rebind variable or exit app if fails or error
 func (s *DatabaseContext) PrepareFmtRebind(queryFmt string, args ...interface{}) *sqlx.Stmt {
 	query := fmt.Sprintf(queryFmt, args...)
 	query = s.conn.Rebind(query)
 	return s.Prepare(query)
 }
 
-// PrepareNamedFmt prepare sql statements from string format with named bindvars or exit app if fails or error
+// PrepareNamedFmtRebind prepare sql statements from string format with named bindvars or exit app if fails or error
 func (s *DatabaseContext) PrepareNamedFmtRebind(queryFmt string, args ...interface{}) *sqlx.NamedStmt {
 	query := fmt.Sprintf(queryFmt, args...)
 	query = s.conn.Rebind(query)
