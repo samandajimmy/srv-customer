@@ -3,8 +3,8 @@ package dto
 import (
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/go-ozzo/ozzo-validation/v4/is"
-	"net/http"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/constant"
+	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nhttp"
 )
 
 type ValidatePassword struct {
@@ -333,26 +333,32 @@ type UpdatePasswordRequest struct {
 	NewPassword     string `json:"new_password"`
 }
 
-type UpdateNPWPRequest struct {
-	Request   *http.Request
+type UpdateNPWPPayload struct {
 	NoNPWP    string `json:"no_npwp"`
 	UserRefID string
+	FileName  string
 }
 
-type UpdateSIDRequest struct {
-	Request   *http.Request
+type UpdateSIDPayload struct {
 	NoSID     string `json:"no_sid"`
 	UserRefID string
+	FileName  string
+}
+
+type UpdateAvatarPayload struct {
+	UpdateUserFile
+	FileSize int64
+	MimeType string
 }
 
 type UpdateUserFile struct {
-	Request   *http.Request
+	FileName  string
 	UserRefID string
 	AssetType constant.AssetType
 }
 
 type UploadUserFilePayload struct {
-	Request   *http.Request
+	File      nhttp.MultipartFile
 	AssetType constant.AssetType
 }
 
@@ -386,15 +392,15 @@ type CustomerInquiryVO struct {
 	Agama              string `json:"agama"`
 }
 
-func (d UpdateSIDRequest) Validate() error {
+func (d UpdateNPWPPayload) Validate() error {
 	return validation.ValidateStruct(&d,
-		validation.Field(&d.NoSID, validation.Required, validation.Length(15, 15)),
+		validation.Field(&d.NoNPWP, validation.Required, validation.Length(15, 15)),
 	)
 }
 
-func (d UpdateNPWPRequest) Validate() error {
+func (d UpdateSIDPayload) Validate() error {
 	return validation.ValidateStruct(&d,
-		validation.Field(&d.NoNPWP, validation.Required, validation.Length(15, 15)),
+		validation.Field(&d.NoSID, validation.Required, validation.Length(15, 15)),
 	)
 }
 
