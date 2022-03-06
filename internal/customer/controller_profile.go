@@ -116,7 +116,7 @@ func (c *ProfileController) PostUpdateAvatar(rx *nhttp.Request) (*nhttp.Response
 	}
 
 	// Upload Userfile
-	userFile, err := svc.uploadUserFile(payloadUserFile)
+	userFile, err := svc.UploadUserFile(payloadUserFile)
 	if err != nil {
 		log.Error("error found when upload user file", nlogger.Error(err))
 		return nil, err
@@ -174,7 +174,7 @@ func (c *ProfileController) PostUpdateKTP(rx *nhttp.Request) (*nhttp.Response, e
 	}
 
 	// Upload Userfile
-	userFile, err := svc.uploadUserFile(payloadUserFile)
+	userFile, err := svc.UploadUserFile(payloadUserFile)
 	if err != nil {
 		log.Error("error found when upload user file", nlogger.Error(err))
 		return nil, err
@@ -225,7 +225,7 @@ func (c *ProfileController) PostUpdateNPWP(rx *nhttp.Request) (*nhttp.Response, 
 	}
 
 	// Upload userfile
-	userFile, err := svc.uploadUserFile(payloadUserFile)
+	userFile, err := svc.UploadUserFile(payloadUserFile)
 	if err != nil {
 		log.Error("error found when upload user file", nlogger.Error(err))
 		return nil, err
@@ -285,7 +285,7 @@ func (c *ProfileController) PostUpdateSID(rx *nhttp.Request) (*nhttp.Response, e
 		AssetType: constant.AssetNPWP,
 	}
 	// Upload Userfile
-	userFile, err := svc.uploadUserFile(payloadUserFile)
+	userFile, err := svc.UploadUserFile(payloadUserFile)
 	if err != nil {
 		log.Error("error found when upload user file", nlogger.Error(err))
 		return nil, err

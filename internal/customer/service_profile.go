@@ -340,7 +340,7 @@ func (s *Service) profileUpdateKyc(customerInquiry *dto.CustomerInquiryVO, verif
 	return status, nil
 }
 
-func (s *Service) uploadUserFile(payload dto.UploadUserFilePayload) (*dto.UploadResponse, error) {
+func (s *Service) UploadUserFile(payload dto.UploadUserFilePayload) (*dto.UploadResponse, error) {
 	// Upload file payload
 	filePayload := dto.UploadRequest{
 		AssetType: payload.AssetType,
