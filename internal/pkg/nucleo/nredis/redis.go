@@ -6,7 +6,7 @@ import (
 	"github.com/nbs-go/errx"
 
 	"github.com/gomodule/redigo/redis"
-	"github.com/nbs-go/nlogger"
+	"github.com/nbs-go/nlogger/v2"
 )
 
 var log = nlogger.Get()

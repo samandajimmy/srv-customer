@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/nbs-go/errx"
-	"github.com/nbs-go/nlogger"
+	"github.com/nbs-go/nlogger/v2"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/model"
 )
 

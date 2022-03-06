@@ -3,7 +3,7 @@ package main
 import (
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
-	"github.com/nbs-go/nlogger"
+	"github.com/nbs-go/nlogger/v2"
 	"net/http"
 	"os"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer"

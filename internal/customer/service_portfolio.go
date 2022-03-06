@@ -2,7 +2,7 @@ package customer
 
 import (
 	"github.com/nbs-go/errx"
-	"github.com/nbs-go/nlogger"
+	"github.com/nbs-go/nlogger/v2"
 )
 
 // Endpoint POST /portofolio/pds/tabemas

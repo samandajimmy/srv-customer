@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"github.com/nbs-go/errx"
-	"github.com/nbs-go/nlogger"
+	"github.com/nbs-go/nlogger/v2"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/statement"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nsql"
 )

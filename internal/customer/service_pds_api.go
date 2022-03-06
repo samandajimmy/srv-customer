@@ -1,7 +1,7 @@
 package customer
 
 import (
-	"github.com/nbs-go/nlogger"
+	"github.com/nbs-go/nlogger/v2"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/dto"
 )
 

@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"github.com/imdario/mergo"
 	"github.com/nbs-go/errx"
-	"github.com/nbs-go/nlogger"
+	"github.com/nbs-go/nlogger/v2"
 	"net/http"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/constant"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/dto"

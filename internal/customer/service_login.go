@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"github.com/lestrrat-go/jwx/jwt"
 	"github.com/nbs-go/errx"
-	"github.com/nbs-go/nlogger"
+	"github.com/nbs-go/nlogger/v2"
 	"regexp"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/constant"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/model"

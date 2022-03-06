@@ -2,7 +2,7 @@ package ns3
 
 import (
 	"github.com/minio/minio-go"
-	"github.com/nbs-go/nlogger"
+	"github.com/nbs-go/nlogger/v2"
 	"io"
 )
 

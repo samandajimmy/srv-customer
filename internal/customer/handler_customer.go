@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/lestrrat-go/jwx/jwt"
 	"github.com/nbs-go/errx"
-	"github.com/nbs-go/nlogger"
+	"github.com/nbs-go/nlogger/v2"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/constant"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/dto"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nhttp"
@@ -27,14 +27,14 @@ func (h *Customer) PostLogin(rx *nhttp.Request) (*nhttp.Response, error) {
 	var payload dto.LoginRequest
 	err := rx.ParseJSONBody(&payload)
 	if err != nil {
-		log.Error("error when parse json body", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("error when parse json body", nlogger.Context(ctx))
 		return nil, nhttp.BadRequestError.Wrap(err)
 	}
 
 	// Validate payload
 	err = payload.Validate()
 	if err != nil {
-		log.Error("unprocessable entity", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("unprocessable entity")
 		return nil, nhttp.BadRequestError.Trace(errx.Source(err))
 	}
 

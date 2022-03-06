@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/nbs-go/nlogger"
+	"github.com/nbs-go/nlogger/v2"
 )
 
 var log nlogger.Logger

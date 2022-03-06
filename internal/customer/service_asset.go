@@ -2,7 +2,7 @@ package customer
 
 import (
 	"github.com/nbs-go/errx"
-	"github.com/nbs-go/nlogger"
+	"github.com/nbs-go/nlogger/v2"
 	"github.com/rs/xid"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/constant"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/dto"
@@ -28,7 +28,7 @@ func (s *Service) AssetUploadFile(req dto.UploadRequest) (*dto.UploadResponse, e
 	// Upload file
 	err = s.minio.Upload(req.File.File, req.File.MimeType, dest)
 	if err != nil {
-		s.log.Error("unable to upload file", err)
+		s.log.Error("unable to upload file", nlogger.Error(err))
 		return nil, err
 	}
 

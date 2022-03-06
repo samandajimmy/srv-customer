@@ -2,7 +2,7 @@ package nhttp
 
 import (
 	"errors"
-	"github.com/nbs-go/nlogger"
+	"github.com/nbs-go/nlogger/v2"
 	"io"
 	"net/http"
 )

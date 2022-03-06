@@ -3,7 +3,7 @@ package customer
 import (
 	"fmt"
 	"github.com/nbs-go/errx"
-	"github.com/nbs-go/nlogger"
+	"github.com/nbs-go/nlogger/v2"
 	"math/rand"
 	"net/http"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/constant"

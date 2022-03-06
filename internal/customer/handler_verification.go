@@ -2,7 +2,7 @@ package customer
 
 import (
 	"encoding/json"
-	"github.com/nbs-go/nlogger"
+	"github.com/nbs-go/nlogger/v2"
 	"net/http"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/dto"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nhttp"
