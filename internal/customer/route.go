@@ -26,37 +26,33 @@ func setUpRoute(router *nhttp.Router, controllers *Controllers) {
 	// Register Step-3
 	router.Handle(http.MethodPost, "/register/step-3", router.HandleFunc(controllers.Customer.PostRegister))
 
-	// Customer
+	// Profile
 	router.Handle(http.MethodGet, "/profile", router.HandleFunc(controllers.Middlewares.AuthUser),
 		router.HandleFunc(controllers.Profile.Get))
 
 	router.Handle(http.MethodPut, "/profile", router.HandleFunc(controllers.Middlewares.AuthUser),
-		router.HandleFunc(controllers.Customer.UpdateProfile))
+		router.HandleFunc(controllers.Profile.PutUpdate))
 
 	router.Handle(http.MethodPost, "/profile/check_password", router.HandleFunc(controllers.Middlewares.AuthUser),
-		router.HandleFunc(controllers.Customer.UpdatePasswordCheck))
+		router.HandleFunc(controllers.Profile.PostValidatePassword))
 
 	router.Handle(http.MethodPut, "/profile/password", router.HandleFunc(controllers.Middlewares.AuthUser),
-		router.HandleFunc(controllers.Customer.UpdatePassword))
-
-	// File Upload
-	router.Handle(http.MethodPost, "/upload", router.HandleFunc(controllers.Middlewares.AuthUser),
-		router.HandleFunc(controllers.Asset.UploadFile))
+		router.HandleFunc(controllers.Profile.PutChangePassword))
 
 	router.Handle(http.MethodPost, "/profile/avatar", router.HandleFunc(controllers.Middlewares.AuthUser),
-		router.HandleFunc(controllers.Customer.UpdateAvatar))
+		router.HandleFunc(controllers.Profile.UpdateAvatar))
 
 	router.Handle(http.MethodPost, "/profile/ktp", router.HandleFunc(controllers.Middlewares.AuthUser),
-		router.HandleFunc(controllers.Customer.UpdateKTP))
+		router.HandleFunc(controllers.Profile.UpdateKTP))
 
 	router.Handle(http.MethodPost, "/profile/npwp", router.HandleFunc(controllers.Middlewares.AuthUser),
-		router.HandleFunc(controllers.Customer.UpdateNPWP))
+		router.HandleFunc(controllers.Profile.UpdateNPWP))
 
 	router.Handle(http.MethodPost, "/profile/sid", router.HandleFunc(controllers.Middlewares.AuthUser),
-		router.HandleFunc(controllers.Customer.UpdateSID))
+		router.HandleFunc(controllers.Profile.UpdateSID))
 
 	router.Handle(http.MethodGet, "/profile/status", router.HandleFunc(controllers.Middlewares.AuthUser),
-		router.HandleFunc(controllers.Customer.CheckStatus))
+		router.HandleFunc(controllers.Profile.CheckStatus))
 
 	// Static asset
 	staticDir := "/web/assets/"
