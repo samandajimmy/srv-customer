@@ -8,15 +8,7 @@ import (
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nval"
 )
 
-type Customer struct {
-	*Handler
-}
-
-func NewCustomer(h *Handler) *Customer {
-	return &Customer{h}
-}
-
-func (s *Service) validateJWT(token string) (jwt.Token, error) {
+func (s *Service) ValidateJWT(token string) (jwt.Token, error) {
 	// Parsing Token
 	t, err := jwt.ParseString(token, jwt.WithVerify(constant.JWTSignature, []byte(s.config.JWTKey)))
 	if err != nil {
@@ -38,12 +30,12 @@ func (s *Service) validateJWT(token string) (jwt.Token, error) {
 	return t, nil
 }
 
-func (s *Service) validateTokenAndRetrieveUserRefID(tokenString string) (string, error) {
+func (s *Service) ValidateTokenAndRetrieveUserRefID(tokenString string) (string, error) {
 	// Get Context
 	ctx := s.ctx
 
 	// validate JWT
-	token, err := s.validateJWT(tokenString)
+	token, err := s.ValidateJWT(tokenString)
 	if err != nil {
 		s.log.Error("error when validate JWT", nlogger.Error(err), nlogger.Context(ctx))
 		return "", err

@@ -32,7 +32,7 @@ func (h *Middlewares) AuthUser(rx *nhttp.Request) (*nhttp.Response, error) {
 	defer svc.Close()
 
 	// Get UserRefID
-	userRefID, err := svc.validateTokenAndRetrieveUserRefID(tokenString)
+	userRefID, err := svc.ValidateTokenAndRetrieveUserRefID(tokenString)
 	if err != nil {
 		return nil, err
 	}

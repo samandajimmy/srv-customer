@@ -92,25 +92,19 @@ type Handler struct {
 }
 
 type Controllers struct {
-	Middlewares  *Middlewares
-	Auth         *Auth
-	Common       *CommonController
-	Customer     *Customer
-	Asset        *Asset
-	Verification *Verification
-	Profile      *ProfileController
-	Account      *AccountController
+	Middlewares *Middlewares
+	Common      *CommonController
+	Asset       *Asset
+	Profile     *ProfileController
+	Account     *AccountController
 }
 
 func NewControllers(manifest ncore.Manifest, h *Handler) *Controllers {
 	return &Controllers{
-		Common:       NewCommonController(time.Now(), manifest),
-		Asset:        NewAsset(h),
-		Middlewares:  NewMiddlewares(h),
-		Auth:         NewAuth(h),
-		Customer:     NewCustomer(h),
-		Verification: NewVerification(h),
-		Profile:      NewProfileController(h),
-		Account:      NewAccountController(h),
+		Common:      NewCommonController(time.Now(), manifest),
+		Asset:       NewAsset(h),
+		Middlewares: NewMiddlewares(h),
+		Profile:     NewProfileController(h),
+		Account:     NewAccountController(h),
 	}
 }
