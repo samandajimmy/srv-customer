@@ -35,7 +35,7 @@ func main() {
 	}
 
 	// Register handlers
-	handlers := customer.RegisterHandler(c.Manifest, h)
+	handlers := customer.NewControllers(c.Manifest, h)
 
 	// Set router
 	router := customer.InitRouter(c.WorkDir, &config, handlers)

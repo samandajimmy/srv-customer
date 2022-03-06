@@ -91,22 +91,24 @@ type Handler struct {
 	Config    *Config
 }
 
-type HandlerMap struct {
+type Controllers struct {
 	Middlewares  *Middlewares
 	Auth         *Auth
 	Common       *Common
 	Customer     *Customer
 	Asset        *Asset
 	Verification *Verification
+	Profile      *ProfileController
 }
 
-func RegisterHandler(manifest ncore.Manifest, h *Handler) *HandlerMap {
-	return &HandlerMap{
+func NewControllers(manifest ncore.Manifest, h *Handler) *Controllers {
+	return &Controllers{
 		Common:       NewCommon(time.Now(), manifest),
 		Asset:        NewAsset(h),
 		Middlewares:  NewMiddlewares(h),
 		Auth:         NewAuth(h),
 		Customer:     NewCustomer(h),
 		Verification: NewVerification(h),
+		Profile:      NewProfileController(h),
 	}
 }

@@ -7,63 +7,63 @@ import (
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nval"
 )
 
-func setUpRoute(router *nhttp.Router, handlers *HandlerMap) {
+func setUpRoute(router *nhttp.Router, controllers *Controllers) {
 	// Common
-	router.Handle(http.MethodGet, "/", router.HandleFunc(handlers.Common.GetAPIStatus))
+	router.Handle(http.MethodGet, "/", router.HandleFunc(controllers.Common.GetAPIStatus))
 
 	// Login
-	router.Handle(http.MethodPost, "/auth/login", router.HandleFunc(handlers.Customer.PostLogin))
+	router.Handle(http.MethodPost, "/auth/login", router.HandleFunc(controllers.Customer.PostLogin))
 
 	// Verification
-	router.Handle(http.MethodGet, "/auth/verify_email", http.HandlerFunc(handlers.Verification.VerifyEmail))
+	router.Handle(http.MethodGet, "/auth/verify_email", http.HandlerFunc(controllers.Verification.VerifyEmail))
 
 	// Register Step-1
-	router.Handle(http.MethodPost, "/register/step-1", router.HandleFunc(handlers.Customer.SendOTP))
+	router.Handle(http.MethodPost, "/register/step-1", router.HandleFunc(controllers.Customer.SendOTP))
 	// Register Resend OTP
-	router.Handle(http.MethodPost, "/register/resend-otp", router.HandleFunc(handlers.Customer.ResendOTP))
+	router.Handle(http.MethodPost, "/register/resend-otp", router.HandleFunc(controllers.Customer.ResendOTP))
 	// Register Step-2
-	router.Handle(http.MethodPost, "/register/step-2", router.HandleFunc(handlers.Customer.VerifyOTP))
+	router.Handle(http.MethodPost, "/register/step-2", router.HandleFunc(controllers.Customer.VerifyOTP))
 	// Register Step-3
-	router.Handle(http.MethodPost, "/register/step-3", router.HandleFunc(handlers.Customer.PostRegister))
+	router.Handle(http.MethodPost, "/register/step-3", router.HandleFunc(controllers.Customer.PostRegister))
 
 	// Customer
-	router.Handle(http.MethodGet, "/profile", router.HandleFunc(handlers.Middlewares.AuthUser),
-		router.HandleFunc(handlers.Customer.GetProfile))
+	router.Handle(http.MethodGet, "/profile", router.HandleFunc(controllers.Middlewares.AuthUser),
+		router.HandleFunc(controllers.Profile.Get))
 
-	router.Handle(http.MethodPut, "/profile", router.HandleFunc(handlers.Middlewares.AuthUser),
-		router.HandleFunc(handlers.Customer.UpdateProfile))
+	router.Handle(http.MethodPut, "/profile", router.HandleFunc(controllers.Middlewares.AuthUser),
+		router.HandleFunc(controllers.Customer.UpdateProfile))
 
-	router.Handle(http.MethodPost, "/profile/check_password", router.HandleFunc(handlers.Middlewares.AuthUser),
-		router.HandleFunc(handlers.Customer.UpdatePasswordCheck))
+	router.Handle(http.MethodPost, "/profile/check_password", router.HandleFunc(controllers.Middlewares.AuthUser),
+		router.HandleFunc(controllers.Customer.UpdatePasswordCheck))
 
-	router.Handle(http.MethodPut, "/profile/password", router.HandleFunc(handlers.Middlewares.AuthUser),
-		router.HandleFunc(handlers.Customer.UpdatePassword))
+	router.Handle(http.MethodPut, "/profile/password", router.HandleFunc(controllers.Middlewares.AuthUser),
+		router.HandleFunc(controllers.Customer.UpdatePassword))
 
 	// File Upload
-	router.Handle(http.MethodPost, "/upload", router.HandleFunc(handlers.Middlewares.AuthUser),
-		router.HandleFunc(handlers.Asset.UploadFile))
+	router.Handle(http.MethodPost, "/upload", router.HandleFunc(controllers.Middlewares.AuthUser),
+		router.HandleFunc(controllers.Asset.UploadFile))
 
-	router.Handle(http.MethodPost, "/profile/avatar", router.HandleFunc(handlers.Middlewares.AuthUser),
-		router.HandleFunc(handlers.Customer.UpdateAvatar))
+	router.Handle(http.MethodPost, "/profile/avatar", router.HandleFunc(controllers.Middlewares.AuthUser),
+		router.HandleFunc(controllers.Customer.UpdateAvatar))
 
-	router.Handle(http.MethodPost, "/profile/ktp", router.HandleFunc(handlers.Middlewares.AuthUser),
-		router.HandleFunc(handlers.Customer.UpdateKTP))
+	router.Handle(http.MethodPost, "/profile/ktp", router.HandleFunc(controllers.Middlewares.AuthUser),
+		router.HandleFunc(controllers.Customer.UpdateKTP))
 
-	router.Handle(http.MethodPost, "/profile/npwp", router.HandleFunc(handlers.Middlewares.AuthUser),
-		router.HandleFunc(handlers.Customer.UpdateNPWP))
+	router.Handle(http.MethodPost, "/profile/npwp", router.HandleFunc(controllers.Middlewares.AuthUser),
+		router.HandleFunc(controllers.Customer.UpdateNPWP))
 
-	router.Handle(http.MethodPost, "/profile/sid", router.HandleFunc(handlers.Middlewares.AuthUser),
-		router.HandleFunc(handlers.Customer.UpdateSID))
+	router.Handle(http.MethodPost, "/profile/sid", router.HandleFunc(controllers.Middlewares.AuthUser),
+		router.HandleFunc(controllers.Customer.UpdateSID))
 
-	router.Handle(http.MethodGet, "/profile/status", router.HandleFunc(handlers.Middlewares.AuthUser),
-		router.HandleFunc(handlers.Customer.CheckStatus))
+	router.Handle(http.MethodGet, "/profile/status", router.HandleFunc(controllers.Middlewares.AuthUser),
+		router.HandleFunc(controllers.Customer.CheckStatus))
 
 	// Static asset
 	staticDir := "/web/assets/"
 	router.PathPrefix(staticDir).Handler(http.StripPrefix(staticDir, http.FileServer(http.Dir("."+staticDir))))
 }
 
-func InitRouter(workDir string, config *Config, handlers *HandlerMap) http.Handler {
+func InitRouter(workDir string, config *Config, controllers *Controllers) http.Handler {
 	var debug bool
 	if config.Debug != "" {
 		debug = true
@@ -85,7 +85,7 @@ func InitRouter(workDir string, config *Config, handlers *HandlerMap) http.Handl
 	}
 
 	// Set-up Routes
-	setUpRoute(router, handlers)
+	setUpRoute(router, controllers)
 
 	// Set-up Static
 	staticPath := path.Join(workDir, "/web/static")

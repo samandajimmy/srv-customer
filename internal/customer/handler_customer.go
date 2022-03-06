@@ -92,31 +92,6 @@ func (h *Customer) PostRegister(rx *nhttp.Request) (*nhttp.Response, error) {
 	return nhttp.Success().SetData(resp), nil
 }
 
-func (h *Customer) GetProfile(rx *nhttp.Request) (*nhttp.Response, error) {
-	// Get context
-	ctx := rx.Context()
-
-	// Get user UserRefID
-	userRefID, err := getUserRefID(rx)
-	if err != nil {
-		log.Errorf("error: %v", err, nlogger.Error(err), nlogger.Context(ctx))
-		return nil, errx.Trace(err)
-	}
-
-	// Init service
-	svc := h.NewService(ctx)
-	defer svc.Close()
-
-	// Call service
-	resp, err := svc.CustomerProfile(userRefID)
-	if err != nil {
-		log.Error("error when call customer profile service", nlogger.Error(err), nlogger.Context(ctx))
-		return nil, err
-	}
-
-	return nhttp.Success().SetData(resp), nil
-}
-
 func (h *Customer) UpdateProfile(rx *nhttp.Request) (*nhttp.Response, error) {
 	// Get context
 	ctx := rx.Context()
