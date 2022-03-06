@@ -69,7 +69,7 @@ func (s *Service) CustomerProfile(id string) (*dto.ProfileResponse, error) {
 	return &resp, nil
 }
 
-func (s *Service) UpdateCustomerProfile(id string, payload dto.UpdateProfileRequest) error {
+func (s *Service) UpdateCustomerProfile(id string, payload dto.UpdateProfilePayload) error {
 	// Get current customer data
 	customer, err := s.repo.FindCustomerByUserRefID(id)
 	if err != nil {

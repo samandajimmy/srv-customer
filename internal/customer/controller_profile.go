@@ -6,6 +6,7 @@ import (
 	"github.com/nbs-go/nlogger/v2"
 	"net/http"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/constant"
+	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/validate"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/dto"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nhttp"
 )
@@ -56,19 +57,19 @@ func (c *ProfileController) PutUpdate(rx *nhttp.Request) (*nhttp.Response, error
 		return nil, errx.Trace(err)
 	}
 
-	// Get payload
-	var payload dto.UpdateProfileRequest
+	// Get Payload
+	var payload dto.UpdateProfilePayload
 	err = rx.ParseJSONBody(&payload)
 	if err != nil {
-		log.Error("error when parse json body", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("error when parse json body", nlogger.Context(ctx))
 		return nil, nhttp.BadRequestError.Wrap(err)
 	}
 
 	// Validate payload
-	err = payload.Validate()
+	err = validate.PutUpdateProfile(&payload)
 	if err != nil {
-		log.Error("unprocessable entity", nlogger.Error(err), nlogger.Context(ctx))
-		return nil, nhttp.BadRequestError.Trace(errx.Source(err))
+		log.Error("Bad request validate payload")
+		return nil, err
 	}
 
 	// Init service

@@ -94,7 +94,7 @@ func (rc *RepositoryContext) UpdateCustomerByCIF(customer *model.Customer, cif s
 	return nil
 }
 
-func (rc *RepositoryContext) UpdateCustomerProfile(customer *model.Customer, payload dto.UpdateProfileRequest) error {
+func (rc *RepositoryContext) UpdateCustomerProfile(customer *model.Customer, payload dto.UpdateProfilePayload) error {
 	tx, err := rc.conn.BeginTxx(rc.ctx, nil)
 	if err != nil {
 		return errx.Trace(err)

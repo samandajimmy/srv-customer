@@ -299,7 +299,7 @@ type LoginPayload struct {
 	FcmToken     string `json:"fcm_token"`
 }
 
-type UpdateProfileRequest struct {
+type UpdateProfilePayload struct {
 	Nama                    string `json:"nama"`
 	Alamat                  string `json:"alamat"`
 	NamaIbu                 string `json:"nama_ibu"`
@@ -403,7 +403,7 @@ func (d UpdateSIDPayload) Validate() error {
 	)
 }
 
-func (d UpdateProfileRequest) Validate() error {
+func (d UpdateProfilePayload) Validate() error {
 	return validation.ValidateStruct(&d,
 		validation.Field(&d.Nama, validation.Required),
 		validation.Field(&d.Alamat, validation.Required),
