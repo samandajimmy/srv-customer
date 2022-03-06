@@ -18,7 +18,7 @@ func NewProfileController(h *Handler) *ProfileController {
 	}
 }
 
-func (c *ProfileController) Get(rx *nhttp.Request) (*nhttp.Response, error) {
+func (c *ProfileController) GetDetail(rx *nhttp.Request) (*nhttp.Response, error) {
 	// Get context
 	ctx := rx.Context()
 
@@ -81,90 +81,6 @@ func (c *ProfileController) PutUpdate(rx *nhttp.Request) (*nhttp.Response, error
 	}
 
 	return nhttp.Success().SetMessage("Update data user berhasil").SetData(false), nil
-}
-
-func (c *ProfileController) PostValidatePassword(rx *nhttp.Request) (*nhttp.Response, error) {
-	// Get context
-	ctx := rx.Context()
-
-	// Get user UserRefID
-	userRefID, err := getUserRefID(rx)
-	if err != nil {
-		log.Errorf("error: %v", err, nlogger.Error(err), nlogger.Context(ctx))
-		return nil, errx.Trace(err)
-	}
-
-	// Get payload
-	var payload dto.UpdatePasswordCheckRequest
-	err = rx.ParseJSONBody(&payload)
-	if err != nil {
-		log.Error("error when parse json body", nlogger.Error(err), nlogger.Context(ctx))
-		return nil, nhttp.BadRequestError.Wrap(err)
-	}
-
-	// Validate payload
-	err = payload.Validate()
-	if err != nil {
-		log.Error("unprocessable entity", nlogger.Error(err), nlogger.Context(ctx))
-		return nil, nhttp.BadRequestError.Trace(errx.Source(err))
-	}
-
-	// Init service
-	svc := c.NewService(rx.Context())
-	defer svc.Close()
-
-	// Call service
-	valid, err := svc.isValidPassword(userRefID, payload.CurrentPassword)
-	if err != nil {
-		log.Error("error when processing service", nlogger.Error(err), nlogger.Context(ctx))
-		return nil, err
-	}
-
-	if !valid {
-		return nil, constant.InvalidPasswordError
-	}
-
-	return nhttp.Success().SetMessage("Password Sesuai"), nil
-}
-
-func (c *ProfileController) PutChangePassword(rx *nhttp.Request) (*nhttp.Response, error) {
-	// Get context
-	ctx := rx.Context()
-
-	// Get user UserRefID
-	userRefID, err := getUserRefID(rx)
-	if err != nil {
-		log.Errorf("error: %v", err, nlogger.Error(err), nlogger.Context(ctx))
-		return nil, errx.Trace(err)
-	}
-
-	// Get payload
-	var payload dto.UpdatePasswordRequest
-	err = rx.ParseJSONBody(&payload)
-	if err != nil {
-		log.Error("error when parse json body", nlogger.Error(err), nlogger.Context(ctx))
-		return nil, nhttp.BadRequestError.Wrap(err)
-	}
-
-	// Validate payload
-	err = payload.Validate()
-	if err != nil {
-		log.Error("unprocessable entity", nlogger.Error(err), nlogger.Context(ctx))
-		return nil, nhttp.BadRequestError.Trace(errx.Source(err))
-	}
-
-	// Init service
-	svc := c.NewService(rx.Context())
-	defer svc.Close()
-
-	// Call service
-	err = svc.UpdatePassword(userRefID, payload)
-	if err != nil {
-		log.Error("error when call update service", nlogger.Error(err), nlogger.Context(ctx))
-		return nil, err
-	}
-
-	return nhttp.Success().SetMessage("Password diperbarui"), nil
 }
 
 func (c *ProfileController) UpdateAvatar(rx *nhttp.Request) (*nhttp.Response, error) {

@@ -28,16 +28,16 @@ func setUpRoute(router *nhttp.Router, controllers *Controllers) {
 
 	// Profile
 	router.Handle(http.MethodGet, "/profile", router.HandleFunc(controllers.Middlewares.AuthUser),
-		router.HandleFunc(controllers.Profile.Get))
+		router.HandleFunc(controllers.Profile.GetDetail))
 
 	router.Handle(http.MethodPut, "/profile", router.HandleFunc(controllers.Middlewares.AuthUser),
 		router.HandleFunc(controllers.Profile.PutUpdate))
 
 	router.Handle(http.MethodPost, "/profile/check_password", router.HandleFunc(controllers.Middlewares.AuthUser),
-		router.HandleFunc(controllers.Profile.PostValidatePassword))
+		router.HandleFunc(controllers.Customer.UpdatePasswordCheck))
 
 	router.Handle(http.MethodPut, "/profile/password", router.HandleFunc(controllers.Middlewares.AuthUser),
-		router.HandleFunc(controllers.Profile.PutChangePassword))
+		router.HandleFunc(controllers.Customer.UpdatePassword))
 
 	router.Handle(http.MethodPost, "/profile/avatar", router.HandleFunc(controllers.Middlewares.AuthUser),
 		router.HandleFunc(controllers.Profile.UpdateAvatar))
