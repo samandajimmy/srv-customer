@@ -7,6 +7,7 @@ import (
 	"github.com/nbs-go/nlogger/v2"
 	"net/http"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/constant"
+	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/validate"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/dto"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nhttp"
 )
@@ -63,7 +64,7 @@ func (c *AccountController) PostLogin(rx *nhttp.Request) (*nhttp.Response, error
 	ctx := rx.Context()
 
 	// Get Payload
-	var payload dto.LoginRequest
+	var payload dto.LoginPayload
 	err := rx.ParseJSONBody(&payload)
 	if err != nil {
 		log.Error("error when parse json body", nlogger.Context(ctx))
@@ -71,10 +72,10 @@ func (c *AccountController) PostLogin(rx *nhttp.Request) (*nhttp.Response, error
 	}
 
 	// Validate payload
-	err = payload.Validate()
+	err = validate.PostLogin(&payload)
 	if err != nil {
-		log.Error("unprocessable entity")
-		return nil, nhttp.BadRequestError.Trace(errx.Source(err))
+		log.Error("Bad request validate payload")
+		return nil, err
 	}
 
 	// Init service
@@ -98,7 +99,7 @@ func (c *AccountController) GetVerifyEmail(w http.ResponseWriter, r *http.Reques
 	payload.VerificationToken = q.Get("t")
 
 	// Validate payload
-	err := payload.Validate()
+	err := validate.GetVerifyEmail(&payload)
 	if err != nil {
 		log.Errorf("Invalid payload. err: %v", err)
 		c.renderError(w, 400, err)
@@ -148,7 +149,7 @@ func (c *AccountController) PostSendOTP(rx *nhttp.Request) (*nhttp.Response, err
 	ctx := rx.Context()
 
 	// Get Payload
-	var payload dto.RegisterStepOne
+	var payload dto.SendOTPPayload
 	err := rx.ParseJSONBody(&payload)
 	if err != nil {
 		log.Error("error when parse json body", nlogger.Error(err), nlogger.Context(ctx))
@@ -156,10 +157,10 @@ func (c *AccountController) PostSendOTP(rx *nhttp.Request) (*nhttp.Response, err
 	}
 
 	// Validate payload
-	err = payload.Validate()
+	err = validate.PostSendOTP(&payload)
 	if err != nil {
-		log.Error("unprocessable Entity", nlogger.Error(err), nlogger.Context(ctx))
-		return nil, nhttp.BadRequestError.Trace(errx.Source(err))
+		log.Error("Bad request validate payload", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, err
 	}
 
 	// Init service
@@ -181,7 +182,7 @@ func (c *AccountController) PostResendOTP(rx *nhttp.Request) (*nhttp.Response, e
 	ctx := rx.Context()
 
 	// Get Payload
-	var payload dto.RegisterResendOTP
+	var payload dto.RegisterResendOTPPayload
 	err := rx.ParseJSONBody(&payload)
 	if err != nil {
 		log.Error("error when parse json body", nlogger.Error(err), nlogger.Context(ctx))
@@ -189,10 +190,10 @@ func (c *AccountController) PostResendOTP(rx *nhttp.Request) (*nhttp.Response, e
 	}
 
 	// Validate payload
-	err = payload.Validate()
+	err = validate.PostResendOTP(&payload)
 	if err != nil {
-		log.Error("unprocessable entity", nlogger.Error(err), nlogger.Context(ctx))
-		return nil, nhttp.BadRequestError.Trace(errx.Source(err))
+		log.Error("Bad request validate payload", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, err
 	}
 
 	// Init service
@@ -214,7 +215,7 @@ func (c *AccountController) PostVerifyOTP(rx *nhttp.Request) (*nhttp.Response, e
 	ctx := rx.Context()
 
 	// Get Payload
-	var payload dto.RegisterStepTwo
+	var payload dto.RegisterVerifyOTPPayload
 	err := rx.ParseJSONBody(&payload)
 	if err != nil {
 		log.Error("error when parse json body", nlogger.Error(err), nlogger.Context(ctx))
@@ -222,9 +223,9 @@ func (c *AccountController) PostVerifyOTP(rx *nhttp.Request) (*nhttp.Response, e
 	}
 
 	// Validate payload
-	err = payload.Validate()
+	err = validate.PostVerifyOTP(&payload)
 	if err != nil {
-		log.Error("unprocessable entity", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("Bad request validate payload", nlogger.Error(err), nlogger.Context(ctx))
 		return nil, nhttp.BadRequestError.Trace(errx.Source(err))
 	}
 
@@ -247,7 +248,7 @@ func (c *AccountController) PostRegister(rx *nhttp.Request) (*nhttp.Response, er
 	ctx := rx.Context()
 
 	// Get Payload
-	var payload dto.RegisterNewCustomer
+	var payload dto.RegisterPayload
 	err := rx.ParseJSONBody(&payload)
 	if err != nil {
 		log.Error("error when parse json body", nlogger.Error(err), nlogger.Context(ctx))
@@ -255,9 +256,9 @@ func (c *AccountController) PostRegister(rx *nhttp.Request) (*nhttp.Response, er
 	}
 
 	// Validate payload
-	err = payload.Validate()
+	err = validate.PostRegister(&payload)
 	if err != nil {
-		log.Error("unprocessable entity", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("Bad request validate payload", nlogger.Error(err), nlogger.Context(ctx))
 		return nil, nhttp.BadRequestError.Trace(errx.Source(err))
 	}
 
@@ -266,7 +267,7 @@ func (c *AccountController) PostRegister(rx *nhttp.Request) (*nhttp.Response, er
 	defer svc.Close()
 
 	// Check is force update password
-	validatePassword := svc.validatePassword(payload.Password)
+	validatePassword := svc.ValidatePassword(payload.Password)
 	if !validatePassword.IsValid {
 		err = fmt.Errorf("password: %s", validatePassword.Message)
 		return nil, nhttp.BadRequestError.Trace(errx.Source(err))
@@ -294,7 +295,7 @@ func (c *AccountController) PostUpdatePasswordCheck(rx *nhttp.Request) (*nhttp.R
 	}
 
 	// Get payload
-	var payload dto.UpdatePasswordCheckRequest
+	var payload dto.UpdatePasswordCheckPayload
 	err = rx.ParseJSONBody(&payload)
 	if err != nil {
 		log.Error("error when parse json body", nlogger.Error(err), nlogger.Context(ctx))
@@ -302,10 +303,10 @@ func (c *AccountController) PostUpdatePasswordCheck(rx *nhttp.Request) (*nhttp.R
 	}
 
 	// Validate payload
-	err = payload.Validate()
+	err = validate.PostUpdatePasswordCheck(&payload)
 	if err != nil {
-		log.Error("unprocessable entity", nlogger.Error(err), nlogger.Context(ctx))
-		return nil, nhttp.BadRequestError.Trace(errx.Source(err))
+		log.Error("Bad request validate payload", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, err
 	}
 
 	// Init service
@@ -313,7 +314,7 @@ func (c *AccountController) PostUpdatePasswordCheck(rx *nhttp.Request) (*nhttp.R
 	defer svc.Close()
 
 	// Call service
-	valid, err := svc.isValidPassword(userRefID, payload.CurrentPassword)
+	valid, err := svc.IsValidPassword(userRefID, payload.CurrentPassword)
 	if err != nil {
 		log.Error("error when processing service", nlogger.Error(err), nlogger.Context(ctx))
 		return nil, err
@@ -338,7 +339,7 @@ func (c *AccountController) PutUpdatePassword(rx *nhttp.Request) (*nhttp.Respons
 	}
 
 	// Get payload
-	var payload dto.UpdatePasswordRequest
+	var payload dto.UpdatePasswordPayload
 	err = rx.ParseJSONBody(&payload)
 	if err != nil {
 		log.Error("error when parse json body", nlogger.Error(err), nlogger.Context(ctx))
@@ -346,9 +347,9 @@ func (c *AccountController) PutUpdatePassword(rx *nhttp.Request) (*nhttp.Respons
 	}
 
 	// Validate payload
-	err = payload.Validate()
+	err = validate.PutUpdatePassword(&payload)
 	if err != nil {
-		log.Error("unprocessable entity", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("Bad request validate payload", nlogger.Error(err), nlogger.Context(ctx))
 		return nil, nhttp.BadRequestError.Trace(errx.Source(err))
 	}
 

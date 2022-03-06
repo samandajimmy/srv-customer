@@ -87,7 +87,7 @@ func (s *Service) UpdateCustomerProfile(id string, payload dto.UpdateProfileRequ
 	return nil
 }
 
-func (s *Service) isValidPassword(userRefID string, password string) (bool, error) {
+func (s *Service) IsValidPassword(userRefID string, password string) (bool, error) {
 	// Find customer
 	c, err := s.repo.FindCustomerByUserRefID(userRefID)
 	if err != nil {
@@ -110,7 +110,7 @@ func (s *Service) isValidPassword(userRefID string, password string) (bool, erro
 	return true, nil
 }
 
-func (s *Service) UpdatePassword(userRefID string, payload dto.UpdatePasswordRequest) error {
+func (s *Service) UpdatePassword(userRefID string, payload dto.UpdatePasswordPayload) error {
 	// Find customer
 	customer, err := s.repo.FindCustomerByUserRefID(userRefID)
 	if err != nil {

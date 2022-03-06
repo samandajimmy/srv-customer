@@ -19,7 +19,7 @@ import (
 	"time"
 )
 
-func (s *Service) Login(payload dto.LoginRequest) (*dto.LoginResponse, error) {
+func (s *Service) Login(payload dto.LoginPayload) (*dto.LoginResult, error) {
 	ctx := s.ctx
 	// Check if user exists
 	t := time.Now()
@@ -167,7 +167,7 @@ func (s *Service) Login(payload dto.LoginRequest) (*dto.LoginResponse, error) {
 	}
 
 	// Check is force update password
-	validatePassword := s.validatePassword(payload.Password)
+	validatePassword := s.ValidatePassword(payload.Password)
 	isForceUpdatePassword := false
 	if !validatePassword.IsValid {
 		isForceUpdatePassword = true
@@ -236,7 +236,7 @@ func (s *Service) syncInternalToExternal(payload *dto.CustomerSynchronizeRequest
 	ctx := s.ctx
 
 	// call register pds api
-	registerCustomer := dto.RegisterNewCustomer{
+	registerCustomer := dto.RegisterPayload{
 		Name:        payload.Name,
 		Email:       payload.Email,
 		PhoneNumber: payload.PhoneNumber,
@@ -374,7 +374,7 @@ func (s *Service) syncExternalToInternal(user *model.User) (*model.Customer, err
 	return customer, nil
 }
 
-func (s *Service) composeLoginResponse(data dto.LoginVO) (*dto.LoginResponse, error) {
+func (s *Service) composeLoginResponse(data dto.LoginVO) (*dto.LoginResult, error) {
 	// Cast to model
 	customer := data.Customer.(*model.Customer)
 	profile := data.Profile.(*model.CustomerProfile)
@@ -393,7 +393,7 @@ func (s *Service) composeLoginResponse(data dto.LoginVO) (*dto.LoginResponse, er
 	// -- SID URL
 	sidURL := s.AssetGetPublicURL(constant.AssetNPWP, customer.Profile.SidPhotoFile)
 
-	return &dto.LoginResponse{
+	return &dto.LoginResult{
 		User: &dto.LoginUserVO{
 			CustomerVO: dto.CustomerVO{
 				ID:                        customer.UserRefID.String,
@@ -504,8 +504,8 @@ func (s *Service) setTokenAuthentication(customer *model.Customer, agen string, 
 	return tokenString, nil
 }
 
-func (s *Service) validatePassword(password string) *dto.ValidatePassword {
-	var validation dto.ValidatePassword
+func (s *Service) ValidatePassword(password string) *dto.ValidatePasswordResult {
+	var validation dto.ValidatePasswordResult
 
 	lowerCase, _ := regexp.Compile(`[a-z]+`)
 	upperCase, _ := regexp.Compile(`[A-Z]+`)

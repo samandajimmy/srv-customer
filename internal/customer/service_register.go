@@ -15,7 +15,7 @@ import (
 	"time"
 )
 
-func (s *Service) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCustomerResponse, error) {
+func (s *Service) Register(payload dto.RegisterPayload) (*dto.RegisterResult, error) {
 	// Get context
 	ctx := s.ctx
 
@@ -234,7 +234,7 @@ func (s *Service) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCus
 	}
 
 	// Init payload Login
-	payloadLogin := dto.LoginRequest{
+	payloadLogin := dto.LoginPayload{
 		Email:    payload.Email,
 		Password: payload.Password,
 		Agen:     payload.Agen,
@@ -271,14 +271,14 @@ func (s *Service) Register(payload dto.RegisterNewCustomer) (*dto.RegisterNewCus
 	}
 
 	// Compose response
-	resp := s.composeRegisterResponse(loginResponse)
+	resp := s.composeRegisterResult(loginResponse)
 
 	return resp, nil
 }
 
 // Register Send OTP
 
-func (s *Service) RegisterStepOne(payload dto.RegisterStepOne) (*dto.RegisterStepOneResponse, error) {
+func (s *Service) RegisterStepOne(payload dto.SendOTPPayload) (*dto.SendOTPResult, error) {
 	// Get Context
 	ctx := s.ctx
 
@@ -332,12 +332,12 @@ func (s *Service) RegisterStepOne(payload dto.RegisterStepOne) (*dto.RegisterSte
 		s.log.Debugf("Debug: RegisterStepOne OTP CODE %s", resp.Message)
 	}
 
-	return &dto.RegisterStepOneResponse{
+	return &dto.SendOTPResult{
 		Action: resp.ResponseDesc,
 	}, nil
 }
 
-func (s *Service) RegisterResendOTP(payload dto.RegisterResendOTP) (*dto.RegisterResendOTPResponse, error) {
+func (s *Service) RegisterResendOTP(payload dto.RegisterResendOTPPayload) (*dto.RegisterResendOTPResult, error) {
 	// Get Context
 	ctx := s.ctx
 
@@ -377,12 +377,12 @@ func (s *Service) RegisterResendOTP(payload dto.RegisterResendOTP) (*dto.Registe
 		s.log.Debugf("Debug: RegisterResendOTP OTP CODE: %s", resp.Message)
 	}
 
-	return &dto.RegisterResendOTPResponse{
+	return &dto.RegisterResendOTPResult{
 		Action: resp.ResponseDesc,
 	}, nil
 }
 
-func (s *Service) RegisterStepTwo(payload dto.RegisterStepTwo) (*dto.RegisterStepTwoResponse, error) {
+func (s *Service) RegisterStepTwo(payload dto.RegisterVerifyOTPPayload) (*dto.RegisterVerifyOTPResult, error) {
 	// Get Context
 	ctx := s.ctx
 
@@ -441,14 +441,14 @@ func (s *Service) RegisterStepTwo(payload dto.RegisterStepTwo) (*dto.RegisterSte
 		return nil, errx.Trace(err)
 	}
 
-	return &dto.RegisterStepTwoResponse{
+	return &dto.RegisterVerifyOTPResult{
 		RegisterID: vOTP.RegistrationID,
 	}, nil
 }
 
-func (s *Service) composeRegisterResponse(loginResponse *dto.LoginResponse) *dto.RegisterNewCustomerResponse {
-	return &dto.RegisterNewCustomerResponse{
-		LoginResponse: loginResponse,
+func (s *Service) composeRegisterResult(loginResponse *dto.LoginResult) *dto.RegisterResult {
+	return &dto.RegisterResult{
+		LoginResult: loginResponse,
 		// TODO EKYC
 		Ekyc: &dto.EKyc{
 			AccountType: "",

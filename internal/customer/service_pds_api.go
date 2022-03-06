@@ -5,7 +5,7 @@ import (
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/dto"
 )
 
-func (s *Service) SynchronizeCustomer(payload dto.RegisterNewCustomer) (*ResponsePdsAPI, error) {
+func (s *Service) SynchronizeCustomer(payload dto.RegisterPayload) (*ResponsePdsAPI, error) {
 	// Set payload
 	reqBody := map[string]interface{}{
 		"nama":      payload.Name,

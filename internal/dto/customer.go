@@ -2,18 +2,17 @@ package dto
 
 import (
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/go-ozzo/ozzo-validation/v4/is"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/constant"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nhttp"
 )
 
-type ValidatePassword struct {
+type ValidatePasswordResult struct {
 	IsValid bool   `json:"isValid"`
 	ErrCode string `json:"errCode"`
 	Message string `json:"message"`
 }
 
-type RegisterNewCustomer struct {
+type RegisterPayload struct {
 	Name           string `json:"nama"`
 	Email          string `json:"email"`
 	PhoneNumber    string `json:"no_hp"`
@@ -24,8 +23,8 @@ type RegisterNewCustomer struct {
 	Version        string `json:"version"`
 }
 
-type RegisterNewCustomerResponse struct {
-	*LoginResponse
+type RegisterResult struct {
+	*LoginResult
 	Ekyc   *EKyc       `json:"ekyc"`
 	GPoint interface{} `json:"gpoint"`
 	GCash  *GCash      `json:"gcash"`
@@ -36,31 +35,31 @@ type NewRegisterResponse struct {
 	ReffID int64  `json:"reffId"`
 }
 
-type RegisterStepOne struct {
+type SendOTPPayload struct {
 	Name        string `json:"nama"`
 	Email       string `json:"email"`
 	PhoneNumber string `json:"no_hp"`
 	Agen        string `json:"agen"`
 }
 
-type RegisterResendOTP struct {
+type RegisterResendOTPPayload struct {
 	PhoneNumber string `json:"no_hp"`
 }
 
-type RegisterResendOTPResponse struct {
+type RegisterResendOTPResult struct {
 	Action string `json:"action"`
 }
 
-type RegisterStepOneResponse struct {
+type SendOTPResult struct {
 	Action string `json:"action"`
 }
 
-type RegisterStepTwo struct {
+type RegisterVerifyOTPPayload struct {
 	PhoneNumber string `json:"no_hp"`
 	OTP         string `json:"otp"`
 }
 
-type RegisterStepTwoResponse struct {
+type RegisterVerifyOTPResult struct {
 	RegisterID string `json:"register_id"`
 }
 
@@ -108,7 +107,7 @@ type LoginUserVO struct {
 	IsForceUpdatePassword bool `json:"isForceUpdatePassword"`
 }
 
-type LoginResponse struct {
+type LoginResult struct {
 	User     *LoginUserVO `json:"user"`
 	JwtToken string       `json:"token"`
 }
@@ -283,7 +282,7 @@ type AccountSavingVO struct {
 	SaldoEfektif string `json:"saldoEfektif"`
 }
 
-type LoginRequest struct {
+type LoginPayload struct {
 	Email        string `json:"email"`
 	Password     string `json:"password"`
 	Agen         string `json:"agen"`
@@ -324,11 +323,11 @@ type UpdateProfileRequest struct {
 	StatusKawin             string `json:"status_kawin"`
 }
 
-type UpdatePasswordCheckRequest struct {
+type UpdatePasswordCheckPayload struct {
 	CurrentPassword string `json:"current_password"`
 }
 
-type UpdatePasswordRequest struct {
+type UpdatePasswordPayload struct {
 	CurrentPassword string `json:"current_password"`
 	NewPassword     string `json:"new_password"`
 }
@@ -404,19 +403,6 @@ func (d UpdateSIDPayload) Validate() error {
 	)
 }
 
-func (d UpdatePasswordCheckRequest) Validate() error {
-	return validation.ValidateStruct(&d,
-		validation.Field(&d.CurrentPassword, validation.Required),
-	)
-}
-
-func (d UpdatePasswordRequest) Validate() error {
-	return validation.ValidateStruct(&d,
-		validation.Field(&d.CurrentPassword, validation.Required),
-		validation.Field(&d.NewPassword, validation.Required),
-	)
-}
-
 func (d UpdateProfileRequest) Validate() error {
 	return validation.ValidateStruct(&d,
 		validation.Field(&d.Nama, validation.Required),
@@ -430,46 +416,5 @@ func (d UpdateProfileRequest) Validate() error {
 		validation.Field(&d.JenisIdentitas, validation.Required),
 		validation.Field(&d.Kewarganegaraan, validation.Required),
 		validation.Field(&d.Agama, validation.Required),
-	)
-}
-
-func (d RegisterNewCustomer) Validate() error {
-	return validation.ValidateStruct(&d,
-		validation.Field(&d.Name, validation.Required),
-		validation.Field(&d.Email, validation.Required),
-		validation.Field(&d.PhoneNumber, validation.Required),
-		validation.Field(&d.Password, validation.Required),
-		validation.Field(&d.FcmToken, validation.Required),
-		validation.Field(&d.RegistrationID, validation.Required),
-	)
-}
-
-func (d RegisterStepTwo) Validate() error {
-	return validation.ValidateStruct(&d,
-		validation.Field(&d.OTP, validation.Required, is.Digit),
-		validation.Field(&d.PhoneNumber, validation.Required, is.Digit),
-	)
-}
-
-func (d RegisterResendOTP) Validate() error {
-	return validation.ValidateStruct(&d,
-		validation.Field(&d.PhoneNumber, validation.Required, is.Digit),
-	)
-}
-
-func (d RegisterStepOne) Validate() error {
-	return validation.ValidateStruct(&d,
-		validation.Field(&d.Name, validation.Required, validation.Length(1, 50)),
-		validation.Field(&d.Email, validation.Required, is.Email),
-		validation.Field(&d.PhoneNumber, validation.Required, is.Digit),
-	)
-}
-
-func (d LoginRequest) Validate() error {
-	return validation.ValidateStruct(&d,
-		validation.Field(&d.Email, validation.Required),
-		validation.Field(&d.Password, validation.Required),
-		validation.Field(&d.Agen, validation.Required),
-		validation.Field(&d.Version, validation.Required),
 	)
 }

@@ -14,7 +14,7 @@ type NotificationRegister struct {
 	Customer     interface{} // *model.Customer
 	Verification interface{} // *model.Verification
 	RegisterOTP  interface{} // *model.VerificationOTP
-	Payload      RegisterNewCustomer
+	Payload      RegisterPayload
 }
 
 type NotificationBlock struct {
