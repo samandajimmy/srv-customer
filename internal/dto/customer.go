@@ -1,7 +1,6 @@
 package dto
 
 import (
-	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/constant"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nhttp"
 )
@@ -389,10 +388,4 @@ type CustomerInquiryVO struct {
 	Jalan              string `json:"jalan"`
 	IsDukcapilVerified string `json:"isDukcapilVerified"`
 	Agama              string `json:"agama"`
-}
-
-func (d UpdateNPWPPayload) Validate() error {
-	return validation.ValidateStruct(&d,
-		validation.Field(&d.NoNPWP, validation.Required, validation.Length(15, 15)),
-	)
 }

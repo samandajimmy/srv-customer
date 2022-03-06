@@ -36,3 +36,13 @@ func PostUpdateSID(p *dto.UpdateSIDPayload) error {
 	}
 	return nil
 }
+
+func PostUpdateNPWP(p *dto.UpdateNPWPPayload) error {
+	err := validation.ValidateStruct(p,
+		validation.Field(&p.NoNPWP, validation.Required, validation.Length(15, 15)),
+	)
+	if err != nil {
+		return nhttp.BadRequestError.Trace(errx.Source(err))
+	}
+	return nil
+}
