@@ -21,6 +21,43 @@ func NewAccountController(h *Handler) *AccountController {
 	}
 }
 
+func (c *AccountController) HandleAuthUser(rx *nhttp.Request) (*nhttp.Response, error) {
+	// Get context
+	ctx := rx.Context()
+
+	// Get token
+	tokenString, err := nhttp.ExtractBearerAuth(rx.Request)
+	if err != nil {
+		log.Error("error when extract token", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, errx.Trace(err)
+	}
+
+	// Init service
+	svc := c.NewService(ctx)
+	defer svc.Close()
+
+	// Get UserRefID
+	userRefID, err := svc.ValidateTokenAndRetrieveUserRefID(tokenString)
+	if err != nil {
+		return nil, err
+	}
+
+	rx.SetContextValue(constant.UserRefIDContextKey, userRefID)
+
+	return nhttp.Continue(), nil
+}
+
+func getUserRefID(rx *nhttp.Request) (string, error) {
+	v := rx.GetContextValue(constant.UserRefIDContextKey)
+
+	userRefID, ok := v.(string)
+	if !ok {
+		return "", fmt.Errorf("unexpected userRefID value in context. Type: %T", v)
+	}
+
+	return userRefID, nil
+}
+
 func (c *AccountController) PostLogin(rx *nhttp.Request) (*nhttp.Response, error) {
 	// Get context
 	ctx := rx.Context()

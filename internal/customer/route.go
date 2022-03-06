@@ -27,32 +27,32 @@ func setUpRoute(router *nhttp.Router, controllers *Controllers) {
 	router.Handle(http.MethodPost, "/accounts/register", router.HandleFunc(controllers.Account.PostRegister))
 
 	// Check password
-	router.Handle(http.MethodPost, "/accounts/check-password", router.HandleFunc(controllers.Middlewares.AuthUser),
+	router.Handle(http.MethodPost, "/accounts/check-password", router.HandleFunc(controllers.Account.HandleAuthUser),
 		router.HandleFunc(controllers.Account.PostUpdatePasswordCheck))
 	// Update password
-	router.Handle(http.MethodPut, "/accounts/password", router.HandleFunc(controllers.Middlewares.AuthUser),
+	router.Handle(http.MethodPut, "/accounts/password", router.HandleFunc(controllers.Account.HandleAuthUser),
 		router.HandleFunc(controllers.Account.PutUpdatePassword))
 
 	// Profile
-	router.Handle(http.MethodGet, "/profiles", router.HandleFunc(controllers.Middlewares.AuthUser),
+	router.Handle(http.MethodGet, "/profiles", router.HandleFunc(controllers.Account.HandleAuthUser),
 		router.HandleFunc(controllers.Profile.GetDetail))
 
-	router.Handle(http.MethodPut, "/profiles", router.HandleFunc(controllers.Middlewares.AuthUser),
+	router.Handle(http.MethodPut, "/profiles", router.HandleFunc(controllers.Account.HandleAuthUser),
 		router.HandleFunc(controllers.Profile.PutUpdate))
 
-	router.Handle(http.MethodPost, "/profiles/avatar", router.HandleFunc(controllers.Middlewares.AuthUser),
+	router.Handle(http.MethodPost, "/profiles/avatar", router.HandleFunc(controllers.Account.HandleAuthUser),
 		router.HandleFunc(controllers.Profile.PostUpdateAvatar))
 
-	router.Handle(http.MethodPost, "/profiles/ktp", router.HandleFunc(controllers.Middlewares.AuthUser),
+	router.Handle(http.MethodPost, "/profiles/ktp", router.HandleFunc(controllers.Account.HandleAuthUser),
 		router.HandleFunc(controllers.Profile.PostUpdateKTP))
 
-	router.Handle(http.MethodPost, "/profiles/npwp", router.HandleFunc(controllers.Middlewares.AuthUser),
+	router.Handle(http.MethodPost, "/profiles/npwp", router.HandleFunc(controllers.Account.HandleAuthUser),
 		router.HandleFunc(controllers.Profile.PostUpdateNPWP))
 
-	router.Handle(http.MethodPost, "/profiles/sid", router.HandleFunc(controllers.Middlewares.AuthUser),
+	router.Handle(http.MethodPost, "/profiles/sid", router.HandleFunc(controllers.Account.HandleAuthUser),
 		router.HandleFunc(controllers.Profile.PostUpdateSID))
 
-	router.Handle(http.MethodGet, "/profiles/status", router.HandleFunc(controllers.Middlewares.AuthUser),
+	router.Handle(http.MethodGet, "/profiles/status", router.HandleFunc(controllers.Account.HandleAuthUser),
 		router.HandleFunc(controllers.Profile.GetStatus))
 
 	// Static asset
