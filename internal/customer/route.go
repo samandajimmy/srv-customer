@@ -12,46 +12,47 @@ func setUpRoute(router *nhttp.Router, controllers *Controllers) {
 	router.Handle(http.MethodGet, "/", router.HandleFunc(controllers.Common.GetAPIStatus))
 
 	// Login
-	router.Handle(http.MethodPost, "/auth/login", router.HandleFunc(controllers.Customer.PostLogin))
+	router.Handle(http.MethodPost, "/accounts/login", router.HandleFunc(controllers.Account.PostLogin))
 
 	// Verification
-	router.Handle(http.MethodGet, "/auth/verify_email", http.HandlerFunc(controllers.Verification.VerifyEmail))
+	router.Handle(http.MethodGet, "/accounts/verify-email", http.HandlerFunc(controllers.Account.GetVerifyEmail))
 
 	// Register Step-1
-	router.Handle(http.MethodPost, "/register/step-1", router.HandleFunc(controllers.Customer.SendOTP))
+	router.Handle(http.MethodPost, "/accounts/register/send-otp", router.HandleFunc(controllers.Account.PostSendOTP))
 	// Register Resend OTP
-	router.Handle(http.MethodPost, "/register/resend-otp", router.HandleFunc(controllers.Customer.ResendOTP))
+	router.Handle(http.MethodPost, "/accounts/register/resend-otp", router.HandleFunc(controllers.Account.PostResendOTP))
 	// Register Step-2
-	router.Handle(http.MethodPost, "/register/step-2", router.HandleFunc(controllers.Customer.VerifyOTP))
+	router.Handle(http.MethodPost, "/accounts/register/verify-otp", router.HandleFunc(controllers.Account.PostVerifyOTP))
 	// Register Step-3
-	router.Handle(http.MethodPost, "/register/step-3", router.HandleFunc(controllers.Customer.PostRegister))
+	router.Handle(http.MethodPost, "/accounts/register", router.HandleFunc(controllers.Account.PostRegister))
+
+	// Check password
+	router.Handle(http.MethodPost, "/accounts/check-password", router.HandleFunc(controllers.Middlewares.AuthUser),
+		router.HandleFunc(controllers.Account.PostUpdatePasswordCheck))
+	// Update password
+	router.Handle(http.MethodPut, "/accounts/password", router.HandleFunc(controllers.Middlewares.AuthUser),
+		router.HandleFunc(controllers.Account.PutUpdatePassword))
 
 	// Profile
-	router.Handle(http.MethodGet, "/profile", router.HandleFunc(controllers.Middlewares.AuthUser),
+	router.Handle(http.MethodGet, "/profiles", router.HandleFunc(controllers.Middlewares.AuthUser),
 		router.HandleFunc(controllers.Profile.GetDetail))
 
-	router.Handle(http.MethodPut, "/profile", router.HandleFunc(controllers.Middlewares.AuthUser),
+	router.Handle(http.MethodPut, "/profiles", router.HandleFunc(controllers.Middlewares.AuthUser),
 		router.HandleFunc(controllers.Profile.PutUpdate))
 
-	router.Handle(http.MethodPost, "/profile/check_password", router.HandleFunc(controllers.Middlewares.AuthUser),
-		router.HandleFunc(controllers.Customer.UpdatePasswordCheck))
-
-	router.Handle(http.MethodPut, "/profile/password", router.HandleFunc(controllers.Middlewares.AuthUser),
-		router.HandleFunc(controllers.Customer.UpdatePassword))
-
-	router.Handle(http.MethodPost, "/profile/avatar", router.HandleFunc(controllers.Middlewares.AuthUser),
+	router.Handle(http.MethodPost, "/profiles/avatar", router.HandleFunc(controllers.Middlewares.AuthUser),
 		router.HandleFunc(controllers.Profile.PostUpdateAvatar))
 
-	router.Handle(http.MethodPost, "/profile/ktp", router.HandleFunc(controllers.Middlewares.AuthUser),
+	router.Handle(http.MethodPost, "/profiles/ktp", router.HandleFunc(controllers.Middlewares.AuthUser),
 		router.HandleFunc(controllers.Profile.PostUpdateKTP))
 
-	router.Handle(http.MethodPost, "/profile/npwp", router.HandleFunc(controllers.Middlewares.AuthUser),
+	router.Handle(http.MethodPost, "/profiles/npwp", router.HandleFunc(controllers.Middlewares.AuthUser),
 		router.HandleFunc(controllers.Profile.PostUpdateNPWP))
 
-	router.Handle(http.MethodPost, "/profile/sid", router.HandleFunc(controllers.Middlewares.AuthUser),
+	router.Handle(http.MethodPost, "/profiles/sid", router.HandleFunc(controllers.Middlewares.AuthUser),
 		router.HandleFunc(controllers.Profile.PostUpdateSID))
 
-	router.Handle(http.MethodGet, "/profile/status", router.HandleFunc(controllers.Middlewares.AuthUser),
+	router.Handle(http.MethodGet, "/profiles/status", router.HandleFunc(controllers.Middlewares.AuthUser),
 		router.HandleFunc(controllers.Profile.GetStatus))
 
 	// Static asset

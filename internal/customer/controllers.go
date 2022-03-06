@@ -99,6 +99,7 @@ type Controllers struct {
 	Asset        *Asset
 	Verification *Verification
 	Profile      *ProfileController
+	Account      *AccountController
 }
 
 func NewControllers(manifest ncore.Manifest, h *Handler) *Controllers {
@@ -110,5 +111,6 @@ func NewControllers(manifest ncore.Manifest, h *Handler) *Controllers {
 		Customer:     NewCustomer(h),
 		Verification: NewVerification(h),
 		Profile:      NewProfileController(h),
+		Account:      NewAccountController(h),
 	}
 }
