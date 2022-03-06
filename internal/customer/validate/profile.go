@@ -21,10 +21,18 @@ func PutUpdateProfile(p *dto.UpdateProfilePayload) error {
 		validation.Field(&p.Kewarganegaraan, validation.Required),
 		validation.Field(&p.Agama, validation.Required),
 	)
-
 	if err != nil {
 		return nhttp.BadRequestError.Trace(errx.Source(err))
 	}
+	return nil
+}
 
+func PostUpdateSID(p *dto.UpdateSIDPayload) error {
+	err := validation.ValidateStruct(p,
+		validation.Field(&p.NoSID, validation.Required, validation.Length(15, 15)),
+	)
+	if err != nil {
+		return nhttp.BadRequestError.Trace(errx.Source(err))
+	}
 	return nil
 }

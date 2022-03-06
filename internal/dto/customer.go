@@ -396,25 +396,3 @@ func (d UpdateNPWPPayload) Validate() error {
 		validation.Field(&d.NoNPWP, validation.Required, validation.Length(15, 15)),
 	)
 }
-
-func (d UpdateSIDPayload) Validate() error {
-	return validation.ValidateStruct(&d,
-		validation.Field(&d.NoSID, validation.Required, validation.Length(15, 15)),
-	)
-}
-
-func (d UpdateProfilePayload) Validate() error {
-	return validation.ValidateStruct(&d,
-		validation.Field(&d.Nama, validation.Required),
-		validation.Field(&d.Alamat, validation.Required),
-		validation.Field(&d.NamaIbu, validation.Required),
-		validation.Field(&d.TempatLahir, validation.Required),
-		validation.Field(&d.TglLahir, validation.Required),
-		validation.Field(&d.NoKtp, validation.Required),
-		validation.Field(&d.IDKelurahan, validation.Required),
-		validation.Field(&d.JenisKelamin, validation.Required),
-		validation.Field(&d.JenisIdentitas, validation.Required),
-		validation.Field(&d.Kewarganegaraan, validation.Required),
-		validation.Field(&d.Agama, validation.Required),
-	)
-}

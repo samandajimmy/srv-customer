@@ -300,10 +300,10 @@ func (c *ProfileController) PostUpdateSID(rx *nhttp.Request) (*nhttp.Response, e
 	}
 
 	// Validate payload
-	err = payload.Validate()
+	err = validate.PostUpdateSID(&payload)
 	if err != nil {
-		log.Error("unprocessable entity", nlogger.Error(err), nlogger.Context(ctx))
-		return nil, nhttp.BadRequestError.Trace(errx.Source(err))
+		log.Error("Bad request validate payload")
+		return nil, err
 	}
 
 	// Call service
