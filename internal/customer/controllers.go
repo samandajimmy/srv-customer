@@ -94,7 +94,7 @@ type Handler struct {
 type Controllers struct {
 	Middlewares  *Middlewares
 	Auth         *Auth
-	Common       *Common
+	Common       *CommonController
 	Customer     *Customer
 	Asset        *Asset
 	Verification *Verification
@@ -103,7 +103,7 @@ type Controllers struct {
 
 func NewControllers(manifest ncore.Manifest, h *Handler) *Controllers {
 	return &Controllers{
-		Common:       NewCommon(time.Now(), manifest),
+		Common:       NewCommonController(time.Now(), manifest),
 		Asset:        NewAsset(h),
 		Middlewares:  NewMiddlewares(h),
 		Auth:         NewAuth(h),

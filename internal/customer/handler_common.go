@@ -13,30 +13,30 @@ import (
 	"time"
 )
 
-func NewCommon(startTime time.Time, manifest ncore.Manifest) *Common {
-	h := Common{
+func NewCommonController(startTime time.Time, manifest ncore.Manifest) *CommonController {
+	h := CommonController{
 		startTime: startTime,
 		manifest:  manifest,
 	}
 	return &h
 }
 
-type Common struct {
+type CommonController struct {
 	startTime time.Time
 	manifest  ncore.Manifest
 }
 
-func (h *Common) GetAPIStatus(_ *nhttp.Request) (*nhttp.Response, error) {
+func (c *CommonController) GetAPIStatus(_ *nhttp.Request) (*nhttp.Response, error) {
 	res := nhttp.Success().
 		SetData(map[string]string{
-			"appVersion":     h.manifest.AppVersion,
-			"buildSignature": h.manifest.BuildSignature,
-			"uptime":         time.Since(h.startTime).String(),
+			"appVersion":     c.manifest.AppVersion,
+			"buildSignature": c.manifest.BuildSignature,
+			"uptime":         time.Since(c.startTime).String(),
 		})
 	return res, nil
 }
 
-func (h *Common) ValidateClient(r *nhttp.Request) (*nhttp.Response, error) {
+func (c *CommonController) ValidateClient(r *nhttp.Request) (*nhttp.Response, error) {
 	// Get subject from headers
 	subjectID := r.Header.Get(constant.SubjectIDHeader)
 	subjectRefID, ok := nval.ParseInt64(subjectID)
