@@ -83,7 +83,7 @@ func (c *ProfileController) PutUpdate(rx *nhttp.Request) (*nhttp.Response, error
 	return nhttp.Success().SetMessage("Update data user berhasil").SetData(false), nil
 }
 
-func (c *ProfileController) UpdateAvatar(rx *nhttp.Request) (*nhttp.Response, error) {
+func (c *ProfileController) PostUpdateAvatar(rx *nhttp.Request) (*nhttp.Response, error) {
 	// Get context
 	ctx := rx.Context()
 
@@ -112,7 +112,7 @@ func (c *ProfileController) UpdateAvatar(rx *nhttp.Request) (*nhttp.Response, er
 	return nhttp.Success().SetData(resp), nil
 }
 
-func (c *ProfileController) UpdateKTP(rx *nhttp.Request) (*nhttp.Response, error) {
+func (c *ProfileController) PostUpdateKTP(rx *nhttp.Request) (*nhttp.Response, error) {
 	// Get context
 	ctx := rx.Context()
 
@@ -140,7 +140,7 @@ func (c *ProfileController) UpdateKTP(rx *nhttp.Request) (*nhttp.Response, error
 	return nhttp.Success().SetData(resp), nil
 }
 
-func (c *ProfileController) UpdateNPWP(rx *nhttp.Request) (*nhttp.Response, error) {
+func (c *ProfileController) PostUpdateNPWP(rx *nhttp.Request) (*nhttp.Response, error) {
 	// Get context
 	ctx := rx.Context()
 
@@ -178,7 +178,7 @@ func (c *ProfileController) UpdateNPWP(rx *nhttp.Request) (*nhttp.Response, erro
 	return nhttp.Success().SetData(resp), nil
 }
 
-func (c *ProfileController) UpdateSID(rx *nhttp.Request) (*nhttp.Response, error) {
+func (c *ProfileController) PostUpdateSID(rx *nhttp.Request) (*nhttp.Response, error) {
 	// Get context
 	ctx := rx.Context()
 	// Get user UserRefID
@@ -214,7 +214,7 @@ func (c *ProfileController) UpdateSID(rx *nhttp.Request) (*nhttp.Response, error
 	return nhttp.Success().SetData(resp), nil
 }
 
-func (c *ProfileController) CheckStatus(rx *nhttp.Request) (*nhttp.Response, error) {
+func (c *ProfileController) GetStatus(rx *nhttp.Request) (*nhttp.Response, error) {
 	// Get context
 	ctx := rx.Context()
 

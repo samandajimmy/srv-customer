@@ -40,19 +40,19 @@ func setUpRoute(router *nhttp.Router, controllers *Controllers) {
 		router.HandleFunc(controllers.Customer.UpdatePassword))
 
 	router.Handle(http.MethodPost, "/profile/avatar", router.HandleFunc(controllers.Middlewares.AuthUser),
-		router.HandleFunc(controllers.Profile.UpdateAvatar))
+		router.HandleFunc(controllers.Profile.PostUpdateAvatar))
 
 	router.Handle(http.MethodPost, "/profile/ktp", router.HandleFunc(controllers.Middlewares.AuthUser),
-		router.HandleFunc(controllers.Profile.UpdateKTP))
+		router.HandleFunc(controllers.Profile.PostUpdateKTP))
 
 	router.Handle(http.MethodPost, "/profile/npwp", router.HandleFunc(controllers.Middlewares.AuthUser),
-		router.HandleFunc(controllers.Profile.UpdateNPWP))
+		router.HandleFunc(controllers.Profile.PostUpdateNPWP))
 
 	router.Handle(http.MethodPost, "/profile/sid", router.HandleFunc(controllers.Middlewares.AuthUser),
-		router.HandleFunc(controllers.Profile.UpdateSID))
+		router.HandleFunc(controllers.Profile.PostUpdateSID))
 
 	router.Handle(http.MethodGet, "/profile/status", router.HandleFunc(controllers.Middlewares.AuthUser),
-		router.HandleFunc(controllers.Profile.CheckStatus))
+		router.HandleFunc(controllers.Profile.GetStatus))
 
 	// Static asset
 	staticDir := "/web/assets/"
