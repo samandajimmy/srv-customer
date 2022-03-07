@@ -17,7 +17,7 @@ require (
 	github.com/lib/pq v1.9.0
 	github.com/matoous/go-nanoid/v2 v2.0.0
 	github.com/minio/minio-go v6.0.14+incompatible
-	github.com/nbs-go/errx v0.5.0
+	github.com/nbs-go/errx v0.5.1
 	github.com/nbs-go/nlogger/v2 v2.1.0
 	github.com/nbs-go/nsql v0.5.1
 	github.com/rs/xid v1.3.0
