@@ -3,7 +3,6 @@ package nhttp
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"github.com/nbs-go/errx"
 	"net/http"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nval"
@@ -18,7 +17,7 @@ type JSONContentWriter struct {
 	Debug bool
 }
 
-func (jw JSONContentWriter) Write(w http.ResponseWriter, httpStatus int, body interface{}) int {
+func (jw *JSONContentWriter) Write(w http.ResponseWriter, httpStatus int, body interface{}) {
 	// Add content type
 	w.Header().Add(ContentTypeHeader, ContentTypeJSON)
 	// Write http status
@@ -28,25 +27,9 @@ func (jw JSONContentWriter) Write(w http.ResponseWriter, httpStatus int, body in
 	if err != nil {
 		log.Errorf("failed to write response to json ( payload = %+v )", body)
 	}
-	// Return httpStatus
-	return httpStatus
 }
 
-func (jw JSONContentWriter) WriteView(w http.ResponseWriter, httpStatus int, view interface{}) int {
-	// Add content type
-	w.Header().Add(ContentTypeHeader, ContentTypeHTML)
-	// Write http status
-	w.WriteHeader(httpStatus)
-	// Send JSON response
-	_, err := fmt.Fprintf(w, view.(string))
-	if err != nil {
-		log.Errorf("failed to write response to html ( payload = %+v )", view)
-	}
-	// Return httpStatus
-	return httpStatus
-}
-
-func (jw JSONContentWriter) WriteError(w http.ResponseWriter, err error) int {
+func (jw *JSONContentWriter) WriteError(w http.ResponseWriter, err error) int {
 	var hErr *errx.Error
 	ok := errors.As(err, &hErr)
 	if !ok {
@@ -93,5 +76,8 @@ func (jw JSONContentWriter) WriteError(w http.ResponseWriter, err error) int {
 	}
 
 	// Send error json
-	return jw.Write(w, httpStatus, resp)
+	jw.Write(w, httpStatus, resp)
+
+	// Return http status
+	return httpStatus
 }

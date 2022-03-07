@@ -41,14 +41,14 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// If an error occurred, then write Error
 	if err != nil {
 		// If an error occurred, then write error response
-		httpStatus = h.contentWriter.WriteError(w, err)
+		httpStatus := h.contentWriter.WriteError(w, err)
 		rx.SetContextValue(HTTPStatusRespContextKey, httpStatus)
 		return
 	}
 
 	// If result is nil, then return No Content
 	if result == nil {
-		httpStatus = http.StatusNoContent
+		httpStatus := http.StatusNoContent
 		w.WriteHeader(httpStatus)
 		rx.SetContextValue(HTTPStatusRespContextKey, httpStatus)
 		return
@@ -79,24 +79,9 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		result.Message = SuccessMessage
 	}
 
-	// Set status http by result code
-	var statusHTTP int
-	switch result.Code {
-	case "200":
-		statusHTTP = http.StatusOK
-	case "400":
-		statusHTTP = http.StatusBadRequest
-	case "422":
-		statusHTTP = http.StatusUnprocessableEntity
-	case "503":
-		statusHTTP = http.StatusServiceUnavailable
-	default:
-		statusHTTP = http.StatusOK
-	}
-
 	// Write standard response json
-	httpStatus = h.contentWriter.Write(w, statusHTTP, result)
-
+	httpStatus := http.StatusOK
+	h.contentWriter.Write(w, httpStatus, result)
 	rx.SetContextValue(HTTPStatusRespContextKey, httpStatus)
 }
 
