@@ -680,3 +680,36 @@ func (c *AccountController) PostSendOTPResetPassword(rx *nhttp.Request) (*nhttp.
 
 	return nhttp.Success().SetMessage(resp), nil
 }
+
+func (c *AccountController) PostVerifyOTPResetPassword(rx *nhttp.Request) (*nhttp.Response, error) {
+	// Get context
+	ctx := rx.Context()
+
+	// Get Payload
+	var payload dto.VerifyOTPResetPasswordPayload
+	err := rx.ParseJSONBody(&payload)
+	if err != nil {
+		log.Error("error when parse json body", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, nhttp.BadRequestError.Wrap(err)
+	}
+
+	// Validate payload
+	err = validate.PostVerifyOTPResetPassword(&payload)
+	if err != nil {
+		log.Error("Bad request validate payload", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, err
+	}
+
+	// Init service
+	svc := c.NewService(ctx)
+	defer svc.Close()
+
+	// Call service
+	resp, err := svc.VerifyOTPResetPassword(payload)
+	if err != nil {
+		log.Error("error found when call service", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, err
+	}
+
+	return nhttp.Success().SetMessage(resp), nil
+}

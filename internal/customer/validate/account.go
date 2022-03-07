@@ -234,3 +234,16 @@ func PostSendOTPPassword(p *dto.OTPResetPasswordPayload) error {
 
 	return nil
 }
+
+func PostVerifyOTPResetPassword(p *dto.VerifyOTPResetPasswordPayload) error {
+	err := validation.ValidateStruct(p,
+		validation.Field(&p.Email, validation.Required),
+		validation.Field(&p.OTP, validation.Required),
+	)
+
+	if err != nil {
+		return nhttp.BadRequestError.Trace(errx.Source(err))
+	}
+
+	return nil
+}

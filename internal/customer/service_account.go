@@ -508,3 +508,25 @@ func (s *Service) SendOTPResetPassword(payload dto.OTPResetPasswordPayload) (str
 
 	return "Resend OTP Successfully", nil
 }
+
+func (s *Service) VerifyOTPResetPassword(payload dto.VerifyOTPResetPasswordPayload) (string, error) {
+	// Send OTP To Phone Number
+	resp, err := s.VerifyOTP(dto.VerifyOTPRequest{
+		PhoneNumber: payload.Email,
+		RequestType: constant.RequestResetPassword,
+		Token:       payload.OTP,
+	})
+	if err != nil {
+		s.log.Error("error found when call send OTP service", nlogger.Error(err), nlogger.Context(s.ctx))
+		return "", errx.Trace(err)
+	}
+
+	s.log.Debugf("Debug: verify reset password otp message %s", resp.Message)
+
+	if resp.ResponseCode != "00" {
+		s.log.Error("error rest switching otp reset pin")
+		return "", constant.InvalidOTPError.Trace()
+	}
+
+	return "Kode OTP yang dimasukan valid!", nil
+}

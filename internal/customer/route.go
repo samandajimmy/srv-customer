@@ -80,6 +80,8 @@ func setUpRoute(router *nhttp.Router, controllers *Controllers) {
 	// Management reset password
 	router.Handle(http.MethodPost, "/accounts/reset-password/resend-otp",
 		router.HandleFunc(controllers.Account.PostSendOTPResetPassword))
+	router.Handle(http.MethodPost, "/accounts/reset-password/check-otp",
+		router.HandleFunc(controllers.Account.PostVerifyOTPResetPassword))
 
 	// Static asset
 	staticDir := "/web/assets/"

@@ -398,3 +398,8 @@ type PINConfirmation struct {
 type OTPResetPasswordPayload struct {
 	Email string `json:"email"`
 }
+
+type VerifyOTPResetPasswordPayload struct {
+	Email string `json:"email"`
+	OTP   string `json:"otp"`
+}
