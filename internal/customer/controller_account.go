@@ -103,6 +103,7 @@ func (c *AccountController) GetVerifyEmail(w http.ResponseWriter, r *http.Reques
 	if err != nil {
 		log.Errorf("Invalid payload. err: %v", err)
 		c.renderError(w, 400, err)
+		return //nolint:gosimple
 	}
 
 	// Init service
@@ -113,10 +114,12 @@ func (c *AccountController) GetVerifyEmail(w http.ResponseWriter, r *http.Reques
 	resp, err := svc.VerifyEmailCustomer(payload)
 	if err != nil {
 		log.Errorf("Error when processing service. err: %v", err)
+		return //nolint:gosimple
 	}
 
 	// Render response
 	c.renderSuccess(w, resp)
+	return //nolint:gosimple
 }
 
 func (c *AccountController) renderError(w http.ResponseWriter, statusCode int, err error) {
