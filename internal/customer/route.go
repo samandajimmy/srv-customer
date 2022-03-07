@@ -59,6 +59,9 @@ func setUpRoute(router *nhttp.Router, controllers *Controllers) {
 	router.Handle(http.MethodPost, "/accounts/pin/validation",
 		router.HandleFunc(controllers.Account.HandleAuthUser),
 		router.HandleFunc(controllers.Account.PostValidatePin))
+	router.Handle(http.MethodPost, "/accounts/pin/check",
+		router.HandleFunc(controllers.Account.HandleAuthUser),
+		router.HandleFunc(controllers.Account.PostCheckPin))
 
 	// Static asset
 	staticDir := "/web/assets/"

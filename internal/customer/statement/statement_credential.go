@@ -2,6 +2,7 @@ package statement
 
 import (
 	"github.com/jmoiron/sqlx"
+	"github.com/nbs-go/nsql/option"
 	"github.com/nbs-go/nsql/pq/query"
 	"github.com/nbs-go/nsql/schema"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/model"
@@ -17,6 +18,7 @@ type Credential struct {
 	UpdatePasswordByCustomerID  *sqlx.NamedStmt
 	DeleteByID                  *sqlx.Stmt
 	FindByPasswordAndCustomerID *sqlx.Stmt
+	IsValidPin                  *sqlx.Stmt
 }
 
 func NewCredential(db *nsql.DatabaseContext) *Credential {
@@ -48,6 +50,16 @@ func NewCredential(db *nsql.DatabaseContext) *Credential {
 		Where(query.Equal(query.Column("customerId"))).
 		Build()
 
+	isValidPin := query.Select(
+		query.GreaterThan(query.Count("id"), query.IntVar(0), option.As("isExists"))).
+		From(CredentialSchema).
+		Where(
+			query.And(
+				query.Equal(query.Column("customerId")),
+				query.Equal(query.Column("pin")),
+			)).
+		Build()
+
 	return &Credential{
 		FindByCustomerID:            db.PrepareFmtRebind(findByCustomerID),
 		FindByPasswordAndCustomerID: db.PrepareFmtRebind(findByPasswordAndCustomerID),
@@ -55,5 +67,6 @@ func NewCredential(db *nsql.DatabaseContext) *Credential {
 		Update:                      db.PrepareNamedFmtRebind(updateByCustomerID),
 		DeleteByID:                  db.PrepareFmtRebind(sb.Delete()),
 		UpdatePasswordByCustomerID:  db.PrepareNamedFmtRebind(updatePasswordByCustomerID),
+		IsValidPin:                  db.PrepareFmtRebind(isValidPin),
 	}
 }

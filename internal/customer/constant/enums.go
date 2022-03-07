@@ -94,3 +94,14 @@ const (
 	JWTSignature = jwa.HS256
 	JWTIssuer    = "https://www.pegadaian.co.id"
 )
+
+const (
+	Unblocked = 0
+	Blocked   = 1
+)
+
+const (
+	WrongPIN    = 1
+	WrongPIN2   = 2
+	MaxWrongPIN = 3
+)

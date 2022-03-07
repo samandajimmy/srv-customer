@@ -399,3 +399,44 @@ func (c *AccountController) PostValidatePin(rx *nhttp.Request) (*nhttp.Response,
 
 	return nhttp.Success().SetMessage(resp), nil
 }
+
+func (c *AccountController) PostCheckPin(rx *nhttp.Request) (*nhttp.Response, error) {
+	// Get context
+	ctx := rx.Context()
+
+	// Get user UserRefID
+	userRefID, err := getUserRefID(rx)
+	if err != nil {
+		log.Errorf("error: %v", err, nlogger.Error(err), nlogger.Context(ctx))
+		return nil, errx.Trace(err)
+	}
+
+	// Get Payload
+	var payload dto.CheckPinPayload
+	payload.UserRefID = userRefID
+	err = rx.ParseJSONBody(&payload)
+	if err != nil {
+		log.Error("error when parse json body", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, nhttp.BadRequestError.Wrap(err)
+	}
+
+	// Validate payload
+	err = validate.PostCheckPin(&payload)
+	if err != nil {
+		log.Error("Bad request validate payload", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, nhttp.BadRequestError.Trace(errx.Source(err))
+	}
+
+	// Init service
+	svc := c.NewService(ctx)
+	defer svc.Close()
+
+	// Call service
+	resp, err := svc.CheckPinUser(&payload)
+	if err != nil {
+		log.Error("error when call update service", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, err
+	}
+
+	return nhttp.Success().SetMessage(resp), nil
+}

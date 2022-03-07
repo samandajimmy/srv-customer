@@ -121,3 +121,16 @@ func PostValidatePin(p *dto.ValidatePinPayload) error {
 
 	return nil
 }
+
+func PostCheckPin(p *dto.CheckPinPayload) error {
+	err := validation.ValidateStruct(p,
+		validation.Field(&p.Pin, validation.Required, validation.Length(6, 6)),
+		validation.Field(&p.UserRefID, validation.Required),
+	)
+
+	if err != nil {
+		return nhttp.BadRequestError.Trace(errx.Source(err))
+	}
+
+	return nil
+}

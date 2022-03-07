@@ -87,3 +87,15 @@ var InvalidIncrementalPIN = b.NewError("E_PIN_1",
 var InvalidRepeatedPIN = b.NewError("E_PIN_2",
 	"PIN terlalu lemah. Hindari menggunakan angka sama seperti 111111",
 	nhttp.WithStatus(http.StatusBadRequest))
+var AccountPINIsNotActive = b.NewError("E_PIN_3",
+	"Akun anda belum aktivasi PIN",
+	nhttp.WithStatus(http.StatusForbidden))
+var AccountPINIsBlocked = b.NewError("E_PIN_4",
+	"PIN kamu terkunci, Silahkan datang ke Outlet Pegadaian terdekat untuk melakukan atur ulang PIN",
+	nhttp.WithStatus(http.StatusUnauthorized))
+var WrongPINInput1 = b.NewError("E_PIN_5",
+	"Masukkan PIN yang sesuai. Sisa 2 kesempatan sebelum PIN dikunci.",
+	nhttp.WithStatus(http.StatusUnauthorized))
+var WrongPINInput2 = b.NewError("E_PIN_6",
+	"Masukkan PIN yang sesuai. Sisa 1 kesempatan sebelum PIN dikunci.",
+	nhttp.WithStatus(http.StatusUnauthorized))

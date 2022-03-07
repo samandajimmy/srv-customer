@@ -9,3 +9,8 @@ type MetadataCredential struct {
 type ValidatePinPayload struct {
 	NewPin string `json:"new_pin"`
 }
+
+type CheckPinPayload struct {
+	Pin       string `json:"pin"`
+	UserRefID string `json:"userRefId"`
+}
