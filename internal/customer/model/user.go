@@ -145,7 +145,7 @@ func UserToCustomer(user *User) (*Customer, error) {
 		IdentityType:   nval.ParseInt64Fallback(user.JenisIdentitas, 0),
 		Profile:        ToCustomerProfile(profile),
 		ReferralCode:   user.ReferralCode,
-		Status:         user.Status.Int64,
+		Status:         constant.ControlStatus(user.Status.Int64),
 		BaseField:      baseField,
 	}
 

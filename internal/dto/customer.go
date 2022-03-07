@@ -403,3 +403,9 @@ type VerifyOTPResetPasswordPayload struct {
 	Email string `json:"email"`
 	OTP   string `json:"otp"`
 }
+
+type ResetPasswordByOTPPayload struct {
+	Email    string `json:"email"`
+	OTP      string `json:"otp"`
+	Password string `json:"password"`
+}
