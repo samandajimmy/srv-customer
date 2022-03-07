@@ -200,3 +200,25 @@ func PostCreatePin(p *dto.PostCreatePinPayload) error {
 
 	return nil
 }
+
+func PostForgetPin(p *dto.ForgetPinPayload) error {
+	err := validation.ValidateStruct(p,
+		validation.Field(&p.OTP, validation.Required),
+		validation.Field(&p.NewPIN, validation.Required, validation.Length(6, 6)),
+		validation.Field(&p.NewPINConfirmation, validation.Required, validation.Length(6, 6)),
+	)
+	if err != nil {
+		return err
+	}
+
+	// Validate pin confirmation
+	err = PINConfirmation(&dto.PINConfirmation{
+		NewPIN:             p.NewPIN,
+		NewPINConfirmation: p.NewPINConfirmation,
+	})
+	if err != nil {
+		return nhttp.BadRequestError.Trace(errx.Source(err))
+	}
+
+	return nil
+}

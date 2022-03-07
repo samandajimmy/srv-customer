@@ -54,3 +54,10 @@ type RestSwitchingOTPForgetPin struct {
 	RequestType string `json:"requestType"`
 	OTP         string `json:"otp"`
 }
+
+type ForgetPinPayload struct {
+	OTP                string `json:"otp"`
+	NewPIN             string `json:"new_pin"`
+	NewPINConfirmation string `json:"new_pin_confirmation"`
+	UserRefID          string `json:"userRefId"`
+}

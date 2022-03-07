@@ -74,6 +74,10 @@ func setUpRoute(router *nhttp.Router, controllers *Controllers) {
 	router.Handle(http.MethodPost, "/accounts/pin/otp-forget",
 		router.HandleFunc(controllers.Account.HandleAuthUser),
 		router.HandleFunc(controllers.Account.PostOTPForgetPin))
+	router.Handle(http.MethodPost, "/accounts/pin/forget",
+		router.HandleFunc(controllers.Account.HandleAuthUser),
+		router.HandleFunc(controllers.Account.PostForgetPin))
+
 	// Static asset
 	staticDir := "/web/assets/"
 	router.PathPrefix(staticDir).Handler(http.StripPrefix(staticDir, http.FileServer(http.Dir("."+staticDir))))

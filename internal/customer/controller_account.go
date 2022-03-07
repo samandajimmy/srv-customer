@@ -604,3 +604,44 @@ func (c *AccountController) PostOTPForgetPin(rx *nhttp.Request) (*nhttp.Response
 
 	return nhttp.Success().SetMessage(resp), nil
 }
+
+func (c *AccountController) PostForgetPin(rx *nhttp.Request) (*nhttp.Response, error) {
+	// Get context
+	ctx := rx.Context()
+
+	// Get user UserRefID
+	userRefID, err := getUserRefID(rx)
+	if err != nil {
+		log.Error("error when parse json body", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, nhttp.BadRequestError.Wrap(err)
+	}
+
+	// Get Payload
+	var payload dto.ForgetPinPayload
+	payload.UserRefID = userRefID
+	err = rx.ParseJSONBody(&payload)
+	if err != nil {
+		log.Error("error when parse json body", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, nhttp.BadRequestError.Wrap(err)
+	}
+
+	// Validate payload
+	err = validate.PostForgetPin(&payload)
+	if err != nil {
+		log.Error("Bad request validate payload", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, err
+	}
+
+	// Init service
+	svc := c.NewService(ctx)
+	defer svc.Close()
+
+	// Call service
+	resp, err := svc.ForgetPin(&payload)
+	if err != nil {
+		log.Errorf("error found when call service", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, err
+	}
+
+	return nhttp.Success().SetMessage(resp), nil
+}
