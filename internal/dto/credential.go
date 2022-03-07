@@ -5,3 +5,7 @@ type MetadataCredential struct {
 	PinCreatedAt string `json:"pinCreatedAt"`
 	PinBlockedAt string `json:"pinBlockedAt"`
 }
+
+type ValidatePinPayload struct {
+	NewPin string `json:"new_pin"`
+}

@@ -366,3 +366,36 @@ func (c *AccountController) PutUpdatePassword(rx *nhttp.Request) (*nhttp.Respons
 
 	return nhttp.Success().SetMessage("Password diperbarui"), nil
 }
+
+func (c *AccountController) PostValidatePin(rx *nhttp.Request) (*nhttp.Response, error) {
+	// Get context
+	ctx := rx.Context()
+
+	// Get Payload
+	var payload dto.ValidatePinPayload
+	err := rx.ParseJSONBody(&payload)
+	if err != nil {
+		log.Error("error when parse json body", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, nhttp.BadRequestError.Wrap(err)
+	}
+
+	// Validate payload
+	err = validate.PostValidatePin(&payload)
+	if err != nil {
+		log.Error("Bad request validate payload", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, nhttp.BadRequestError.Trace(errx.Source(err))
+	}
+
+	// Init service
+	svc := c.NewService(ctx)
+	defer svc.Close()
+
+	// Call service
+	resp, err := svc.ValidatePin(&payload)
+	if err != nil {
+		log.Error("error when call update service", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, err
+	}
+
+	return nhttp.Success().SetMessage(resp), nil
+}

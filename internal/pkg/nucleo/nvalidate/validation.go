@@ -26,6 +26,9 @@ func customMessage() {
 	// required
 	validation.ErrRequired = validation.ErrRequired.SetMessage("harus diisi")
 
+	// length
+	validation.ErrLengthInvalid = validation.ErrLengthInvalid.SetMessage("panjang pin harus berjumlah {{.min}} digit")
+
 	// email
 	is.ErrEmail = is.ErrEmail.SetMessage("alamat e-mail tidak valid")
 	is.Email = validation.NewStringRuleWithError(govalidator.IsExistingEmail, is.ErrEmail)

@@ -109,3 +109,15 @@ func PutUpdatePassword(p *dto.UpdatePasswordPayload) error {
 
 	return nil
 }
+
+func PostValidatePin(p *dto.ValidatePinPayload) error {
+	err := validation.ValidateStruct(p,
+		validation.Field(&p.NewPin, validation.Required, validation.Length(6, 6)),
+	)
+
+	if err != nil {
+		return nhttp.BadRequestError.Trace(errx.Source(err))
+	}
+
+	return nil
+}
