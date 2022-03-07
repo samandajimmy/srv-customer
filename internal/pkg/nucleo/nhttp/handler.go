@@ -1,8 +1,8 @@
 package nhttp
 
 import (
+	"fmt"
 	"net/http"
-	"time"
 )
 
 // HandlerFunc represents function that will be called
@@ -32,11 +32,27 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Prepare extended request
 	rx := NewRequest(r)
 
+	// Init recovery handler
+	panicked := true
+	defer func() {
+		if result := recover(); result != nil || panicked {
+			log.Errorf("Panic => %v", result)
+
+			var err error
+			if rErr, ok := result.(error); ok {
+				err = rErr
+			} else {
+				err = InternalError.Wrap(fmt.Errorf("unknwon result received from panic: %v", result))
+			}
+
+			httpStatus := h.contentWriter.WriteError(w, err)
+			rx.SetContextValue(HTTPStatusRespContextKey, httpStatus)
+		}
+	}()
+
 	// Call handler function
 	result, err := h.fn(&rx)
-
-	// Determine result
-	var httpStatus int
+	panicked = false
 
 	// If an error occurred, then write Error
 	if err != nil {
@@ -91,26 +107,4 @@ func HandleErrorNotFound(_ *Request) (*Response, error) {
 
 func HandleErrorMethodNotAllowed(_ *Request) (*Response, error) {
 	return nil, MethodNotAllowedError
-}
-
-func NewAppStatusHandler(startedAt time.Time, version string, args ...ContentWriter) http.Handler {
-	// Get content writer from args
-	var cw ContentWriter
-	if len(args) == 0 {
-		// If content writer is not set, set to JSON Content Writer
-		cw = new(JSONContentWriter)
-	} else {
-		cw = args[0]
-	}
-
-	// Create handler
-	return NewHandler(func(r *Request) (*Response, error) {
-		// Compose response
-		resp := OK()
-		resp.Data = map[string]string{
-			"uptime":  time.Since(startedAt).String(),
-			"version": version,
-		}
-		return resp, nil
-	}).SetWriter(cw)
 }
