@@ -147,7 +147,10 @@ func PostUpdatePin(p *dto.UpdatePinPayload) error {
 	}
 
 	// Validate pin confirmation
-	err = PINConfirmation(p)
+	err = PINConfirmation(&dto.PINConfirmation{
+		NewPIN:             p.NewPIN,
+		NewPINConfirmation: p.NewPINConfirmation,
+	})
 	if err != nil {
 		return nhttp.BadRequestError.Trace(errx.Source(err))
 	}
@@ -155,7 +158,7 @@ func PostUpdatePin(p *dto.UpdatePinPayload) error {
 	return nil
 }
 
-func PINConfirmation(p *dto.UpdatePinPayload) error {
+func PINConfirmation(p *dto.PINConfirmation) error {
 	if p.NewPIN != p.NewPINConfirmation {
 		return fmt.Errorf("new_pin: Masukan PIN yang sama dengan sebelumnya")
 	}
@@ -168,6 +171,29 @@ func CheckPostOTPPinCreate(p *dto.CheckOTPPinPayload) error {
 		validation.Field(&p.OTP, validation.Required),
 		validation.Field(&p.UserRefID, validation.Required),
 	)
+	if err != nil {
+		return nhttp.BadRequestError.Trace(errx.Source(err))
+	}
+
+	return nil
+}
+
+func PostCreatePin(p *dto.PostCreatePinPayload) error {
+	err := validation.ValidateStruct(p,
+		validation.Field(&p.UserRefID, validation.Required),
+		validation.Field(&p.NewPIN, validation.Required, validation.Length(6, 6)),
+		validation.Field(&p.NewPINConfirmation, validation.Required, validation.Length(6, 6)),
+		validation.Field(&p.OTP, validation.Required),
+	)
+	if err != nil {
+		return nhttp.BadRequestError.Trace(errx.Source(err))
+	}
+
+	// Validate pin confirmation
+	err = PINConfirmation(&dto.PINConfirmation{
+		NewPIN:             p.NewPIN,
+		NewPINConfirmation: p.NewPINConfirmation,
+	})
 	if err != nil {
 		return nhttp.BadRequestError.Trace(errx.Source(err))
 	}

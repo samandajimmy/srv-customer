@@ -59,7 +59,7 @@ type User struct {
 	LastUpdateLinkCif         sql.NullTime   `db:"last_update_link_cif"`
 	LastUpdateUnlinkCif       sql.NullTime   `db:"last_update_unlink_cif"`
 	LastUpdatePin             sql.NullTime   `db:"last_update_pin"`
-	AktifasiTransFinansial    int64          `db:"aktifasiTransFinansial"`
+	AktifasiTransFinansial    constant.ControlStatus          `db:"aktifasiTransFinansial"`
 	TanggalAktifasiFinansial  sql.NullTime   `db:"tanggal_aktifasi_finansial"`
 	IsDukcapilVerified        sql.NullInt64  `db:"is_dukcapil_verified"`
 	IsOpenTe                  sql.NullInt64  `db:"is_open_te"`

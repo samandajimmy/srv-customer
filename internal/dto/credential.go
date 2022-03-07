@@ -38,3 +38,10 @@ type RestSwitchingOTPPinCreate struct {
 	OTP  string `json:"otp"`
 	NoHp string `json:"no_hp"`
 }
+
+type PostCreatePinPayload struct {
+	NewPIN             string `json:"new_pin"`
+	NewPINConfirmation string `json:"new_pin_confirmation"`
+	UserRefID          string `json:"userRefId"`
+	OTP                string `json:"otp"`
+}

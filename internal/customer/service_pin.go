@@ -270,3 +270,79 @@ func (s *Service) CheckOTPPinCreate(payload *dto.CheckOTPPinPayload) (string, er
 
 	return "OTP yang dimasukan valid!", nil
 }
+
+func (s *Service) CreatePinUser(payload *dto.PostCreatePinPayload) (string, error) {
+	// Get user by ref id
+	customer, err := s.repo.FindCustomerByUserRefID(payload.UserRefID)
+	if err != nil {
+		s.log.Error("error found when get customer repo", nlogger.Error(err), nlogger.Context(s.ctx))
+		if errors.Is(err, sql.ErrNoRows) {
+			return "", errors.New("user not found")
+		}
+		return "", err
+	}
+
+	// Check OTP
+	msg, err := s.CheckOTPPinCreate(&dto.CheckOTPPinPayload{
+		OTP:       payload.OTP,
+		UserRefID: payload.UserRefID,
+	})
+	if err != nil {
+		return msg, err
+	}
+
+	// Unblock pin user
+	err = s.unblockPINUser(customer)
+	if err != nil {
+		return "", err
+	}
+
+	// Update pin
+	_, _, err = s.UpdatePin(&dto.UpdatePinPayload{
+		UserRefID: customer.UserRefID.String,
+		NewPIN:    payload.NewPIN,
+		CheckPIN:  false,
+	})
+	if err != nil {
+		s.log.Error("error found when update customer pin", nlogger.Error(err), nlogger.Context(s.ctx))
+		return "", err
+	}
+
+	// Aktivasi finansial
+	err = s.activateFinancialStatus(customer)
+	if err != nil {
+		return "", err
+	}
+
+	// TODO: Audit log aktifasi finansial
+
+	return "PIN sudah valid", nil
+}
+
+func (s *Service) activateFinancialStatus(customer *model.Customer) error {
+	// Get verification
+	verification, err := s.repo.FindVerificationByCustomerID(customer.ID)
+	if err != nil {
+		s.log.Error("error found when get verification from repo", nlogger.Error(err), nlogger.Context(s.ctx))
+		if errors.Is(err, sql.ErrNoRows) {
+			return errors.New("verification not found")
+		}
+		return err
+	}
+
+	// Update financial transaction status
+	verification.FinancialTransactionStatus = constant.Enabled
+	verification.FinancialTransactionActivatedAt = sql.NullTime{
+		Valid: true,
+		Time:  time.Now(),
+	}
+	verification.UpdatedAt = time.Now()
+	verification.Version++
+
+	err = s.repo.UpdateVerification(verification)
+	if err != nil {
+		s.log.Error("error found when update verification", nlogger.Error(err), nlogger.Context(s.ctx))
+		return err
+	}
+	return nil
+}
