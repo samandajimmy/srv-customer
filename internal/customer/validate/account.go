@@ -166,7 +166,7 @@ func PINConfirmation(p *dto.PINConfirmation) error {
 	return nil
 }
 
-func CheckPostOTPPinCreate(p *dto.CheckOTPPinPayload) error {
+func CheckPostOTP(p *dto.CheckOTPPinPayload) error {
 	err := validation.ValidateStruct(p,
 		validation.Field(&p.OTP, validation.Required),
 		validation.Field(&p.UserRefID, validation.Required),

@@ -28,3 +28,29 @@ func (s *Service) customerActivation(payload *dto.RestSwitchingOTPPinCreate) (*R
 
 	return data, nil
 }
+
+// Endpoint POST /otp/validate
+func (s *Service) otpValidate(payload *dto.RestSwitchingOTPForgetPin) (*ResponseSwitchingSuccess, error) {
+	// Set payload
+	reqBody := map[string]interface{}{
+		"cif":         payload.Cif,
+		"flag":        payload.Flag,
+		"noHp":        payload.NoHp,
+		"norek":       payload.NoHp,
+		"requestType": payload.RequestType,
+		"token":       payload.OTP,
+	}
+
+	sp := PostDataPayload{
+		Url:  "/otp/validate",
+		Data: reqBody,
+	}
+
+	data, err := s.RestSwitchingPostData(sp)
+	if err != nil {
+		s.log.Error("error found when get reset pin otp validate", nlogger.Error(err), nlogger.Context(s.ctx))
+		return nil, errx.Trace(err)
+	}
+
+	return data, nil
+}

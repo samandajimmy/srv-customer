@@ -45,3 +45,12 @@ type PostCreatePinPayload struct {
 	UserRefID          string `json:"userRefId"`
 	OTP                string `json:"otp"`
 }
+
+type RestSwitchingOTPForgetPin struct {
+	Cif         string `json:"cif"`
+	Flag        string `json:"flag"`
+	NoHp        string `json:"noHp"`
+	NoRek       string `json:"noRek"`
+	RequestType string `json:"requestType"`
+	OTP         string `json:"otp"`
+}

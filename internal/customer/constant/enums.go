@@ -74,6 +74,7 @@ const (
 	RequestTypeRegister     = "register"
 	RequestTypeBlockOneHour = "block-login-hour"
 	RequestTypeBlockOneDay  = "block-login-day"
+	RequestTypePinReset     = "pin-reset-pds"
 )
 
 const (
