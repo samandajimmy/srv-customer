@@ -146,7 +146,7 @@ func (s *Service) unblockPINUser(customer *model.Customer) error {
 	if err != nil {
 		s.log.Error("error found when get credential", nlogger.Error(err), nlogger.Context(s.ctx))
 		if errors.Is(err, sql.ErrNoRows) {
-			return errors.New("credential not found")
+			return constant.ResourceNotFoundError
 		}
 		return err
 	}
@@ -205,7 +205,7 @@ func (s *Service) handleUpdatePin(userRefID string, newPin string) error {
 	if err != nil {
 		s.log.Error("error found when get customer repo", nlogger.Error(err), nlogger.Context(s.ctx))
 		if errors.Is(err, sql.ErrNoRows) {
-			return errors.New("user not found")
+			return constant.ResourceNotFoundError
 		}
 		return err
 	}
@@ -244,7 +244,7 @@ func (s *Service) CheckOTPPinCreate(payload *dto.CheckOTPPinPayload) (string, er
 	if err != nil {
 		s.log.Error("error found when get customer repo", nlogger.Error(err), nlogger.Context(s.ctx))
 		if errors.Is(err, sql.ErrNoRows) {
-			return "", errors.New("user not found")
+			return "", constant.ResourceNotFoundError
 		}
 		return "", err
 	}
@@ -277,7 +277,7 @@ func (s *Service) CreatePinUser(payload *dto.PostCreatePinPayload) (string, erro
 	if err != nil {
 		s.log.Error("error found when get customer repo", nlogger.Error(err), nlogger.Context(s.ctx))
 		if errors.Is(err, sql.ErrNoRows) {
-			return "", errors.New("user not found")
+			return "", constant.ResourceNotFoundError
 		}
 		return "", err
 	}
@@ -325,7 +325,7 @@ func (s *Service) activateFinancialStatus(customer *model.Customer) error {
 	if err != nil {
 		s.log.Error("error found when get verification from repo", nlogger.Error(err), nlogger.Context(s.ctx))
 		if errors.Is(err, sql.ErrNoRows) {
-			return errors.New("verification not found")
+			return constant.ResourceNotFoundError
 		}
 		return err
 	}
@@ -345,4 +345,40 @@ func (s *Service) activateFinancialStatus(customer *model.Customer) error {
 		return err
 	}
 	return nil
+}
+
+func (s *Service) CheckOTPForgetPin(payload *dto.CheckOTPPinPayload) (string, error) { // Get customer id
+	customer, err := s.repo.FindCustomerByUserRefID(payload.UserRefID)
+	if err != nil {
+		s.log.Error("error found when get customer repo", nlogger.Error(err), nlogger.Context(s.ctx))
+		if errors.Is(err, sql.ErrNoRows) {
+			return "", constant.ResourceNotFoundError
+		}
+		return "", err
+	}
+
+	// Set payload
+	payloadSwitching := &dto.RestSwitchingOTPForgetPin{
+		Cif:         customer.Cif,
+		Flag:        "K",
+		NoHp:        customer.Phone,
+		NoRek:       customer.Phone,
+		RequestType: constant.RequestTypePinReset,
+		OTP:         payload.OTP,
+	}
+
+	// Rest switching customer
+	switchingResponse, err := s.otpValidate(payloadSwitching)
+	if err != nil {
+		s.log.Error("error found when get reset pin otp validate", nlogger.Error(err), nlogger.Context(s.ctx))
+		return "", errx.Trace(err)
+	}
+
+	// Get from cache when switching response is not success
+	if switchingResponse.ResponseCode != "00" {
+		s.log.Error("error rest switching otp reset pin", nlogger.Context(s.ctx))
+		return "", constant.IncorrectOTPError
+	}
+
+	return "OTP yang dimasukan valid!", nil
 }
