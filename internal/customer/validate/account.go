@@ -162,3 +162,15 @@ func PINConfirmation(p *dto.UpdatePinPayload) error {
 
 	return nil
 }
+
+func CheckPostOTPPinCreate(p *dto.CheckOTPPinPayload) error {
+	err := validation.ValidateStruct(p,
+		validation.Field(&p.OTP, validation.Required),
+		validation.Field(&p.UserRefID, validation.Required),
+	)
+	if err != nil {
+		return nhttp.BadRequestError.Trace(errx.Source(err))
+	}
+
+	return nil
+}

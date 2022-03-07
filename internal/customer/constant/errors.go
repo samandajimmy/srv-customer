@@ -72,7 +72,7 @@ var EmailHasBeenRegisteredError = b.NewError("E_REG_2", "Email sudah terdaftar",
 
 // OTP Errors
 
-var IncorrectOTPError = b.NewError("E_OTP_1", "incorrect otp",
+var IncorrectOTPError = b.NewError("E_OTP_1", "OTP yang dimasukan tidak valid",
 	nhttp.WithStatus(http.StatusBadRequest))
 var OTPReachResendLimitError = b.NewError("E_OTP_3", "Mohon tunggu 300 detik lagi",
 	nhttp.WithStatus(http.StatusBadRequest))

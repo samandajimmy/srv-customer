@@ -27,3 +27,14 @@ type UpdatePinResult struct {
 	Title string `json:"title"`
 	Text  string `json:"text"`
 }
+
+type CheckOTPPinPayload struct {
+	OTP       string `json:"otp"`
+	UserRefID string `json:"userRefId"`
+}
+
+type RestSwitchingOTPPinCreate struct {
+	Cif  string `json:"cif"`
+	OTP  string `json:"otp"`
+	NoHp string `json:"no_hp"`
+}

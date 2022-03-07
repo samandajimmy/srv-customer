@@ -481,3 +481,44 @@ func (c *AccountController) PostUpdatePin(rx *nhttp.Request) (*nhttp.Response, e
 
 	return nhttp.Success().SetData(resp).SetMessage(message), nil
 }
+
+func (c *AccountController) PostCheckOTPPinCreate(rx *nhttp.Request) (*nhttp.Response, error) {
+	// Get context
+	ctx := rx.Context()
+
+	// Get user UserRefID
+	userRefID, err := getUserRefID(rx)
+	if err != nil {
+		log.Errorf("error: %v", err, nlogger.Error(err), nlogger.Context(ctx))
+		return nil, errx.Trace(err)
+	}
+
+	// Get Payload
+	var payload dto.CheckOTPPinPayload
+	payload.UserRefID = userRefID
+	err = rx.ParseJSONBody(&payload)
+	if err != nil {
+		log.Error("error when parse json body", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, nhttp.BadRequestError.Wrap(err)
+	}
+
+	// Validate payload
+	err = validate.CheckPostOTPPinCreate(&payload)
+	if err != nil {
+		log.Error("Bad request validate payload", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, err
+	}
+
+	// Init service
+	svc := c.NewService(ctx)
+	defer svc.Close()
+
+	// Call service
+	resp, err := svc.CheckOTPPinCreate(&payload)
+	if err != nil {
+		log.Errorf("error found when call service", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, err
+	}
+
+	return nhttp.Success().SetMessage(resp), nil
+}

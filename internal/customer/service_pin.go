@@ -237,3 +237,36 @@ func (s *Service) handleUpdatePin(userRefID string, newPin string) error {
 
 	return nil
 }
+
+func (s *Service) CheckOTPPinCreate(payload *dto.CheckOTPPinPayload) (string, error) {
+	// Get customer id
+	customer, err := s.repo.FindCustomerByUserRefID(payload.UserRefID)
+	if err != nil {
+		s.log.Error("error found when get customer repo", nlogger.Error(err), nlogger.Context(s.ctx))
+		if errors.Is(err, sql.ErrNoRows) {
+			return "", errors.New("user not found")
+		}
+		return "", err
+	}
+
+	// Set payload
+	payloadSwitching := &dto.RestSwitchingOTPPinCreate{
+		Cif:  customer.Cif,
+		OTP:  payload.OTP,
+		NoHp: customer.Phone,
+	}
+
+	// Rest switching customer
+	switchingResponse, err := s.customerActivation(payloadSwitching)
+	if err != nil {
+		s.log.Error("error found when get otp pin create", nlogger.Error(err), nlogger.Context(s.ctx))
+		return "", errx.Trace(err)
+	}
+
+	// Get from cache when switching response is not success
+	if switchingResponse.ResponseCode != "00" {
+		return "", constant.IncorrectOTPError
+	}
+
+	return "OTP yang dimasukan valid!", nil
+}
