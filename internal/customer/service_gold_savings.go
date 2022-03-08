@@ -76,11 +76,7 @@ func (s *Service) getListAccountNumber(cif string, userRefId string) (*dto.GoldS
 
 	// Get from cache when switching response is not success
 	if switchingResponse.ResponseCode != "00" {
-		accountSaving, err = s.CacheGetGoldSavings(customer.Cif)
-		if err != nil {
-			return nil, errx.Trace(err)
-		}
-		return accountSaving, nil
+		return s.CacheGetGoldSavings(customer.Cif)
 	}
 
 	// Marshal response to account saving
@@ -123,57 +119,59 @@ func (s *Service) getListAccountNumber(cif string, userRefId string) (*dto.GoldS
 }
 
 func (s *Service) UpdateIsOpenGoldSavings(fd *model.FinancialData, as *dto.GoldSavingVO, c *model.Customer) error {
-	// Update is open te
-	if as != nil {
-		if len(as.ListTabungan) > 0 {
-			fd.GoldSavingStatus = 1
-		} else {
-			fd.GoldSavingStatus = 0
-		}
+	if as == nil {
+		return nil
+	}
+	// Set default status
+	fd.GoldSavingStatus = 0
 
-		// Update financial data to repo
-		err := s.repo.UpdateGoldSavingStatus(fd)
-		if err != nil {
-			s.log.Error("error found when update gold saving status", nlogger.Error(err), nlogger.Context(s.ctx))
-		}
+	if len(as.ListTabungan) > 0 {
+		fd.GoldSavingStatus = 1
+	}
 
-		// Update referral code
-		err = s.updateReferralCode(c, fd)
-		if err != nil {
-			return err
-		}
+	// Update financial data to repo
+	err := s.repo.UpdateGoldSavingStatus(fd)
+	if err != nil {
+		s.log.Error("error found when update gold saving status", nlogger.Error(err), nlogger.Context(s.ctx))
+	}
+
+	// Update referral code
+	err = s.updateReferralCode(c)
+	if err != nil {
+		return errx.Trace(err)
 	}
 
 	return nil
 }
 
-func (s *Service) updateReferralCode(customer *model.Customer, financialData *model.FinancialData) error {
-	// Set Prefix Referral code
+func (s *Service) updateReferralCode(customer *model.Customer) error {
+	if customer.ReferralCode != "" {
+		return nil
+	}
+
+	// Set prefix referral code
 	prefixReferralCode := "PDS"
-
-	if customer.ReferralCode == "" && financialData.GoldSavingStatus == 1 {
-		var newReferralCode string
-
-		for {
-			newReferralCode = generateReferralCode(prefixReferralCode)
-			_, err := s.repo.ReferralCodeExists(newReferralCode)
-			if err != nil && !errors.Is(err, sql.ErrNoRows) {
-				s.log.Error("error found when check referral code repo", nlogger.Error(err), nlogger.Context(s.ctx))
-				return errx.Trace(err)
-			}
-
-			if errors.Is(err, sql.ErrNoRows) {
-				break
-			}
+	// Init referral code
+	var newReferralCode string
+	for {
+		newReferralCode = generateReferralCode(prefixReferralCode)
+		_, err := s.repo.ReferralCodeExists(newReferralCode)
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+			s.log.Error("error found when check referral code repo", nlogger.Error(err), nlogger.Context(s.ctx))
+			return errx.Trace(err)
 		}
 
-		// Update referral code customer repo
-		customer.ReferralCode = newReferralCode
-		err := s.repo.UpdateCustomerByCIF(customer, customer.Cif)
-		if err != nil {
-			s.log.Error("error found when update customer repo", nlogger.Error(err), nlogger.Context(s.ctx))
-			return err
+		if errors.Is(err, sql.ErrNoRows) {
+			break
 		}
+	}
+
+	// Update referral code customer repo
+	customer.ReferralCode = newReferralCode
+	err := s.repo.UpdateCustomerByCIF(customer, customer.Cif)
+	if err != nil {
+		s.log.Error("error found when update customer repo", nlogger.Error(err), nlogger.Context(s.ctx))
+		return errx.Trace(err)
 	}
 
 	return nil
