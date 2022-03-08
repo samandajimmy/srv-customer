@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"github.com/nbs-go/errx"
+	"github.com/nbs-go/nlogger/v2"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/constant"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/model"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nsql"
@@ -63,23 +64,18 @@ func (rc *RepositoryContext) UpdateVerificationByCustomerID(row *model.Verificat
 }
 
 func (rc *RepositoryContext) InsertOrUpdateVerification(row *model.Verification) error {
-	// find by customer id
 	verification, err := rc.FindVerificationByCustomerID(row.CustomerID)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return errx.Trace(err)
 	}
 
-	if err != nil && errors.Is(err, sql.ErrNoRows) {
-		err = rc.InsertVerification(row)
-		if err != nil {
-			return errx.Trace(err)
-		}
-
-		return nil
+	if !errors.Is(err, sql.ErrNoRows) {
+		return rc.UpdateVerification(verification)
 	}
 
-	err = rc.UpdateVerification(verification)
+	err = rc.InsertVerification(row)
 	if err != nil {
+		rc.log.Error("cannot create verification", nlogger.Error(err), nlogger.Context(rc.ctx))
 		return errx.Trace(err)
 	}
 

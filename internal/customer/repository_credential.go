@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"github.com/nbs-go/errx"
+	"github.com/nbs-go/nlogger/v2"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/constant"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/model"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nsql"
@@ -46,26 +47,22 @@ func (rc *RepositoryContext) UpdateCredential(row *model.Credential) error {
 }
 
 func (rc *RepositoryContext) InsertOrUpdateCredential(row *model.Credential) error {
-	// find by customer id
 	credential, err := rc.FindCredentialByCustomerID(row.CustomerID)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return errx.Trace(err)
+	}
+
+	if !errors.Is(err, sql.ErrNoRows) {
+		return rc.UpdateCredential(credential)
+	}
+
+	err = rc.CreateCredential(row)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			credential = nil
-		}
+		rc.log.Error("cannot create credential", nlogger.Error(err), nlogger.Context(rc.ctx))
+		return errx.Trace(err)
 	}
-	if credential != nil {
-		err = rc.UpdateCredential(credential)
-		if err != nil {
-			return errx.Trace(err)
-		}
-		return nil
-	} else {
-		err = rc.CreateCredential(row)
-		if err != nil {
-			return errx.Trace(err)
-		}
-		return nil
-	}
+
+	return nil
 }
 
 func (rc *RepositoryContext) IsValidPassword(customerId int64, password string) (*model.Credential, error) {
