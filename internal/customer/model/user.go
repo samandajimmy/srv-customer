@@ -15,7 +15,7 @@ type User struct {
 	UserAiid                  int64          `db:"user_AIID"`
 	JenisIdentitas            string         `db:"jenis_identitas"`
 	NoKtp                     sql.NullString `db:"no_ktp"`
-	TanggalExpiredIdentitas   string         `db:"tanggal_expired_identitas"`
+	TanggalExpiredIdentitas   sql.NullString `db:"tanggal_expired_identitas"`
 	Cif                       string         `db:"cif"`
 	Email                     sql.NullString `db:"email"`
 	NoHp                      sql.NullString `db:"no_hp"`
