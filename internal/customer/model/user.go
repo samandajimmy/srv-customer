@@ -137,7 +137,7 @@ func UserToCustomer(user *User) (*Customer, error) {
 		UserRefID:      sql.NullString{String: nval.ParseStringFallback(user.UserAiid, "")},
 		IdentityType:   nval.ParseInt64Fallback(user.JenisIdentitas, 0),
 		Profile:        ToCustomerProfile(profile),
-		ReferralCode:   nval.ParseStringFallback(user.ReferralCode, ""),
+		ReferralCode:   user.ReferralCode,
 		Status:         user.Status.Int64,
 		BaseField:      baseField,
 	}

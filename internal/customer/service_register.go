@@ -107,19 +107,19 @@ func (s *Service) Register(payload dto.RegisterPayload) (*dto.RegisterResult, er
 			UserRefID:      sql.NullString{},
 			Cif:            "",
 			Sid:            "",
-			ReferralCode:   "",
+			ReferralCode:   sql.NullString{},
 			Profile:        model.ToCustomerProfile(profile),
 			Photos:         nil,
 			BaseField:      model.EmptyBaseField,
 		}
 
 		// Persist Customer
-		lastInsertId, errInsert := s.repo.CreateCustomer(insertCustomer)
+		lastInsertID, errInsert := s.repo.CreateCustomer(insertCustomer)
 		if errInsert != nil {
 			s.log.Errorf("error when persist customer: %s", payload.Name, nlogger.Error(errInsert), nlogger.Context(ctx))
 			return nil, errx.Trace(errInsert)
 		}
-		customerID = lastInsertId
+		customerID = lastInsertID
 		customer = insertCustomer
 		customerXID = customer.CustomerXID
 	}

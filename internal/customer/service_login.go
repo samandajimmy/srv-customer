@@ -434,7 +434,7 @@ func (s *Service) composeLoginResponse(data dto.LoginVO) (*dto.LoginResult, erro
 				AktifasiTransFinansial:    nval.ParseStringFallback(verification.FinancialTransactionStatus, ""),
 				IsDukcapilVerified:        nval.ParseStringFallback(verification.DukcapilVerifiedStatus, "0"),
 				IsOpenTe:                  nval.ParseStringFallback(financial.GoldSavingStatus, "0"),
-				ReferralCode:              customer.ReferralCode,
+				ReferralCode:              customer.ReferralCode.String,
 				GoldCardApplicationNumber: financial.GoldCardApplicationNumber,
 				GoldCardAccountNumber:     financial.GoldCardAccountNumber,
 				KodeCabang:                "", // TODO

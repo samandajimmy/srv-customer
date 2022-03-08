@@ -101,10 +101,10 @@ func (s *Service) getListAccountNumber(cif string, userRefId string) (*dto.GoldS
 	// Set primary account saving
 	accountSaving.PrimaryRekening = s.getPrimaryAccountNumber(financialData, accountSaving.ListTabungan)
 
-	// update is open TE
+	// Update is open TE
 	err = s.UpdateIsOpenGoldSavings(financialData, accountSaving, customer)
 	if err != nil {
-		s.log.Error("error found when open gold saving.", nlogger.Error(err), nlogger.Context(ctx))
+		s.log.Error("error found when open gold saving", nlogger.Error(err), nlogger.Context(ctx))
 		return nil, errx.Trace(err)
 	}
 
@@ -145,7 +145,7 @@ func (s *Service) UpdateIsOpenGoldSavings(fd *model.FinancialData, as *dto.GoldS
 }
 
 func (s *Service) updateReferralCode(customer *model.Customer) error {
-	if customer.ReferralCode != "" {
+	if customer.ReferralCode.String != "" {
 		return nil
 	}
 
@@ -167,7 +167,7 @@ func (s *Service) updateReferralCode(customer *model.Customer) error {
 	}
 
 	// Update referral code customer repo
-	customer.ReferralCode = newReferralCode
+	customer.ReferralCode = sql.NullString{String: newReferralCode, Valid: true}
 	err := s.repo.UpdateCustomerByCIF(customer, customer.Cif)
 	if err != nil {
 		s.log.Error("error found when update customer repo", nlogger.Error(err), nlogger.Context(s.ctx))

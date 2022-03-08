@@ -22,7 +22,7 @@ type Customer struct {
 	Profile        *CustomerProfile `db:"profile"`
 	Cif            string           `db:"cif"`
 	Sid            string           `db:"sid"`
-	ReferralCode   string           `db:"referralCode"`
+	ReferralCode   sql.NullString   `db:"referralCode"`
 	Status         int64            `db:"status"`
 }
 
