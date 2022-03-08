@@ -114,3 +114,7 @@ const (
 	WrongPIN2   = 2
 	MaxWrongPIN = 3
 )
+
+const (
+	MetadataMessage = "message"
+)

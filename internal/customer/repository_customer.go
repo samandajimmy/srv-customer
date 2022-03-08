@@ -176,7 +176,7 @@ func (rc *RepositoryContext) UpdateCustomerByPhone(customer *model.Customer) err
 }
 
 func (rc *RepositoryContext) UpdateCustomerByUserRefID(customer *model.Customer, userRefID string) error {
-	result, err := rc.stmt.Customer.UpdateByPhone.ExecContext(rc.ctx, &model.UpdateCustomerByUserRefID{
+	result, err := rc.stmt.Customer.UpdateByUserRefID.ExecContext(rc.ctx, &model.UpdateCustomerByUserRefID{
 		Customer:  customer,
 		UserRefID: userRefID,
 	})
@@ -217,6 +217,15 @@ func (rc *RepositoryContext) FindCombineCustomerDataByUserRefID(userRefID string
 func (rc *RepositoryContext) EmailIsExists(email string) (bool, error) {
 	var isExists bool
 	err := rc.stmt.Customer.EmailIsExists.GetContext(rc.ctx, &isExists, email)
+	if err != nil {
+		return false, err
+	}
+	return isExists, nil
+}
+
+func (rc *RepositoryContext) PhoneNumberIsExists(phone string) (bool, error) {
+	var isExists bool
+	err := rc.stmt.Customer.PhoneNumberIsExists.GetContext(rc.ctx, &isExists, phone)
 	if err != nil {
 		return false, err
 	}

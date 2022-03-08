@@ -25,6 +25,7 @@ type Customer struct {
 	ReferralCodeExist  *sqlx.Stmt
 	UpdateByCIF        *sqlx.NamedStmt
 	EmailIsExists      *sqlx.Stmt
+	PhoneNumberIsExists *sqlx.Stmt
 }
 
 func NewCustomer(db *nsql.DatabaseContext) *Customer {
@@ -102,6 +103,12 @@ func NewCustomer(db *nsql.DatabaseContext) *Customer {
 		Where(query.Equal(query.Column("email"))).
 		Build()
 
+	phoneNumberIsExist := query.
+		Select(query.GreaterThan(query.Count("id"), query.IntVar(0), option.As("isExists"))).
+		Where(query.Equal(query.Column("phone"))).
+		From(CustomerSchema).
+		Build()
+
 	return &Customer{
 		Insert:             db.PrepareNamedFmtRebind(insert),
 		FindByID:           db.PrepareFmtRebind(findByID),
@@ -115,5 +122,6 @@ func NewCustomer(db *nsql.DatabaseContext) *Customer {
 		UpdateByUserRefID:  db.PrepareNamedFmtRebind(updateByUserRefID),
 		UpdateByPhone:      db.PrepareNamedFmtRebind(updateByPhone),
 		EmailIsExists:      db.PrepareFmtRebind(emailIsExists),
+		PhoneNumberIsExists: db.PrepareFmtRebind(phoneNumberIsExist),
 	}
 }

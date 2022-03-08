@@ -409,3 +409,25 @@ type ResetPasswordByOTPPayload struct {
 	OTP      string `json:"otp"`
 	Password string `json:"password"`
 }
+
+type ChangePhoneNumberPayload struct {
+	UserRefID          string `json:"userRefID"`
+	MaidenName         string `json:"maidenName"`
+	FullName           string `json:"fullName"`
+	DateOfBirth        string `json:"dateOfBirth"`
+	CurrentPhoneNumber string `json:"currentPhoneNumber"`
+	NewPhoneNumber     string `json:"newPhoneNumber"`
+}
+
+type ChangePhoneNumberResult struct {
+	PhoneNumber string `json:"currentPhoneNumber"`
+}
+
+type ChangePhoneNumberRequestCore struct {
+	CurrentPhoneNumber string
+	NewPhoneNumber     string
+	FullName           string
+	MaidenName         string
+	Cif                string
+	DateOfBirth        string
+}

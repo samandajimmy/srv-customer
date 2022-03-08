@@ -111,6 +111,10 @@ func setUpRoute(router *nhttp.Router, controllers *Controllers) {
 	router.Handle(http.MethodPost, "/accounts/change-email",
 		router.HandleFunc(controllers.Account.PostChangeEmail))
 
+	// Update no hp
+	router.Handle(http.MethodPost, "/accounts/change-phone",
+		router.HandleFunc(controllers.Account.PostChangePhoneNumber))
+
 	// Static asset
 	staticDir := "/web/assets/"
 	router.PathPrefix(staticDir).Handler(http.StripPrefix(staticDir, http.FileServer(http.Dir("."+staticDir))))

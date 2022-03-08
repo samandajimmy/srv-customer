@@ -13,6 +13,7 @@ import (
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/dto"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nhttp"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nval"
+	"strings"
 	"time"
 )
 
@@ -69,6 +70,135 @@ func (s *Service) ValidateTokenAndRetrieveUserRefID(tokenString string) (string,
 	userRefID := nval.ParseStringFallback(tokenID, "")
 
 	return userRefID, nil
+
+}
+
+func (s *Service) UpdatePhoneNumber(payload dto.ChangePhoneNumberPayload) (*dto.ChangePhoneNumberResult, error) {
+	// Check if phone number exist // TODO: Check token if admin
+	isExists, err := s.repo.PhoneNumberIsExists(payload.NewPhoneNumber)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		s.log.Error("error when check email is exists", nlogger.Error(err))
+		return nil, errx.Trace(err)
+	}
+
+	if isExists {
+		s.log.Debug("Phone number has been used")
+		return nil, constant.UsedPhoneNumberError.Trace()
+	}
+
+	// Find customer
+	customer, err := s.repo.FindCustomerByUserRefID(payload.UserRefID)
+	if err != nil {
+		s.log.Error("error when find current customer", nlogger.Error(err))
+		return nil, errx.Trace(err)
+	}
+
+	// Validate payload with current data
+	err = s.handleValidateChangePasswordData(payload, customer)
+	if err != nil {
+		return nil, err
+	}
+
+	// Check if customer has cif
+	if customer.Cif != "" {
+		return s.handleChangePhoneNumberCore(dto.ChangePhoneNumberRequestCore{
+			CurrentPhoneNumber: payload.CurrentPhoneNumber,
+			NewPhoneNumber:     payload.NewPhoneNumber,
+			FullName:           payload.FullName,
+			DateOfBirth:        payload.DateOfBirth,
+			MaidenName:         payload.MaidenName,
+			Cif:                customer.Cif,
+		}, customer)
+	}
+
+	// Update phone number
+	customer.Phone = payload.NewPhoneNumber
+	customer.UpdatedAt = time.Now()
+	customer.Version++
+
+	// Persist
+	err = s.repo.UpdateCustomerByUserRefID(customer, payload.UserRefID)
+	if err != nil {
+		s.log.Error("error when update phone number", nlogger.Error(err))
+		return nil, errx.Trace(err)
+	}
+
+	return &dto.ChangePhoneNumberResult{
+		PhoneNumber: customer.Phone,
+	}, nil
+}
+
+func (s *Service) handleValidateChangePasswordData(payload dto.ChangePhoneNumberPayload, customer *model.Customer) error {
+	// Check Maiden Name
+	if !strings.EqualFold(customer.Profile.MaidenName, payload.MaidenName) {
+		s.log.Errorf(
+			`MaidenName is not correct expected: %s actual: %s`,
+			customer.Profile.MaidenName,
+			payload.MaidenName,
+		)
+		return constant.ResourceNotFoundError
+	}
+
+	// Check Full Name
+	if !strings.EqualFold(customer.FullName, payload.FullName) {
+		s.log.Errorf(
+			`fullName is not correct expected: %s actual: %s`,
+			customer.FullName,
+			payload.FullName,
+		)
+		return constant.ResourceNotFoundError
+	}
+
+	// Check Date Of Birth
+	if customer.Profile.DateOfBirth != payload.DateOfBirth {
+		s.log.Errorf(
+			`dateOfBirth is not correct expected: %s actual: %s`,
+			customer.Profile.DateOfBirth,
+			payload.DateOfBirth,
+		)
+		return constant.ResourceNotFoundError
+	}
+
+	// Check Current Phone Number
+	if customer.Phone != payload.CurrentPhoneNumber {
+		s.log.Errorf(
+			`Current phone number is not correct expected: %s actual: %s`,
+			customer.Phone,
+			payload.CurrentPhoneNumber,
+		)
+		return constant.ResourceNotFoundError
+	}
+
+	return nil
+}
+
+func (s *Service) handleChangePhoneNumberCore(payload dto.ChangePhoneNumberRequestCore, customer *model.Customer) (*dto.ChangePhoneNumberResult, error) { // Hit core change phone number
+	resp, err := s.ChangePhoneNumber(payload)
+	if err != nil {
+		return nil, errx.Trace(err)
+	}
+
+	// Handle if hit core api not success
+	if resp.ResponseCode != "00" {
+		log.Debugf(`Response code: %s message: %s, Description: %s`, resp.ResponseCode, resp.Message, resp.ResponseDesc)
+		return nil, constant.ChangePhoneNumberError.AddMetadata(constant.MetadataMessage, resp.ResponseDesc)
+	}
+
+	// Update phone number
+	customer.Phone = payload.NewPhoneNumber
+	customer.UpdatedAt = time.Now()
+	customer.Version++
+
+	// Persist update phone number
+	err = s.repo.UpdateCustomerByUserRefID(customer, customer.UserRefID.String)
+	if err != nil {
+		s.log.Error("error when update phone number", nlogger.Error(err))
+		return nil, errx.Trace(err)
+	}
+
+	return &dto.ChangePhoneNumberResult{
+		PhoneNumber: customer.Phone,
+	}, nil
 }
 
 func (s *Service) ValidatePin(payload *dto.ValidatePinPayload) error {
