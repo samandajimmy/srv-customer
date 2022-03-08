@@ -45,8 +45,8 @@ func (s *Service) Login(payload dto.LoginPayload) (*dto.LoginResult, error) {
 		// If data not found on internal database check on external database.
 		user, errExternal := s.repoExternal.FindUserExternalByEmailOrPhone(payload.Email)
 		if errExternal != nil && !errors.Is(errExternal, sql.ErrNoRows) {
-			s.log.Error("error found when query find by email or phone", nlogger.Error(err), nlogger.Context(ctx))
-			return nil, errx.Trace(err)
+			s.log.Error("error found when query find by email or phone", nlogger.Error(errExternal), nlogger.Context(ctx))
+			return nil, errx.Trace(errExternal)
 		}
 
 		if errors.Is(errExternal, sql.ErrNoRows) {
