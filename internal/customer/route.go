@@ -107,6 +107,10 @@ func setUpRoute(router *nhttp.Router, controllers *Controllers) {
 	router.Handle(http.MethodDelete, "/favorite/{xid}", router.HandleFunc(controllers.Account.HandleAuthUser),
 		router.HandleFunc(controllers.Favorite.Delete))
 
+	// Change email
+	router.Handle(http.MethodPost, "/accounts/change-email",
+		router.HandleFunc(controllers.Account.PostChangeEmail))
+
 	// Static asset
 	staticDir := "/web/assets/"
 	router.PathPrefix(staticDir).Handler(http.StripPrefix(staticDir, http.FileServer(http.Dir("."+staticDir))))
