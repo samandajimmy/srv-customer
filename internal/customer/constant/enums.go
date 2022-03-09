@@ -7,8 +7,14 @@ import "github.com/lestrrat-go/jwx/jwa"
 type ControlStatus = int8
 
 const (
-	Enabled  = ControlStatus(iota + 1)
-	Disabled = 0
+	Enabled = ControlStatus(iota + 1)
+	Disabled
+)
+
+const (
+	Unknown ControlStatus = iota
+	Active
+	Inactive
 )
 
 const (
