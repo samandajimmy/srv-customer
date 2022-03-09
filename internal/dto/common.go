@@ -23,9 +23,16 @@ func (s *Subject) ModifiedBy() *Modifier {
 }
 
 type Modifier struct {
-	ID       string                `json:"-"`
+	ID       string                `json:"id"`
 	Role     constant.ModifierRole `json:"role"`
 	FullName string                `json:"fullName"`
+}
+
+type BaseField struct {
+	CreatedAt  int64     `json:"createdAt"`
+	UpdatedAt  int64     `json:"updatedAt"`
+	ModifiedBy *Modifier `json:"modifiedBy"`
+	Version    int64     `json:"version"`
 }
 
 type ItemMetadataResponse struct {
