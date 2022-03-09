@@ -8,7 +8,7 @@ type InitializeChecker interface {
 	HasInitialized() bool
 }
 
-/// InitStruct reflect fields in struct and run initializer function
+// InitStruct reflect fields in struct and run initializer function
 func InitStruct(s interface{}, initFn func(name string, i interface{}) error) error {
 	// Reflect on struct element
 	rv := reflect.ValueOf(s).Elem()

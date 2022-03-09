@@ -1,77 +1,50 @@
 package nhttp
 
-import "repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/ncore"
-
-// Standard error response codes
-const (
-	BadRequestErrorCode          = "400"
-	UnauthorizedErrorCode        = "401"
-	ForbiddenErrorCode           = "403"
-	NotFoundErrorCode            = "404"
-	MethodNotAllowedErrorCode    = "405"
-	UnprocessableEntityErrorCode = "422"
+import (
+	"github.com/nbs-go/errx"
+	"net/http"
 )
 
-type errorDataResponse struct {
-	ErrorDebug *errorDebug `json:"_error,omitempty"`
+const (
+	HttpStatusMetadata = "httpStatus"
+	MessageMetadata    = "message"
+)
+
+func WithStatus(status int) errx.SetOptionFn {
+	return errx.AddMetadata(HttpStatusMetadata, status)
 }
 
-type errorDebug struct {
-	Message  string      `json:"message,omitempty"`
-	Traces   []string    `json:"traces,omitempty"`
-	Metadata interface{} `json:"metadata,omitempty"`
-}
+var b = errx.NewBuilder(pkgNamespace)
 
-var BadRequestError = &ncore.Response{
-	Success: false,
-	Code:    BadRequestErrorCode,
-	Message: "Bad Request",
-	Metadata: map[string]interface{}{
-		HttpStatusRespKey: 400,
-	},
-}
+// Standard Errors
 
-var UnprocessableEntityError = &ncore.Response{
-	Success: false,
-	Code:    UnprocessableEntityErrorCode,
-	Message: "Unprocessable Entity",
-	Metadata: map[string]interface{}{
-		HttpStatusRespKey: 422,
-	},
-}
+var InternalError = b.NewError("500", "Internal Error",
+	WithStatus(http.StatusInternalServerError))
 
-var UnauthorizedError = &ncore.Response{
-	Success: false,
-	Code:    UnauthorizedErrorCode,
-	Message: "Unauthorized",
-	Metadata: map[string]interface{}{
-		HttpStatusRespKey: 401,
-	},
-}
+var BadRequestError = b.NewError("400", "Bad Request",
+	WithStatus(http.StatusBadRequest),
+)
 
-var ForbiddenError = &ncore.Response{
-	Success: false,
-	Code:    ForbiddenErrorCode,
-	Message: "Forbidden",
-	Metadata: map[string]interface{}{
-		HttpStatusRespKey: 403,
-	},
-}
+var UnauthorizedError = b.NewError("401", "Unauthorized",
+	WithStatus(http.StatusUnauthorized),
+)
 
-var NotFoundError = &ncore.Response{
-	Success: false,
-	Code:    NotFoundErrorCode,
-	Message: "Not Found",
-	Metadata: map[string]interface{}{
-		HttpStatusRespKey: 404,
-	},
-}
+var ForbiddenError = b.NewError("403", "Forbidden",
+	WithStatus(http.StatusForbidden),
+)
 
-var MethodNotAllowedError = &ncore.Response{
-	Success: false,
-	Code:    MethodNotAllowedErrorCode,
-	Message: "Method Not Allowed",
-	Metadata: map[string]interface{}{
-		HttpStatusRespKey: 405,
-	},
-}
+var NotFoundError = b.NewError("404", "Not Found",
+	WithStatus(http.StatusNotFound),
+)
+
+var MethodNotAllowedError = b.NewError("405", "Method Not Allowed",
+	WithStatus(http.StatusMethodNotAllowed),
+)
+
+// Authorization Errors
+
+var EmptyAuthorizationError = b.NewError("E_AUTH_1", "Authorization value is empty",
+	WithStatus(http.StatusBadRequest))
+
+var MalformedTokenError = errx.NewError("E_AUTH_2", "Malformed token",
+	WithStatus(http.StatusBadRequest))

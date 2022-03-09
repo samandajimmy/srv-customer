@@ -3,24 +3,23 @@ package nhttp
 import (
 	"encoding/base64"
 	"net/http"
-	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/ncore"
 	"strings"
 )
 
 func ExtractAuthValue(prefix string, str string) (string, error) {
 	if str == "" {
-		return "", ncore.NewError("authorization value is empty")
+		return "", EmptyAuthorizationError
 	}
 
 	// Extract token
 	tokens := strings.Split(str, " ")
 	if len(tokens) != 2 {
-		return "", ncore.NewError("token is malformed")
+		return "", MalformedTokenError
 	}
 
 	// Check prefix
 	if tokens[0] != prefix {
-		return "", ncore.NewError("unexpected prefix")
+		return "", MalformedTokenError
 	}
 
 	return tokens[1], nil
@@ -45,7 +44,7 @@ func ExtractBasicAuth(r *http.Request) (username string, password string, err er
 	// Split row by : delimiter
 	tokens := strings.Split(string(decAuth), ":")
 	if len(tokens) != 2 {
-		return "", "", ncore.NewError("malformed decoded Basic Auth")
+		return "", "", MalformedTokenError
 	}
 
 	return tokens[0], tokens[1], nil

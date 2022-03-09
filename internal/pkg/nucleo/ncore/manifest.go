@@ -3,9 +3,19 @@ package ncore
 import "fmt"
 
 type Manifest struct {
-	AppName    string                 `json:"app_name"`
-	AppVersion string                 `json:"app_version"`
-	Metadata   map[string]interface{} `json:"metadata"`
+	AppName        string                 `json:"appName"`
+	AppVersion     string                 `json:"appVersion"`
+	BuildSignature string                 `json:"buildSignature"`
+	Metadata       map[string]interface{} `json:"metadata"`
+}
+
+func NewManifest(appName, appVersion, buildSignature string) Manifest {
+	return Manifest{
+		AppName:        appName,
+		AppVersion:     appVersion,
+		BuildSignature: buildSignature,
+		Metadata:       make(map[string]interface{}),
+	}
 }
 
 func (m *Manifest) AddMetadata(key string, value interface{}) *Manifest {

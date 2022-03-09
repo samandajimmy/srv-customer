@@ -1,20 +1,22 @@
 package ncore
 
 import (
-	"path"
+	"fmt"
+	"github.com/kelseyhightower/envconfig"
+	gonanoid "github.com/matoous/go-nanoid/v2"
 )
 
 type BootOptions struct {
-	Manifest        Manifest
-	NodeNo          int64
-	WorkDir         string
-	Environment     Environment
-	EnvFile         string
-	ResponseMapFile string
-	LoadEnvFile     bool
+	// Values for Core
+	Manifest    Manifest    // Application manifest
+	Environment Environment // Process environment
+	WorkDir     string      // Working directory
+	NodeID      string      // Process Node Identifier
+	// Boot options
+	EnvPrefix string
 }
 
-func Boot(configDest interface{}, args ...BootOptions) *Core {
+func Boot(destConfig interface{}, destConfigExternal interface{}, args ...BootOptions) *Core {
 	// Load Options
 	options := getBootOptions(args)
 
@@ -23,21 +25,20 @@ func Boot(configDest interface{}, args ...BootOptions) *Core {
 		Manifest:    options.Manifest,
 		Environment: options.Environment,
 		WorkDir:     options.WorkDir,
-		NodeNo:      options.NodeNo,
+		NodeID:      options.NodeID,
 	}
 
 	// Load config
-	err := loadConfig(options.LoadEnvFile, configDest, options.EnvFile)
+	err := envconfig.Process(options.EnvPrefix, destConfig)
 	if err != nil {
 		panic(err)
 	}
 
-	// Load responses
-	responses, err := loadResponseMap(options.ResponseMapFile)
+	// Load config external
+	err = envconfig.Process("EXTERNAL", destConfigExternal)
 	if err != nil {
 		panic(err)
 	}
-	core.Responses = responses
 
 	return &core
 }
@@ -54,19 +55,13 @@ func getBootOptions(args []BootOptions) BootOptions {
 		options.WorkDir = "."
 	}
 
-	// If config file is not set, then set default
-	if options.EnvFile == "" {
-		options.EnvFile = path.Join(options.WorkDir, ".env")
-	}
-
-	// If config file is not set, then set default
-	if options.ResponseMapFile == "" {
-		options.ResponseMapFile = path.Join(options.WorkDir, "responses.yml")
-	}
-
-	// If node number is not set, then set to 1
-	if options.NodeNo == 0 {
-		options.NodeNo = 1
+	// If node number is not set, then set random id
+	if options.NodeID == "" {
+		nodeID, err := gonanoid.Generate(AlphaNumUpperCharSet, 4)
+		if err != nil {
+			panic(fmt.Errorf("failed to generate NodeId. Error = %w", err))
+		}
+		options.NodeID = nodeID
 	}
 
 	return options

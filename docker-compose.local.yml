@@ -1,0 +1,77 @@
+# This docker-compose is intended for local development only
+# For production, see build/${SERVICE_SLUG}
+
+version: "3"
+
+networks:
+  local:
+
+services:
+  # ------------------------------
+  # Shared Backing Service section
+  # ------------------------------
+  db:
+    image: postgres:13-alpine
+    ports:
+      - "127.0.0.1:${PG13_DB_PORT}:5432"
+    environment:
+      - POSTGRES_USER=${PG13_DB_USER}
+      - POSTGRES_PASSWORD=${PG13_DB_PASS}
+      - POSTGRES_DB=${PG13_DB_NAME}
+    volumes:
+      - ./.tmp/db:/var/lib/postgresql/data
+    networks:
+      local:
+
+  minio:
+    image: minio/minio
+    ports:
+      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:9001:9001"
+    environment:
+      - MINIO_ROOT_USER=miniodev
+      - MINIO_ROOT_PASSWORD=miniodev
+    command: server /data --console-address :9001
+    volumes:
+      - .tmp/minio/data:/data
+      - .tmp/minio/config:/root/.minio
+
+    networks:
+      local:
+
+  redis:
+    image: redis:6-alpine
+    ports:
+      - "127.0.0.1:6379:6379"
+    networks:
+      local:
+
+  # ----------------
+  # Services section
+  # ----------------
+  customer-svc:
+    container_name: "l-${PROJECT_SLUG}-${CUSTOMER_SVC_SLUG}-svc"
+    env_file: .env
+    environment:
+      MAIN_DIR: "./cmd/${CUSTOMER_SVC_SLUG}"
+    build:
+      context: .
+      dockerfile: ./build/local-svc/Dockerfile
+      args:
+        ARG_SERVICE_SLUG: "${CUSTOMER_SVC_SLUG}"
+        ARG_PORT: "${CUSTOMER_SVC_PORT}"
+    ports:
+      - "127.0.0.1:${CUSTOMER_SVC_PUBLISH_PORT}:${CUSTOMER_SVC_PORT}"
+      - "127.0.0.1:${CUSTOMER_SVC_DEBUG_PORT}:2345"
+    volumes:
+      - ./internal/pkg:/usr/src/app/internal/pkg
+      - ./internal/dto:/usr/src/app/internal/dto
+      - ./go.mod:/usr/src/app/go.mod
+      - ./go.sum:/usr/src/app/go.sum
+      - ./vendor:/usr/src/app/vendor
+      # Service specific
+      - ./cmd/${CUSTOMER_SVC_SLUG}:/usr/src/app/cmd/${CUSTOMER_SVC_SLUG}
+      - ./internal/${CUSTOMER_SVC_SLUG}:/usr/src/app/internal/${CUSTOMER_SVC_SLUG}
+    working_dir: /usr/src/app
+    networks:
+      local:

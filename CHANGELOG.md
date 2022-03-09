@@ -1,3 +1,41 @@
 # Changelog
 
-## 0.1
+## 0.1.0
+
+- [FIXED] Fix unclose service
+- [ADDED] Add gold saving account when login
+- [ADDED] Add endpoint check user status
+- [FIXED] Remove mock get when gold saving account
+- [ADDED] Add endpoint for update SID number and SID file
+- [ADDED] Add endpoint update NPWP
+- [ADDED] Add endpoint update KTP
+- [ADDED] Add endpoint for upload file
+- [ADDED] Add Minio s3 compatible library
+- [ADDED] Add configuration and dependency for Minio
+- [ADDED] Add update password endpoint
+- [ADDED] Add check password endpoint
+- [ADDED] Add update profile endpoint
+- [ADDED] Add get customer detail endpoint
+- [ADDED] Add debugger for intellij idea
+- [ADDED] Add query builder package
+- [CHANGED] Update docker compose for local development
+- [CHANGED] Refactor repository, statement, and handler
+- [ADDED] Add logger dependencies
+- [ADDED] Add client for pds-api sync data
+- [FIXED] Fix data type emailVerificationToken using text
+- [ADDED] Fix route static asset for template email
+- [ADDED] Add send notification when account is blocked
+- [ADDED] Add verification email service
+- [FIXED] Load config for server when booting
+- [ADDED] Add new service for send notification.
+- [ADDED] Sync sync data from db external
+- [ADDED] Add new external datasource configuration
+- [ADDED] Add login service in register service
+- [ADDED] Add validation response to all handle in customer
+- [ADDED] Add register submit endpoint
+- [ADDED] Add Redis client for rest switching token
+- [ADDED] Add resend OTP for register endpoint
+- [ADDED] Add verify OTP for register endpoint
+- [CHANGED] Fix example env for core switching client
+- [ADDED] Add schema table otp
+- [ADDED] Add send otp for register endpoint

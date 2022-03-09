@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 )
 
-// String add functionality to handle null types of JSON strings
+// Int64 add functionality to handle null types of JSON strings
 type Int64 struct {
 	sql.NullInt64
 }
@@ -46,6 +46,6 @@ func (s *Int64) UnmarshalJSON(b []byte) error {
 }
 
 // newInt returns pointer of a variable that contains integer
-func NewInt(i int) *int {
+func newInt(i int) *int {
 	return &i
 }

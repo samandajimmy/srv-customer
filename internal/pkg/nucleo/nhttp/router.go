@@ -3,7 +3,6 @@ package nhttp
 import (
 	"github.com/gorilla/mux"
 	"net/http"
-	"time"
 )
 
 func NewRouter(args ...RouterOptions) *Router {
@@ -21,7 +20,7 @@ func NewRouter(args ...RouterOptions) *Router {
 
 	// If content writer is not set, then set to json
 	if options.ContentWriter == nil {
-		options.ContentWriter = JSONContentWriter{Debug: options.Debug}
+		options.ContentWriter = &JSONContentWriter{Debug: options.Debug}
 	}
 
 	// If router is not set then initiate a new router
@@ -65,7 +64,6 @@ type Router struct {
 	LogRequest bool
 	// Private
 	contentWriter                ContentWriter
-	startedAt                    time.Time
 	handleCaptureRequestMetadata mux.MiddlewareFunc
 }
 
@@ -102,7 +100,7 @@ func (r *Router) RESTSubRouter(path string) *Router {
 		Router:        r.PathPrefix(path).Subrouter(),
 		LogRequest:    r.LogRequest,
 		Debug:         r.Debug,
-		ContentWriter: JSONContentWriter{Debug: r.Debug},
+		ContentWriter: &JSONContentWriter{Debug: r.Debug},
 	})
 
 	s.HandleErrorNotFound(NewHandler(HandleErrorNotFound).SetWriter(s.contentWriter))

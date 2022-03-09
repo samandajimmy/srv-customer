@@ -1,79 +1,50 @@
-# PDSM - PDS Customer Service
+# srv-customer
 
-Initialize project for PDS Customer Service
+Customer Service for Pegadaian Digital Service
 
-## Prerequisites
+## Local Development
 
-1. Go 1.16
-2. PostgreSQL 11
+### Prerequisites
+
+1. Goland IDE or Visual Studio Code
+2. Go 1.17
 3. UNIX Shell
-   > Use `wsl` in Windows 10
+   > Use `wsl2` in Windows 10
 4. Git
 5. Make
-6. Docker CE (Optional)
+6. Docker and Docker Compose CE
 
-## Set-up
+### Quick Start
 
-1. Configure Project
+```shell
+# Set-up development environment
+make configure
 
-   ```sh
-   # Run scripts to make env from .env-example and grant permission
-   make setup
-   
-   # Run scripts to get all app dependencies that needed.
-   make configure
-   
-   # Run scripts to check all prerequisites for development is available
-   make doctor
-   ```
+# Build server for local development
+make servers
 
-2. Configure project. see [Configuration Section](#Configuration) for details:
+# Run database upgrade migration scripts
+make db-up
 
-3. Init Database
-
-   Once `.env` has been configured, initiate database:
-   ```bash
-   # Create database if not exists
-   make db
-   
-   # Upgrade database to next version
-   make db-up
-   ```
-
-## Configuration
-
-PDS service are configurable from `.env` file
-
-Below are available configuration for the project:
-
-### Run Development
-
-```sh
-# Run Service
+# Start development server
 make serve
 ```
 
-|                      | Key                        | Description                                 | Required                                          | Value                                                                                      |
-| -------------------- | -------------------------- | ------------------------------------------- | ------------------------------------------------- |:------------------------------------------------------------------------------------------ |
-| **Common**           | `DEBUG`                    | Debug Mode                                  |                                                   | Boolean. Default: `false`                                                                  | 
-| **API - Server**     | `PORT`                     | Server listen port                          | **✓**                                             | `1024-65535`                                                                               |
-|                      | `SERVER_HOSTNAME`          | Resolved hostname                           |                                                   | String, Default: `localhost`                                                               |
-|                      | `SERVER_BASE_PATH`         | Resolved base path                          |                                                   | String, Default: `/`                                                                       |
-|                      | `SERVER_LISTEN_SECURE`     | Listen in secure mode for base url resolver |                                                   | Boolean, Default: `false`                                                                  |
-|                      | `SERVER_TRUST_PROXY`       | Show debug responses                        | **✓** (Required for Deployment via Reverse Proxy) | String Array of IP Address, separated by comma. Default: `[]`. Set to `["*"]` to allow all |
-|                      | `SERVER_HTTP_BASE_URL`     | Override value for resolved HTTP Base URL   |                                                   | URL                                                                                        |
-|                      |                            |                                             |                                                   |                                                                                            |
-|  **API - Client**    | `CLIENT_ID`                |  Client credential for Web App              | **✓**                                             | String                                                                                     |
-|                      | `CLIENT_SECRET`            |  Client credential for Web App              | **✓**                                             | String                                                                                     |
-|                      | `CORS_ENABLED`             |  Allowed CORS Origin                        | **✓**                                             | Comma-separated URL. Use value `'*'` to allow all origin                                   |
-|                      |                            |                                             |                                                   |                                                                                            |
-| **Data Sources**     | `DB_DRIVER`                | Database driver                             | **✓**                                             | `postgres`                                                                                 |
-|                      | `DB_HOST`                  | Postgres server host                        | **✓**                                             | String                                                                                     |
-|                      | `DB_PORT`                  | Postgres server port                        | **✓**                                             | `1024-65535`                                                                               |
-|                      | `DB_USER`                  | Postgres server username                    | **✓**                                             | String                                                                                     |
-|                      | `DB_PASS`                  | Postgres server password                    | **✓**                                             | String                                                                                     |
-|                      | `DB_NAME`                  | Postgres server database                    | **✓**                                             | String                                                                                     |
+### Configuration
+
+> TODO
+
+### Updating Dependencies
+
+1. Run `go mod vendor` to download dependencies
+2. Restart Service container
+
+### Debugging
+
+Attach debugger in your IDE to port 3001 (or as defined in `CUSTOMER_SVC_DEBUG_PORT`)
 
 ## Contributors
 
 - Saggaf Arsyad <saggaf@nusantarabetastudio.com>
+- Dinan <dinan@nusantarabetastudio.com>
+- Imam Ponco <ponco@nusantarabetastudio.com>

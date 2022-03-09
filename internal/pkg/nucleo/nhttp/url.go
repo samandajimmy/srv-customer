@@ -5,7 +5,7 @@ import (
 	"net/url"
 )
 
-func BuildUrl(host string, port int, basePath string) url.URL {
+func BuildURL(host string, port int, basePath string) url.URL {
 	if port != 443 && port != 80 {
 		host = fmt.Sprintf("%s:%d", host, port)
 	}

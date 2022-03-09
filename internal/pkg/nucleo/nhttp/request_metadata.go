@@ -2,6 +2,7 @@ package nhttp
 
 import (
 	"context"
+	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"html"
 	"net/http"
@@ -21,10 +22,14 @@ func NewCaptureRequestMetadataHandler(trustProxy bool) mux.MiddlewareFunc {
 			startedAt := time.Now()
 
 			// Set to context value
-			ctx := context.WithValue(r.Context(), RequestMetadataKey, RequestMetadata{
+			ctx := context.WithValue(r.Context(), RequestMetadataContextKey, RequestMetadata{
 				ClientIP:  clientIP,
 				StartedAt: startedAt,
 			})
+
+			// Set request id value
+			reqID, _ := uuid.NewUUID()
+			ctx = context.WithValue(ctx, RequestIDContextKey, reqID.String())
 
 			// Continue
 			next.ServeHTTP(w, r.WithContext(ctx))
@@ -42,7 +47,7 @@ func HandleLogRequest(h http.Handler) http.Handler {
 
 		// Get Log Request Metadata
 		var elapsedTime, clientIP string
-		metadata, ok := ctx.Value(RequestMetadataKey).(RequestMetadata)
+		metadata, ok := ctx.Value(RequestMetadataContextKey).(RequestMetadata)
 		if !ok {
 			elapsedTime = "N/A"
 			clientIP = "N/A"
@@ -52,7 +57,7 @@ func HandleLogRequest(h http.Handler) http.Handler {
 		}
 
 		// Get httpStatus
-		httpStatus, ok := ctx.Value(HttpStatusRespKey).(int)
+		httpStatus, ok := ctx.Value(HTTPStatusRespContextKey).(int)
 		if !ok {
 			httpStatus = -1
 		}

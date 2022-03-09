@@ -9,7 +9,6 @@ import (
 func ScanJSON(src interface{}, target interface{}) error {
 	// If source is nil, set target to nil
 	if src == nil {
-		target = nil
 		return nil
 	}
 	// Assert source to byte

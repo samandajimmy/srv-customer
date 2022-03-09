@@ -1,9 +1,8 @@
 package nhttp
 
 import (
+	"fmt"
 	"net/http"
-	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/ncore"
-	"time"
 )
 
 // HandlerFunc represents function that will be called
@@ -16,6 +15,7 @@ func NewHandler(fn HandlerFunc) *Handler {
 }
 
 /// Handler handles HTTP request and send response as JSON
+
 type Handler struct {
 	// Private
 	contentWriter ContentWriter
@@ -32,25 +32,41 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Prepare extended request
 	rx := NewRequest(r)
 
+	// Init recovery handler
+	panicked := true
+	defer func() {
+		if result := recover(); result != nil || panicked {
+			log.Errorf("Panic => %v", result)
+
+			var err error
+			if rErr, ok := result.(error); ok {
+				err = rErr
+			} else {
+				err = InternalError.Wrap(fmt.Errorf("unknwon result received from panic: %v", result))
+			}
+
+			httpStatus := h.contentWriter.WriteError(w, err)
+			rx.SetContextValue(HTTPStatusRespContextKey, httpStatus)
+		}
+	}()
+
 	// Call handler function
 	result, err := h.fn(&rx)
-
-	// Determine result
-	var httpStatus int
+	panicked = false
 
 	// If an error occurred, then write Error
 	if err != nil {
 		// If an error occurred, then write error response
-		httpStatus = h.contentWriter.WriteError(w, err)
-		rx.SetContextValue(HttpStatusRespKey, httpStatus)
+		httpStatus := h.contentWriter.WriteError(w, err)
+		rx.SetContextValue(HTTPStatusRespContextKey, httpStatus)
 		return
 	}
 
 	// If result is nil, then return No Content
 	if result == nil {
-		httpStatus = http.StatusNoContent
+		httpStatus := http.StatusNoContent
 		w.WriteHeader(httpStatus)
-		rx.SetContextValue(HttpStatusRespKey, httpStatus)
+		rx.SetContextValue(HTTPStatusRespContextKey, httpStatus)
 		return
 	}
 
@@ -71,38 +87,18 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// If Code is not set, then set to success code
 	if result.Code == "" {
-		result.Code = ncore.Success.Code
+		result.Code = SuccessCode
 	}
 
 	// If Code is not set, then set to success message
 	if result.Message == "" {
-		result.Message = ncore.Success.Message
+		result.Message = SuccessMessage
 	}
 
-	// Set status http by result code
-	var statusHttp int
-	switch result.Code {
-	case "200":
-		statusHttp = http.StatusOK
-	case "400":
-		statusHttp = http.StatusBadRequest
-	case "422":
-		statusHttp = http.StatusUnprocessableEntity
-	case "503":
-		statusHttp = http.StatusServiceUnavailable
-	default:
-		statusHttp = http.StatusOK
-	}
-
-	if result.responseFlag == ViewRequest {
-		// Write response html
-		httpStatus = h.contentWriter.WriteView(w, statusHttp, result.Data)
-	} else {
-		// Write standard response json
-		httpStatus = h.contentWriter.Write(w, statusHttp, result)
-	}
-
-	rx.SetContextValue(HttpStatusRespKey, httpStatus)
+	// Write standard response json
+	httpStatus := http.StatusOK
+	h.contentWriter.Write(w, httpStatus, result)
+	rx.SetContextValue(HTTPStatusRespContextKey, httpStatus)
 }
 
 func HandleErrorNotFound(_ *Request) (*Response, error) {
@@ -111,26 +107,4 @@ func HandleErrorNotFound(_ *Request) (*Response, error) {
 
 func HandleErrorMethodNotAllowed(_ *Request) (*Response, error) {
 	return nil, MethodNotAllowedError
-}
-
-func NewAppStatusHandler(startedAt time.Time, version string, args ...ContentWriter) http.Handler {
-	// Get content writer from args
-	var cw ContentWriter
-	if len(args) == 0 {
-		// If content writer is not set, set to JSON Content Writer
-		cw = new(JSONContentWriter)
-	} else {
-		cw = args[0]
-	}
-
-	// Create handler
-	return NewHandler(func(r *Request) (*Response, error) {
-		// Compose response
-		resp := OK()
-		resp.Data = map[string]string{
-			"uptime":  time.Since(startedAt).String(),
-			"version": version,
-		}
-		return resp, nil
-	}).SetWriter(cw)
 }
