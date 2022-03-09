@@ -4,6 +4,24 @@ import (
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/constant"
 )
 
+type Subject struct {
+	ID          string
+	RefID       int64
+	Role        string
+	FullName    string
+	SubjectType constant.SubjectType
+	SessionID   int64
+	Metadata    map[string]string
+}
+
+func (s *Subject) ModifiedBy() *Modifier {
+	return &Modifier{
+		ID:       s.ID,
+		Role:     s.Role,
+		FullName: s.FullName,
+	}
+}
+
 type Modifier struct {
 	ID       string                `json:"-"`
 	Role     constant.ModifierRole `json:"role"`
