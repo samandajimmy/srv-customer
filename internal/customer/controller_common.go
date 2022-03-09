@@ -1,10 +1,8 @@
 package customer
 
 import (
-	"errors"
 	"fmt"
 	"github.com/google/uuid"
-	"github.com/nbs-go/errx"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/constant"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/dto"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/ncore"
@@ -36,33 +34,53 @@ func (c *CommonController) GetAPIStatus(_ *nhttp.Request) (*nhttp.Response, erro
 	return res, nil
 }
 
-func (c *CommonController) ValidateClient(r *nhttp.Request) (*nhttp.Response, error) {
+const (
+	AnonymousUserID       = "ANON"
+	AnonymousUserRefID    = 0
+	AnonymousUserFullName = "Anonymous User"
+)
+
+func (c *CommonController) ParseSubject(r *nhttp.Request) (*nhttp.Response, error) {
 	// Get subject from headers
-	subjectID := r.Header.Get(constant.SubjectIDHeader)
-	subjectRefID, ok := nval.ParseInt64(subjectID)
-	if !ok {
-		log.Error("x-subject-id is required")
-		return nil, errors.New("x-subject-id is required")
+	id := r.Header.Get(constant.SubjectIDHeader)
+	if id == "" {
+		id = AnonymousUserID
 	}
 
-	// Get subject role
-	subjectRole := r.Header.Get(constant.SubjectRoleHeader)
-	role := constant.AdminModifierRole
-	if subjectRole != constant.AdminModifierRole {
+	// Get subject reference id
+	refID, ok := nval.ParseInt64(id)
+	if !ok {
+		refID = AnonymousUserRefID
+	}
+
+	// Get subject role and determine subject type
+	role := r.Header.Get(constant.SubjectRoleHeader)
+	var subjectType constant.SubjectType
+	switch role {
+	case constant.AdminModifierRole, constant.UserModifierRole:
+		subjectType = constant.UserSubjectType
+	case constant.SystemModifierRole:
+		subjectType = constant.SystemSubjectType
+	default:
+		// Fallback to anonymous user
+		subjectType = constant.UserSubjectType
 		role = constant.UserModifierRole
 	}
 
+	// Get name
+	fullName := r.Header.Get(constant.SubjectNameHeader)
+	if fullName == "" {
+		fullName = AnonymousUserFullName
+	}
+
 	subject := dto.Subject{
-		SubjectID:    subjectID,
-		SubjectRefID: subjectRefID,
-		SubjectType:  constant.UserSubjectType,
-		SubjectRole:  role,
-		ModifiedBy: dto.Modifier{
-			ID:       subjectID,
-			Role:     role,
-			FullName: r.Header.Get(constant.SubjectNameHeader),
-		},
-		Metadata: nil,
+		ID:          id,
+		RefID:       refID,
+		Role:        role,
+		FullName:    fullName,
+		SubjectType: subjectType,
+		Metadata:    map[string]string{},
+		SessionID:   0,
 	}
 
 	r.SetContextValue(constant.SubjectContextKey, &subject)
@@ -70,17 +88,26 @@ func (c *CommonController) ValidateClient(r *nhttp.Request) (*nhttp.Response, er
 	return nhttp.Continue(), nil
 }
 
-func GetSubject(rx *nhttp.Request) (*dto.Subject, error) {
+func GetSubject(rx *nhttp.Request) *dto.Subject {
 	v := rx.GetContextValue(constant.SubjectContextKey)
 	subject, ok := v.(*dto.Subject)
 	if !ok {
-		return nil, errx.Trace(errors.New("no subject found in request context"))
+		// Return anonymous subject
+		return &dto.Subject{
+			ID:          AnonymousUserID,
+			RefID:       AnonymousUserRefID,
+			Role:        constant.UserModifierRole,
+			FullName:    AnonymousUserFullName,
+			SubjectType: constant.UserSubjectType,
+			SessionID:   0,
+			Metadata:    map[string]string{},
+		}
 	}
-	return subject, nil
+	return subject
 }
 
 func GetRequestID(rx *nhttp.Request) string {
-	reqID, ok := rx.GetContextValue(nhttp.RequestIDContextKey).(string)
+	reqID, ok := rx.GetContextValue(constant.RequestIDContextKey).(string)
 	if !ok {
 		// Generate new request id
 		id, err := uuid.NewUUID()
