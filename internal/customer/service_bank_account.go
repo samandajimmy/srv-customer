@@ -14,7 +14,7 @@ import (
 
 func (s *Service) ListBankAccount(userRefID string, params *dto.ListPayload) (*dto.ListBankAccountResult, error) {
 	// Find customer
-	customer, err := s.repo.FindCustomerByUserRefID(userRefID)
+	customer, err := s.findOrFailCustomerByUserRefID(userRefID)
 	if err != nil {
 		return nil, err
 	}
@@ -38,11 +38,11 @@ func (s *Service) ListBankAccount(userRefID string, params *dto.ListPayload) (*d
 	}, nil
 }
 
-func (s *Service) CreateBankAccount(userRefID string, payload *dto.CreateBankAccountPayload) (*dto.GetDetailBankAccountResult, error) {
+func (s *Service) CreateBankAccount(payload *dto.CreateBankAccountPayload) (*dto.GetDetailBankAccountResult, error) {
 	// Find customer
-	customer, err := s.repo.FindCustomerByUserRefID(userRefID)
+	customer, err := s.findOrFailCustomerByUserRefID(payload.UserRefID)
 	if err != nil {
-		return nil, errx.Trace(err)
+		return nil, err
 	}
 
 	// Initialize data to insert
@@ -71,30 +71,30 @@ func (s *Service) CreateBankAccount(userRefID string, payload *dto.CreateBankAcc
 
 func (s *Service) GetDetailBankAccount(userRefID string, payload *dto.GetDetailBankAccountPayload) (*dto.GetDetailBankAccountResult, error) {
 	// Find customer
-	customer, err := s.repo.FindCustomerByUserRefID(userRefID)
+	customer, err := s.findOrFailCustomerByUserRefID(userRefID)
 	if err != nil {
-		return nil, errx.Trace(err)
+		return nil, err
 	}
 
 	// Ownership validate
 	if customer.UserRefID.String != userRefID {
-		return nil, constant.ResourceNotFoundError.AddMetadata("message", "Bank account not found")
+		return nil, constant.BankAccountNotFoundError
 	}
 
 	// Get bank account by xid
 	bankAccount, err := s.repo.FindBankAccountByXID(payload.XID)
 	if err != nil {
-		return nil, constant.ResourceNotFoundError
+		return nil, constant.BankAccountNotFoundError
 	}
 
 	return composeDetailBankAccount(bankAccount)
 }
 
-func (s *Service) UpdateBankAccount(userRefID string, payload *dto.UpdateBankAccountPayload) (*dto.GetDetailBankAccountResult, error) {
+func (s *Service) UpdateBankAccount(payload *dto.UpdateBankAccountPayload) (*dto.GetDetailBankAccountResult, error) {
 	// Find customer
-	customer, err := s.repo.FindCustomerByUserRefID(userRefID)
-	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		return nil, errx.Trace(err)
+	customer, err := s.findOrFailCustomerByUserRefID(payload.UserRefID)
+	if err != nil {
+		return nil, err
 	}
 
 	// Get from repo
@@ -107,7 +107,7 @@ func (s *Service) UpdateBankAccount(userRefID string, payload *dto.UpdateBankAcc
 	}
 
 	// Ownership validate
-	if customer.UserRefID.String != userRefID {
+	if customer.UserRefID.String != payload.UserRefID {
 		return nil, constant.ResourceNotFoundError.AddMetadata("message", "Bank account not found")
 	}
 
@@ -134,9 +134,9 @@ func (s *Service) UpdateBankAccount(userRefID string, payload *dto.UpdateBankAcc
 
 func (s *Service) DeleteBankAccount(userRefID string, payload *dto.GetDetailBankAccountPayload) error {
 	// Find customer
-	customer, err := s.repo.FindCustomerByUserRefID(userRefID)
-	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		return errx.Trace(err)
+	customer, err := s.findOrFailCustomerByUserRefID(userRefID)
+	if err != nil {
+		return err
 	}
 
 	// Ownership validate

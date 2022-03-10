@@ -25,6 +25,7 @@ type ListBankAccountResult struct {
 type CreateBankAccountPayload struct {
 	Subject       *Subject `json:"-"`
 	RequestID     string   `json:"-"`
+	UserRefID     string   `json:"-"`
 	AccountNumber string   `json:"accountNumber"`
 	AccountName   string   `json:"accountName"`
 	Bank          *Bank    `json:"bank"`
@@ -46,6 +47,7 @@ type GetDetailBankAccountResult struct {
 type UpdateBankAccountPayload struct {
 	Subject       *Subject `json:"-"`
 	RequestID     string   `json:"-"`
+	UserRefID     string   `json:"-"`
 	XID           string   `json:"xid"`
 	AccountNumber string   `json:"accountNumber"`
 	AccountName   string   `json:"accountName"`

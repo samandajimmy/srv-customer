@@ -121,3 +121,7 @@ var AccountIsNotActiveError = b.NewError("E_PASS_1", "Akun anda belum aktif",
 // Bank Account Errors
 
 var BankAccountNotFoundError = ResourceNotFoundError.AddMetadata("message", "Bank Account not found")
+
+// Customer Errors
+
+var CustomerNotFoundError = ResourceNotFoundError.AddMetadata("message", "Customer not found")

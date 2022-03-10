@@ -79,13 +79,14 @@ func (c *BankAccountController) PostCreateBankAccount(rx *nhttp.Request) (*nhttp
 	// Set subject and requestID
 	payload.RequestID = GetRequestID(rx)
 	payload.Subject = GetSubject(rx)
+	payload.UserRefID = userRefID
 
 	// Init service
 	svc := c.NewService(ctx)
 	defer svc.Close()
 
 	// Call service
-	resp, err := svc.CreateBankAccount(userRefID, &payload)
+	resp, err := svc.CreateBankAccount(&payload)
 	if err != nil {
 		log.Error("error when call list bank account service", nlogger.Error(err), nlogger.Context(ctx))
 		return nil, err
@@ -155,6 +156,7 @@ func (c *BankAccountController) PutUpdateBankAccount(rx *nhttp.Request) (*nhttp.
 	payload.RequestID = GetRequestID(rx)
 	payload.XID = mux.Vars(rx.Request)["xid"]
 	payload.Subject = GetSubject(rx)
+	payload.UserRefID = userRefID
 
 	err = validate.PutUpdateBankAccount(&payload)
 	if err != nil {
@@ -167,7 +169,7 @@ func (c *BankAccountController) PutUpdateBankAccount(rx *nhttp.Request) (*nhttp.
 	defer svc.Close()
 
 	// Call service
-	resp, err := svc.UpdateBankAccount(userRefID, &payload)
+	resp, err := svc.UpdateBankAccount(&payload)
 	if err != nil {
 		log.Error("error when call list bank account service", nlogger.Error(err), nlogger.Context(ctx))
 		return nil, err

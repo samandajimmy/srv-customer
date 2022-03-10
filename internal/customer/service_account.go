@@ -480,6 +480,18 @@ func (s *Service) ForgetPin(payload *dto.ForgetPinPayload) error {
 	return nil
 }
 
+func (s *Service) findOrFailCustomerByUserRefID(userRefID string) (*model.Customer, error) {
+	customer, err := s.repo.FindCustomerByUserRefID(userRefID)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		s.log.Error("error found when find customer by userRefID", nlogger.Error(err))
+		return nil, errx.Trace(err)
+	}
+	if err != nil && errors.Is(err, sql.ErrNoRows) {
+		return nil, constant.CustomerNotFoundError
+	}
+	return customer, nil
+}
+
 func handleErrorRepository(errRepo error, errMsg error) error {
 	if errors.Is(errRepo, sql.ErrNoRows) {
 		return errMsg
