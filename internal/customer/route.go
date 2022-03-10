@@ -88,6 +88,9 @@ func setUpRoute(router *nhttp.Router, controllers *Controllers) {
 	// Customer Bank Account
 	router.Handle(http.MethodGet, "/bank-accounts", router.HandleFunc(controllers.Account.HandleAuthUser),
 		router.HandleFunc(controllers.BankAccount.GetListBankAccount))
+	router.Handle(http.MethodPost, "/bank-accounts", router.HandleFunc(controllers.Account.HandleAuthUser),
+		router.HandleFunc(controllers.Common.ParseSubject),
+		router.HandleFunc(controllers.BankAccount.PostCreateBankAccount))
 
 	// Static asset
 	staticDir := "/web/assets/"

@@ -3,6 +3,8 @@ package customer
 import (
 	"github.com/nbs-go/errx"
 	"github.com/nbs-go/nlogger/v2"
+	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/validate"
+	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/dto"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nhttp"
 )
 
@@ -44,4 +46,48 @@ func (c *BankAccountController) GetListBankAccount(rx *nhttp.Request) (*nhttp.Re
 	}
 
 	return nhttp.OK().SetData(resp), nil
+}
+
+func (c *BankAccountController) PostCreateBankAccount(rx *nhttp.Request) (*nhttp.Response, error) {
+	// Get context
+	ctx := rx.Context()
+
+	// Get user UserRefID
+	userRefID, err := getUserRefID(rx)
+	if err != nil {
+		log.Errorf("error: %v", err, nlogger.Error(err), nlogger.Context(ctx))
+		return nil, errx.Trace(err)
+	}
+
+	// Get Payload
+	var payload dto.CreateBankAccountPayload
+	err = rx.ParseJSONBody(&payload)
+	if err != nil {
+		log.Error("Error when parse json body from request", nlogger.Error(err))
+		return nil, nhttp.BadRequestError.Wrap(err)
+	}
+
+	// Validate
+	err = validate.PostCreateBankAccount(&payload)
+	if err != nil {
+		log.Error("Bad request validate payload", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, nhttp.BadRequestError.Trace(errx.Source(err))
+	}
+
+	// Set subject and requestID
+	payload.RequestID = GetRequestID(rx)
+	payload.Subject = GetSubject(rx)
+
+	// Init service
+	svc := c.NewService(ctx)
+	defer svc.Close()
+
+	// Call service
+	resp, err := svc.CreateBankAccount(userRefID, &payload)
+	if err != nil {
+		log.Error("error when call list bank account service", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, err
+	}
+
+	return nhttp.Success().SetData(resp), nil
 }

@@ -72,3 +72,11 @@ func (rc *RepositoryContext) ListBankAccount(customerID int64, params *dto.ListP
 	}
 	return &result, err
 }
+
+func (rc *RepositoryContext) CreateBankAccount(row model.BankAccount) error {
+	_, err := rc.stmt.BankAccount.Insert.ExecContext(rc.ctx, row)
+	if err != nil {
+		return err
+	}
+	return nil
+}
