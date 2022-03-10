@@ -85,6 +85,10 @@ func setUpRoute(router *nhttp.Router, controllers *Controllers) {
 	router.Handle(http.MethodPost, "/accounts/reset-password",
 		router.HandleFunc(controllers.Account.PostResetPasswordByOTP))
 
+	// Customer Bank Account
+	router.Handle(http.MethodGet, "/bank-accounts", router.HandleFunc(controllers.Account.HandleAuthUser),
+		router.HandleFunc(controllers.BankAccount.GetListBankAccount))
+
 	// Static asset
 	staticDir := "/web/assets/"
 	router.PathPrefix(staticDir).Handler(http.StripPrefix(staticDir, http.FileServer(http.Dir("."+staticDir))))

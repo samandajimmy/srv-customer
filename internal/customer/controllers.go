@@ -1,10 +1,13 @@
 package customer
 
 import (
+	"github.com/hetiansu5/urlquery"
 	"github.com/nbs-go/errx"
 	"net/http"
+	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/dto"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nclient"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/ncore"
+	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nhttp"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nredis"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/ns3"
 	"time"
@@ -92,15 +95,38 @@ type Handler struct {
 }
 
 type Controllers struct {
-	Common  *CommonController
-	Profile *ProfileController
-	Account *AccountController
+	Common      *CommonController
+	Profile     *ProfileController
+	Account     *AccountController
+	BankAccount *BankAccountController
 }
 
 func NewControllers(manifest ncore.Manifest, h *Handler) *Controllers {
 	return &Controllers{
-		Common:  NewCommonController(time.Now(), manifest),
-		Profile: NewProfileController(h),
-		Account: NewAccountController(h),
+		Common:      NewCommonController(time.Now(), manifest),
+		Profile:     NewProfileController(h),
+		Account:     NewAccountController(h),
+		BankAccount: NewBankAccountController(h),
 	}
+}
+
+func getListPayload(rx *nhttp.Request) (*dto.ListPayload, error) {
+	// Parse query
+	var payload dto.ListPayload
+	err := urlquery.Unmarshal([]byte(rx.URL.RawQuery), &payload)
+	if err != nil {
+		return nil, errx.Trace(err)
+	}
+
+	// Normalize Limit
+	if payload.Limit <= 0 {
+		payload.Limit = 10
+	}
+
+	// Normalize Skip
+	if payload.Skip < 0 {
+		payload.Skip = 0
+	}
+
+	return &payload, nil
 }
