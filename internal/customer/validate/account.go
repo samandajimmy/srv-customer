@@ -1,10 +1,10 @@
 package validate
 
 import (
-	"fmt"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/go-ozzo/ozzo-validation/v4/is"
 	"github.com/nbs-go/errx"
+	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/constant"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/dto"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nhttp"
 )
@@ -160,7 +160,7 @@ func PostUpdatePin(p *dto.UpdatePinPayload) error {
 
 func PINConfirmation(p *dto.PINConfirmation) error {
 	if p.NewPIN != p.NewPINConfirmation {
-		return fmt.Errorf("new_pin: Masukan PIN yang sama dengan sebelumnya")
+		return constant.NotEqualPINError
 	}
 
 	return nil

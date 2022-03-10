@@ -94,8 +94,11 @@ var AccountPINIsBlocked = b.NewError("E_PIN_4",
 	"PIN kamu terkunci, Silahkan datang ke Outlet Pegadaian terdekat untuk melakukan atur ulang PIN",
 	nhttp.WithStatus(http.StatusUnauthorized))
 var WrongPINInput1 = b.NewError("E_PIN_5",
-	"Masukkan PIN yang sesuai. Sisa 2 kesempatan sebelum PIN dikunci.",
+	"Masukan PIN yang sesuai. Sisa 2 kesempatan sebelum PIN dikunci.",
 	nhttp.WithStatus(http.StatusUnauthorized))
 var WrongPINInput2 = b.NewError("E_PIN_6",
-	"Masukkan PIN yang sesuai. Sisa 1 kesempatan sebelum PIN dikunci.",
+	"Masukan PIN yang sesuai. Sisa 1 kesempatan sebelum PIN dikunci.",
 	nhttp.WithStatus(http.StatusUnauthorized))
+var NotEqualPINError = b.NewError("E_PIN_7",
+	"Masukan PIN yang sama dengan sebelumnya",
+	nhttp.WithStatus(http.StatusBadRequest))
