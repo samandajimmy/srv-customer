@@ -96,6 +96,9 @@ func setUpRoute(router *nhttp.Router, controllers *Controllers) {
 	router.Handle(http.MethodPut, "/bank-accounts/{xid}", router.HandleFunc(controllers.Account.HandleAuthUser),
 		router.HandleFunc(controllers.Common.ParseSubject),
 		router.HandleFunc(controllers.BankAccount.PutUpdateBankAccount))
+	router.Handle(http.MethodDelete, "/bank-accounts/{xid}", router.HandleFunc(controllers.Account.HandleAuthUser),
+		router.HandleFunc(controllers.BankAccount.DeleteBankAccount))
+
 	// Static asset
 	staticDir := "/web/assets/"
 	router.PathPrefix(staticDir).Handler(http.StripPrefix(staticDir, http.FileServer(http.Dir("."+staticDir))))

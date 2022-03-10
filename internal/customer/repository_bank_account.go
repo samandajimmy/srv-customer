@@ -94,7 +94,18 @@ func (rc *RepositoryContext) UpdateBankAccount(bankAccount *model.BankAccount) e
 		return errx.Trace(err)
 	}
 	if !nsqlDep.IsUpdated(result) {
-		return constant.ResourceNotFoundError
+		return constant.BankAccountNotFoundError
+	}
+	return nil
+}
+
+func (rc *RepositoryContext) DeleteBankAccountByXID(xid string) error {
+	result, err := rc.stmt.BankAccount.DeleteByXID.ExecContext(rc.ctx, xid)
+	if err != nil {
+		return errx.Trace(err)
+	}
+	if !nsqlDep.IsUpdated(result) {
+		return constant.BankAccountNotFoundError
 	}
 	return nil
 }

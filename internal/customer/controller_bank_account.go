@@ -175,3 +175,40 @@ func (c *BankAccountController) PutUpdateBankAccount(rx *nhttp.Request) (*nhttp.
 
 	return nhttp.Success().SetData(resp), nil
 }
+
+func (c *BankAccountController) DeleteBankAccount(rx *nhttp.Request) (*nhttp.Response, error) {
+	// Get context
+	ctx := rx.Context()
+
+	// Get user UserRefID
+	userRefID, err := getUserRefID(rx)
+	if err != nil {
+		log.Errorf("error: %v", err, nlogger.Error(err), nlogger.Context(ctx))
+		return nil, errx.Trace(err)
+	}
+
+	// Get xid
+	xid := mux.Vars(rx.Request)["xid"]
+	if xid == "" {
+		err = errors.New("xid is not found on params")
+		log.Errorf("xid is not found on params. err: %v", err)
+		return nil, nhttp.BadRequestError.Wrap(err)
+	}
+
+	// Set payload
+	var payload dto.GetDetailBankAccountPayload
+	payload.RequestID = GetRequestID(rx)
+	payload.XID = xid
+
+	// Init service
+	svc := c.NewService(ctx)
+	defer svc.Close()
+
+	// Call service
+	err = svc.DeleteBankAccount(userRefID, &payload)
+	if err != nil {
+		return nil, errx.Trace(err)
+	}
+
+	return nhttp.OK(), nil
+}

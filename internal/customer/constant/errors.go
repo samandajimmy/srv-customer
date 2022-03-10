@@ -114,5 +114,10 @@ var NotEqualPINError = b.NewError("E_PIN_7",
 	nhttp.WithStatus(http.StatusBadRequest))
 
 // Password
+
 var AccountIsNotActiveError = b.NewError("E_PASS_1", "Akun anda belum aktif",
 	nhttp.WithStatus(http.StatusBadRequest))
+
+// Bank Account Errors
+
+var BankAccountNotFoundError = ResourceNotFoundError.AddMetadata("message", "Bank Account not found")

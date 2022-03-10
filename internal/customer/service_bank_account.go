@@ -90,16 +90,6 @@ func (s *Service) GetDetailBankAccount(userRefID string, payload *dto.GetDetailB
 	return composeDetailBankAccount(bankAccount)
 }
 
-func composeDetailBankAccount(row *model.BankAccount) (*dto.GetDetailBankAccountResult, error) {
-	return &dto.GetDetailBankAccountResult{
-		XID:           row.XID,
-		AccountNumber: row.AccountNumber,
-		AccountName:   row.AccountName,
-		Bank:          model.ToBankDTO(row.Bank),
-		BaseField:     model.ToBaseFieldDTO(&row.BaseField),
-	}, nil
-}
-
 func (s *Service) UpdateBankAccount(userRefID string, payload *dto.UpdateBankAccountPayload) (*dto.GetDetailBankAccountResult, error) {
 	// Find customer
 	customer, err := s.repo.FindCustomerByUserRefID(userRefID)
@@ -140,4 +130,34 @@ func (s *Service) UpdateBankAccount(userRefID string, payload *dto.UpdateBankAcc
 	}
 
 	return composeDetailBankAccount(bankAccount)
+}
+
+func (s *Service) DeleteBankAccount(userRefID string, payload *dto.GetDetailBankAccountPayload) error {
+	// Find customer
+	customer, err := s.repo.FindCustomerByUserRefID(userRefID)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return errx.Trace(err)
+	}
+
+	// Ownership validate
+	if customer.UserRefID.String != userRefID {
+		return constant.BankAccountNotFoundError
+	}
+
+	err = s.repo.DeleteBankAccountByXID(payload.XID)
+	if err != nil {
+		return errx.Trace(err)
+	}
+
+	return nil
+}
+
+func composeDetailBankAccount(row *model.BankAccount) (*dto.GetDetailBankAccountResult, error) {
+	return &dto.GetDetailBankAccountResult{
+		XID:           row.XID,
+		AccountNumber: row.AccountNumber,
+		AccountName:   row.AccountName,
+		Bank:          model.ToBankDTO(row.Bank),
+		BaseField:     model.ToBaseFieldDTO(&row.BaseField),
+	}, nil
 }
