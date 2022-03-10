@@ -67,6 +67,27 @@ func (s *Service) CreateBankAccount(userRefID string, payload *dto.CreateBankAcc
 	return composeDetailBankAccount(&bankAccount)
 }
 
+func (s *Service) GetDetailBankAccount(userRefID string, payload *dto.GetDetailBankAccountPayload) (*dto.GetDetailBankAccountResult, error) {
+	// Find customer
+	customer, err := s.repo.FindCustomerByUserRefID(userRefID)
+	if err != nil {
+		return nil, errx.Trace(err)
+	}
+
+	// Ownership validate
+	if customer.UserRefID.String != userRefID {
+		return nil, constant.ResourceNotFoundError.AddMetadata("message", "Bank account not found")
+	}
+
+	// Get bank account by xid
+	bankAccount, err := s.repo.FindBankAccountByXID(payload.XID)
+	if err != nil {
+		return nil, constant.ResourceNotFoundError
+	}
+
+	return composeDetailBankAccount(bankAccount)
+}
+
 func composeDetailBankAccount(row *model.BankAccount) (*dto.GetDetailBankAccountResult, error) {
 	return &dto.GetDetailBankAccountResult{
 		XID:           row.XID,

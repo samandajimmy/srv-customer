@@ -30,6 +30,11 @@ type CreateBankAccountPayload struct {
 	Bank          *Bank    `json:"bank"`
 }
 
+type GetDetailBankAccountPayload struct {
+	RequestID string `json:"-"`
+	XID       string `json:"xid"`
+}
+
 type GetDetailBankAccountResult struct {
 	XID           string `json:"xid"`
 	AccountNumber string `json:"accountNumber"`

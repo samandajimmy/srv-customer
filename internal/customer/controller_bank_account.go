@@ -1,6 +1,8 @@
 package customer
 
 import (
+	"errors"
+	"github.com/gorilla/mux"
 	"github.com/nbs-go/errx"
 	"github.com/nbs-go/nlogger/v2"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/validate"
@@ -90,4 +92,42 @@ func (c *BankAccountController) PostCreateBankAccount(rx *nhttp.Request) (*nhttp
 	}
 
 	return nhttp.Success().SetData(resp), nil
+}
+
+func (c *BankAccountController) GetDetailBankAccount(rx *nhttp.Request) (*nhttp.Response, error) {
+	// Get context
+	ctx := rx.Context()
+
+	// Get xid
+	xid := mux.Vars(rx.Request)["xid"]
+	if xid == "" {
+		err := errors.New("xid is not found on params")
+		log.Errorf("xid is not found on params. err: %v", err)
+		return nil, nhttp.BadRequestError.Wrap(err)
+	}
+
+	// Get user UserRefID
+	userRefID, err := getUserRefID(rx)
+	if err != nil {
+		log.Error("error when get userRefID", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, errx.Trace(err)
+	}
+
+	// Set payload
+	var payload dto.GetDetailBankAccountPayload
+	payload.RequestID = GetRequestID(rx)
+	payload.XID = xid
+
+	// Init service
+	svc := c.NewService(ctx)
+	defer svc.Close()
+
+	// Call service
+	resp, err := svc.GetDetailBankAccount(userRefID, &payload)
+	if err != nil {
+		log.Error("error when call detail bank account service", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, err
+	}
+
+	return nhttp.OK().SetData(resp), nil
 }

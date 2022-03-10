@@ -80,3 +80,9 @@ func (rc *RepositoryContext) CreateBankAccount(row model.BankAccount) error {
 	}
 	return nil
 }
+
+func (rc *RepositoryContext) FindBankAccountByXID(xid string) (*model.BankAccount, error) {
+	var result model.BankAccount
+	err := rc.stmt.BankAccount.FindByXID.GetContext(rc.ctx, &result, xid)
+	return &result, err
+}
