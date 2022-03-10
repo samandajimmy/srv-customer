@@ -69,15 +69,15 @@ func (s *Service) CreateBankAccount(payload *dto.CreateBankAccountPayload) (*dto
 	return composeDetailBankAccount(&bankAccount)
 }
 
-func (s *Service) GetDetailBankAccount(userRefID string, payload *dto.GetDetailBankAccountPayload) (*dto.GetDetailBankAccountResult, error) {
+func (s *Service) GetDetailBankAccount(payload *dto.GetDetailBankAccountPayload) (*dto.GetDetailBankAccountResult, error) {
 	// Find customer
-	customer, err := s.findOrFailCustomerByUserRefID(userRefID)
+	customer, err := s.findOrFailCustomerByUserRefID(payload.UserRefID)
 	if err != nil {
 		return nil, err
 	}
 
 	// Ownership validate
-	if customer.UserRefID.String != userRefID {
+	if customer.UserRefID.String != payload.UserRefID {
 		return nil, constant.BankAccountNotFoundError
 	}
 
@@ -132,15 +132,15 @@ func (s *Service) UpdateBankAccount(payload *dto.UpdateBankAccountPayload) (*dto
 	return composeDetailBankAccount(bankAccount)
 }
 
-func (s *Service) DeleteBankAccount(userRefID string, payload *dto.GetDetailBankAccountPayload) error {
+func (s *Service) DeleteBankAccount(payload *dto.GetDetailBankAccountPayload) error {
 	// Find customer
-	customer, err := s.findOrFailCustomerByUserRefID(userRefID)
+	customer, err := s.findOrFailCustomerByUserRefID(payload.UserRefID)
 	if err != nil {
 		return err
 	}
 
 	// Ownership validate
-	if customer.UserRefID.String != userRefID {
+	if customer.UserRefID.String != payload.UserRefID {
 		return constant.BankAccountNotFoundError
 	}
 
