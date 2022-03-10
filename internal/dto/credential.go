@@ -11,16 +11,16 @@ type ValidatePinPayload struct {
 }
 
 type CheckPinPayload struct {
+	UserRefID string `json:"-"`
 	Pin       string `json:"pin"`
-	UserRefID string `json:"userRefId"`
 	CheckPIN  bool   `json:"checkPIN"`
 }
 
 type UpdatePinPayload struct {
+	UserRefID          string `json:"-"`
 	PIN                string `json:"pin"`
 	NewPIN             string `json:"new_pin"`
 	NewPINConfirmation string `json:"new_pin_confirmation"`
-	UserRefID          string `json:"userRefId"`
 	CheckPIN           bool   `json:"check_pin"`
 }
 
@@ -30,8 +30,8 @@ type UpdatePinResult struct {
 }
 
 type CheckOTPPinPayload struct {
+	UserRefID string `json:"-"`
 	OTP       string `json:"otp"`
-	UserRefID string `json:"userRefId"`
 }
 
 type RestSwitchingOTPPinCreate struct {
@@ -41,9 +41,9 @@ type RestSwitchingOTPPinCreate struct {
 }
 
 type PostCreatePinPayload struct {
+	UserRefID          string `json:"-"`
 	NewPIN             string `json:"new_pin"`
 	NewPINConfirmation string `json:"new_pin_confirmation"`
-	UserRefID          string `json:"userRefId"`
 	OTP                string `json:"otp"`
 }
 
@@ -57,8 +57,8 @@ type RestSwitchingOTPForgetPin struct {
 }
 
 type ForgetPinPayload struct {
+	UserRefID          string `json:"-"`
 	OTP                string `json:"otp"`
 	NewPIN             string `json:"new_pin"`
 	NewPINConfirmation string `json:"new_pin_confirmation"`
-	UserRefID          string `json:"userRefId"`
 }
