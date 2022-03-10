@@ -13,6 +13,7 @@ type ValidatePinPayload struct {
 type CheckPinPayload struct {
 	Pin       string `json:"pin"`
 	UserRefID string `json:"userRefId"`
+	CheckPIN  bool   `json:"checkPIN"`
 }
 
 type UpdatePinPayload struct {

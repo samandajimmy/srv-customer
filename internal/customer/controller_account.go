@@ -414,6 +414,7 @@ func (c *AccountController) PostCheckPin(rx *nhttp.Request) (*nhttp.Response, er
 	// Get Payload
 	var payload dto.CheckPinPayload
 	payload.UserRefID = userRefID
+	payload.CheckPIN = true
 	err = rx.ParseJSONBody(&payload)
 	if err != nil {
 		log.Error("error when parse json body", nlogger.Error(err), nlogger.Context(ctx))
@@ -455,6 +456,7 @@ func (c *AccountController) PostUpdatePin(rx *nhttp.Request) (*nhttp.Response, e
 	// Get Payload
 	var payload dto.UpdatePinPayload
 	payload.UserRefID = userRefID
+	payload.CheckPIN = true
 	err = rx.ParseJSONBody(&payload)
 	if err != nil {
 		log.Error("error when parse json body", nlogger.Error(err), nlogger.Context(ctx))
@@ -473,13 +475,13 @@ func (c *AccountController) PostUpdatePin(rx *nhttp.Request) (*nhttp.Response, e
 	defer svc.Close()
 
 	// Call service
-	resp, message, err := svc.UpdatePin(&payload)
+	resp, err := svc.UpdatePin(&payload)
 	if err != nil {
 		log.Errorf("error found when call service", nlogger.Error(err), nlogger.Context(ctx))
 		return nil, err
 	}
 
-	return nhttp.Success().SetData(resp).SetMessage(message), nil
+	return nhttp.Success().SetData(resp).SetMessage(resp.Title), nil
 }
 
 func (c *AccountController) PostCheckOTPPinCreate(rx *nhttp.Request) (*nhttp.Response, error) {
