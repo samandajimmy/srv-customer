@@ -42,3 +42,14 @@ type GetDetailBankAccountResult struct {
 	Bank          *Bank  `json:"bank"`
 	*BaseField
 }
+
+type UpdateBankAccountPayload struct {
+	Subject       *Subject `json:"-"`
+	RequestID     string   `json:"-"`
+	XID           string   `json:"xid"`
+	AccountNumber string   `json:"accountNumber"`
+	AccountName   string   `json:"accountName"`
+	Status        int8     `json:"status"`
+	Bank          *Bank    `json:"bank"`
+	Version       int64    `json:"version"`
+}

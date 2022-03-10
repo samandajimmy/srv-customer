@@ -1,6 +1,8 @@
 package customer
 
 import (
+	"database/sql"
+	"errors"
 	"fmt"
 	gonanoid "github.com/matoous/go-nanoid/v2"
 	"github.com/nbs-go/errx"
@@ -96,4 +98,46 @@ func composeDetailBankAccount(row *model.BankAccount) (*dto.GetDetailBankAccount
 		Bank:          model.ToBankDTO(row.Bank),
 		BaseField:     model.ToBaseFieldDTO(&row.BaseField),
 	}, nil
+}
+
+func (s *Service) UpdateBankAccount(userRefID string, payload *dto.UpdateBankAccountPayload) (*dto.GetDetailBankAccountResult, error) {
+	// Find customer
+	customer, err := s.repo.FindCustomerByUserRefID(userRefID)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return nil, errx.Trace(err)
+	}
+
+	// Get from repo
+	bankAccount, err := s.repo.FindBankAccountByXID(payload.XID)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return nil, errx.Trace(err)
+	}
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, constant.ResourceNotFoundError
+	}
+
+	// Ownership validate
+	if customer.UserRefID.String != userRefID {
+		return nil, constant.ResourceNotFoundError.AddMetadata("message", "Bank account not found")
+	}
+
+	// Version validate
+	if bankAccount.Version != payload.Version {
+		return nil, constant.StaleResourceError.Trace()
+	}
+
+	// Update model
+	bankAccount.AccountName = payload.AccountName
+	bankAccount.AccountNumber = payload.AccountNumber
+	bankAccount.Status = payload.Status
+	bankAccount.Bank = model.ToBank(payload.Bank)
+	bankAccount.BaseField = bankAccount.Upgrade(model.ToModifier(payload.Subject.ModifiedBy()))
+
+	// Persist
+	err = s.repo.UpdateBankAccount(bankAccount)
+	if err != nil {
+		return nil, errx.Trace(err)
+	}
+
+	return composeDetailBankAccount(bankAccount)
 }

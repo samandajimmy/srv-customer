@@ -131,3 +131,47 @@ func (c *BankAccountController) GetDetailBankAccount(rx *nhttp.Request) (*nhttp.
 
 	return nhttp.OK().SetData(resp), nil
 }
+
+func (c *BankAccountController) PutUpdateBankAccount(rx *nhttp.Request) (*nhttp.Response, error) {
+	// Get context
+	ctx := rx.Context()
+
+	// Get user UserRefID
+	userRefID, err := getUserRefID(rx)
+	if err != nil {
+		log.Errorf("error: %v", err, nlogger.Error(err), nlogger.Context(ctx))
+		return nil, errx.Trace(err)
+	}
+
+	// Get payload
+	var payload dto.UpdateBankAccountPayload
+	err = rx.ParseJSONBody(&payload)
+	if err != nil {
+		log.Errorf("Error when parse json body from request.", nlogger.Error(err))
+		return nil, nhttp.BadRequestError.Wrap(err)
+	}
+
+	// Set modifier and id
+	payload.RequestID = GetRequestID(rx)
+	payload.XID = mux.Vars(rx.Request)["xid"]
+	payload.Subject = GetSubject(rx)
+
+	err = validate.PutUpdateBankAccount(&payload)
+	if err != nil {
+		log.Error("Bad request validate payload", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, nhttp.BadRequestError.Trace(errx.Source(err))
+	}
+
+	// Init service
+	svc := c.NewService(ctx)
+	defer svc.Close()
+
+	// Call service
+	resp, err := svc.UpdateBankAccount(userRefID, &payload)
+	if err != nil {
+		log.Error("error when call list bank account service", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, err
+	}
+
+	return nhttp.Success().SetData(resp), nil
+}
