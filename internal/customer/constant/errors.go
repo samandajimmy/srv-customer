@@ -125,3 +125,7 @@ var BankAccountNotFoundError = ResourceNotFoundError.AddMetadata(nhttp.MessageMe
 // Customer Errors
 
 var CustomerNotFoundError = ResourceNotFoundError.AddMetadata(nhttp.MessageMetadata, "Customer not found")
+
+// Transaction Favorite Errors
+
+var TransactionFavoriteNotFoundError = ResourceNotFoundError.AddMetadata(nhttp.MessageMetadata, "Transaction Favorite not found")
