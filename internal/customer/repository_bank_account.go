@@ -26,10 +26,10 @@ func (rc *RepositoryContext) ListBankAccount(customerID int64, params *dto.ListP
 	// Set where
 	filters := query.NewFilter(params.Filters, bankAccountFilters)
 	b.Where(
-		filters.Conditions(),
 		query.And(
 			query.Equal(query.Column("customerId", query.Schema(statement.BankAccountSchema)), query.BindVar()),
 		),
+		filters.Conditions(),
 	)
 
 	// Set order by
