@@ -21,18 +21,18 @@ func (s *Service) ValidateJWT(token string) (jwt.Token, error) {
 	t, err := jwt.ParseString(token, jwt.WithVerify(constant.JWTSignature, []byte(s.config.JWTKey)))
 	if err != nil {
 		s.log.Error("parsing jwt token", nlogger.Error(err), nlogger.Context(s.ctx))
-		return nil, err
+		return nil, constant.InvalidJWTFormatError.Trace()
 	}
 
 	if err = jwt.Validate(t); err != nil {
 		s.log.Error("error when validate", nlogger.Error(err), nlogger.Context(s.ctx))
-		return nil, err
+		return nil, constant.ExpiredJWTError.Trace()
 	}
 
 	err = jwt.Validate(t, jwt.WithIssuer(constant.JWTIssuer))
 	if err != nil {
 		s.log.Error("error found when validate with issuer", nlogger.Error(err), nlogger.Context(s.ctx))
-		return nil, err
+		return nil, constant.InvalidJWTIssuerError.Trace()
 	}
 
 	return t, nil
@@ -46,7 +46,7 @@ func (s *Service) ValidateTokenAndRetrieveUserRefID(tokenString string) (string,
 	token, err := s.ValidateJWT(tokenString)
 	if err != nil {
 		s.log.Error("error when validate JWT", nlogger.Error(err), nlogger.Context(ctx))
-		return "", err
+		return "", errx.Trace(err)
 	}
 
 	accessToken, _ := token.Get("access_token")
@@ -59,7 +59,7 @@ func (s *Service) ValidateTokenAndRetrieveUserRefID(tokenString string) (string,
 	tokenFromCache, err := s.CacheGet(key)
 	if err != nil {
 		s.log.Error("error get token from cache", nlogger.Error(err), nlogger.Context(ctx))
-		return "", err
+		return "", errx.Trace(err)
 	}
 
 	if accessToken != tokenFromCache {

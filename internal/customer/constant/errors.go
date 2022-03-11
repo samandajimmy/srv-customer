@@ -53,6 +53,12 @@ var InvalidTokenError = b.NewError("E_AUTH_11", "Invalid token",
 	nhttp.WithStatus(http.StatusBadRequest))
 var InvalidPasswordError = b.NewError("E_AUTH_12", "Password tidak sesuai",
 	nhttp.WithStatus(http.StatusBadRequest))
+var InvalidJWTFormatError = b.NewError("E_AUTH_13", "Invalid JWT Format",
+	nhttp.WithStatus(http.StatusBadRequest))
+var InvalidJWTIssuerError = b.NewError("E_AUTH_14", "Invalid JWT Issuer",
+	nhttp.WithStatus(http.StatusUnauthorized))
+var ExpiredJWTError = b.NewError("E_AUTH_15", "Expired JWT",
+	nhttp.WithStatus(http.StatusUnauthorized))
 
 var InvalidFormatError = b.NewError("E_COMM_5", "Invalid Format")
 

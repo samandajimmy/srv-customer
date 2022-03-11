@@ -40,7 +40,7 @@ func (c *AccountController) HandleAuthUser(rx *nhttp.Request) (*nhttp.Response, 
 	// Get UserRefID
 	userRefID, err := svc.ValidateTokenAndRetrieveUserRefID(tokenString)
 	if err != nil {
-		return nil, err
+		return nil, errx.Trace(err)
 	}
 
 	rx.SetContextValue(constant.UserRefIDContextKey, userRefID)
