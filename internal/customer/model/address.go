@@ -7,7 +7,7 @@ import (
 type Address struct {
 	BaseField
 	ID              int64          `db:"id"`
-	Xid             string         `db:"xid"`
+	XID             string         `db:"xid"`
 	CustomerID      int64          `db:"customerId"`
 	Purpose         int64          `db:"purpose"`
 	ProvinceID      sql.NullInt64  `db:"provinceId"`

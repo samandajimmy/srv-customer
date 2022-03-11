@@ -137,7 +137,7 @@ func (rc *RepositoryContext) UpdateCustomerProfile(customer *model.Customer, pay
 	// if empty create new address
 	if errors.Is(errAddress, sql.ErrNoRows) {
 		address.CustomerID = customer.ID
-		address.Xid = strings.ToUpper(xid.New().String())
+		address.XID = strings.ToUpper(xid.New().String())
 		address.Metadata = nsql.EmptyObjectJSON
 		address.Purpose = constant.IdentityCard
 		address.IsPrimary = sql.NullBool{Bool: true, Valid: true}

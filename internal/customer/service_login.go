@@ -271,10 +271,13 @@ func (s *Service) syncInternalToExternal(payload *dto.CustomerSynchronizeRequest
 }
 
 func (s *Service) syncExternalToInternal(user *model.User) (*model.Customer, error) {
+	// Get context
+	ctx := s.ctx
+
 	// prepare customer
 	customer, err := model.UserToCustomer(user)
 	if err != nil {
-		s.log.Error("failed to convert to model customer", nlogger.Error(err), nlogger.Context(s.ctx))
+		s.log.Error("failed to convert to model customer", nlogger.Error(err), nlogger.Context(ctx))
 		return nil, err
 	}
 
@@ -283,7 +286,7 @@ func (s *Service) syncExternalToInternal(user *model.User) (*model.Customer, err
 	if errors.Is(err, sql.ErrNoRows) {
 		userPin = &model.UserPin{}
 	} else if err != nil {
-		s.log.Error("failed retrieve user pin from external database", nlogger.Error(err), nlogger.Context(s.ctx))
+		s.log.Error("failed retrieve user pin from external database", nlogger.Error(err), nlogger.Context(ctx))
 		return nil, err
 	}
 
@@ -292,42 +295,42 @@ func (s *Service) syncExternalToInternal(user *model.User) (*model.Customer, err
 	if errors.Is(err, sql.ErrNoRows) {
 		addressExternal = &model.AddressExternal{}
 	} else if err != nil {
-		s.log.Error("failed retrieve address from external database", nlogger.Error(err), nlogger.Context(s.ctx))
+		s.log.Error("failed retrieve address from external database", nlogger.Error(err), nlogger.Context(ctx))
 		return nil, err
 	}
 
 	// Prepare credential
 	credential, err := model.UserToCredential(user, userPin)
 	if err != nil {
-		s.log.Error("failed convert to credential model", nlogger.Error(err), nlogger.Context(s.ctx))
+		s.log.Error("failed convert to credential model", nlogger.Error(err), nlogger.Context(ctx))
 		return nil, err
 	}
 
 	// Prepare financial data
 	financialData, err := model.UserToFinancialData(user)
 	if err != nil {
-		s.log.Error("failed convert to financial data", nlogger.Error(err), nlogger.Context(s.ctx))
+		s.log.Error("failed convert to financial data", nlogger.Error(err), nlogger.Context(ctx))
 		return nil, err
 	}
 
 	// Prepare verification
 	verification, err := model.UserToVerification(user)
 	if err != nil {
-		s.log.Error("failed convert to verification", nlogger.Error(err), nlogger.Context(s.ctx))
+		s.log.Error("failed convert to verification", nlogger.Error(err), nlogger.Context(ctx))
 		return nil, err
 	}
 
 	// Prepare address
 	address, err := model.UserToAddress(user, addressExternal)
 	if err != nil {
-		s.log.Error("failed convert address", nlogger.Error(err), nlogger.Context(s.ctx))
+		s.log.Error("failed convert address", nlogger.Error(err), nlogger.Context(ctx))
 		return nil, err
 	}
 
 	// Persist customer data
 	customerID, err := s.repo.CreateCustomer(customer)
 	if err != nil {
-		s.log.Error("failed to persist customer", nlogger.Error(err), nlogger.Context(s.ctx))
+		s.log.Error("failed to persist customer", nlogger.Error(err), nlogger.Context(ctx))
 		return nil, err
 	}
 
@@ -340,34 +343,34 @@ func (s *Service) syncExternalToInternal(user *model.User) (*model.Customer, err
 	// persist credential
 	err = s.repo.InsertOrUpdateCredential(credential)
 	if err != nil {
-		s.log.Error("failed persist to credential", nlogger.Error(err), nlogger.Context(s.ctx))
+		s.log.Error("failed persist to credential", nlogger.Error(err), nlogger.Context(ctx))
 		return nil, err
 	}
 
 	// persist financial data
 	err = s.repo.InsertOrUpdateFinancialData(financialData)
 	if err != nil {
-		s.log.Error("failed persist to financial data", nlogger.Error(err), nlogger.Context(s.ctx))
+		s.log.Error("failed persist to financial data", nlogger.Error(err), nlogger.Context(ctx))
 		return nil, err
 	}
 
 	// persist verification
 	err = s.repo.InsertOrUpdateVerification(verification)
 	if err != nil {
-		s.log.Error("failed persist verification.", nlogger.Error(err), nlogger.Context(s.ctx))
+		s.log.Error("failed persist verification.", nlogger.Error(err), nlogger.Context(ctx))
 		return nil, err
 	}
 
 	// persist address
 	err = s.repo.InsertOrUpdateAddress(address)
 	if err != nil {
-		s.log.Error("failed persist address", nlogger.Error(err), nlogger.Context(s.ctx))
+		s.log.Error("failed persist address", nlogger.Error(err), nlogger.Context(ctx))
 		return nil, err
 	}
 
 	customer, err = s.repo.FindCustomerByID(customerID)
 	if err != nil {
-		s.log.Error("failed to retrieve customer not found", nlogger.Error(err), nlogger.Context(s.ctx))
+		s.log.Error("failed to retrieve customer not found", nlogger.Error(err), nlogger.Context(ctx))
 		return nil, constant.ResourceNotFoundError.Trace()
 	}
 
@@ -459,10 +462,10 @@ func (s *Service) setTokenAuthentication(customer *model.Customer, agen string, 
 		// Generate access token
 		newAccessToken := nval.Bin2Hex(nval.RandStringBytes(78))
 		// Set token to cache
-		cacheToken, err := s.CacheSetThenGet(cacheTokenKey, newAccessToken, s.config.ClientConfig.JWTExpiry)
-		if err != nil {
+		cacheToken, errCache := s.CacheSetThenGet(cacheTokenKey, newAccessToken, s.config.ClientConfig.JWTExpiry)
+		if errCache != nil {
 			s.log.Error("error found when set token to cache", nlogger.Error(err), nlogger.Context(s.ctx))
-			return "", err
+			return "", errx.Trace(errCache)
 		}
 		// Set access token
 		accessToken = cacheToken
