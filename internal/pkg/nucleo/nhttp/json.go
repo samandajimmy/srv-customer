@@ -47,11 +47,20 @@ func (jw *JSONContentWriter) WriteError(w http.ResponseWriter, err error) int {
 	// Get metadata of error
 	metadata, _ := errMeta[MetadataKey].(map[string]interface{})
 
+	// Set default message
+	hErrMessage := hErr.Message()
+
+	// Get metadata message
+	messageMetadata, ok := nval.ParseString(errMeta[MessageMetadata])
+	if ok {
+		hErrMessage = messageMetadata
+	}
+
 	// Create response
 	resp := Response{
 		Success: false,
 		Code:    hErr.Code(),
-		Message: hErr.Message(),
+		Message: hErrMessage,
 		Data:    nil,
 	}
 
@@ -62,7 +71,7 @@ func (jw *JSONContentWriter) WriteError(w http.ResponseWriter, err error) int {
 		if sourceErr := errors.Unwrap(hErr); sourceErr != nil {
 			dbgMsg = sourceErr.Error()
 		} else {
-			dbgMsg = hErr.Message()
+			dbgMsg = hErrMessage
 		}
 
 		// Add error tracing metadata to data
