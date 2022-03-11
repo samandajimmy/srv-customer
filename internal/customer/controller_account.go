@@ -391,13 +391,13 @@ func (c *AccountController) PostValidatePin(rx *nhttp.Request) (*nhttp.Response,
 	defer svc.Close()
 
 	// Call service
-	resp, err := svc.ValidatePin(&payload)
+	err = svc.ValidatePin(&payload)
 	if err != nil {
 		log.Error("error when call update service", nlogger.Error(err), nlogger.Context(ctx))
 		return nil, err
 	}
 
-	return nhttp.Success().SetMessage(resp), nil
+	return nhttp.Success().SetMessage(constant.IsValidPINMessage), nil
 }
 
 func (c *AccountController) PostCheckPin(rx *nhttp.Request) (*nhttp.Response, error) {
@@ -433,13 +433,13 @@ func (c *AccountController) PostCheckPin(rx *nhttp.Request) (*nhttp.Response, er
 	defer svc.Close()
 
 	// Call service
-	resp, err := svc.CheckPinUser(&payload)
+	err = svc.CheckPinUser(&payload)
 	if err != nil {
 		log.Error("error when call update service", nlogger.Error(err), nlogger.Context(ctx))
 		return nil, err
 	}
 
-	return nhttp.Success().SetMessage(resp), nil
+	return nhttp.Success().SetMessage(constant.IsCheckValidMessage), nil
 }
 
 func (c *AccountController) PostUpdatePin(rx *nhttp.Request) (*nhttp.Response, error) {
@@ -516,13 +516,13 @@ func (c *AccountController) PostCheckOTPPinCreate(rx *nhttp.Request) (*nhttp.Res
 	defer svc.Close()
 
 	// Call service
-	resp, err := svc.CheckOTPPinCreate(&payload)
+	err = svc.CheckOTPPinCreate(&payload)
 	if err != nil {
 		log.Errorf("error found when call service", nlogger.Error(err), nlogger.Context(ctx))
 		return nil, err
 	}
 
-	return nhttp.Success().SetMessage(resp), nil
+	return nhttp.Success().SetMessage(constant.OTPValidMessage), nil
 }
 
 func (c *AccountController) PostCreatePin(rx *nhttp.Request) (*nhttp.Response, error) {
@@ -557,13 +557,13 @@ func (c *AccountController) PostCreatePin(rx *nhttp.Request) (*nhttp.Response, e
 	defer svc.Close()
 
 	// Call service
-	resp, err := svc.CreatePinUser(&payload)
+	err = svc.CreatePinUser(&payload)
 	if err != nil {
 		log.Errorf("error found when call service", nlogger.Error(err), nlogger.Context(ctx))
 		return nil, err
 	}
 
-	return nhttp.Success().SetMessage(resp), nil
+	return nhttp.Success().SetMessage(constant.IsValidPINMessage), nil
 }
 
 func (c *AccountController) PostOTPForgetPin(rx *nhttp.Request) (*nhttp.Response, error) {
@@ -598,13 +598,13 @@ func (c *AccountController) PostOTPForgetPin(rx *nhttp.Request) (*nhttp.Response
 	defer svc.Close()
 
 	// Call service
-	resp, err := svc.CheckOTPForgetPin(&payload)
+	err = svc.CheckOTPForgetPin(&payload)
 	if err != nil {
 		log.Errorf("error found when call service", nlogger.Error(err), nlogger.Context(ctx))
 		return nil, err
 	}
 
-	return nhttp.Success().SetMessage(resp), nil
+	return nhttp.Success().SetMessage(constant.OTPValidMessage), nil
 }
 
 func (c *AccountController) PostForgetPin(rx *nhttp.Request) (*nhttp.Response, error) {
@@ -639,11 +639,11 @@ func (c *AccountController) PostForgetPin(rx *nhttp.Request) (*nhttp.Response, e
 	defer svc.Close()
 
 	// Call service
-	resp, err := svc.ForgetPin(&payload)
+	err = svc.ForgetPin(&payload)
 	if err != nil {
 		log.Errorf("error found when call service", nlogger.Error(err), nlogger.Context(ctx))
 		return nil, err
 	}
 
-	return nhttp.Success().SetMessage(resp), nil
+	return nhttp.Success().SetMessage(constant.IsUpdatedPINMessage), nil
 }

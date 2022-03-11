@@ -71,7 +71,7 @@ func (s *Service) ValidateTokenAndRetrieveUserRefID(tokenString string) (string,
 	return userRefID, nil
 }
 
-func (s *Service) ValidatePin(payload *dto.ValidatePinPayload) (string, error) {
+func (s *Service) ValidatePin(payload *dto.ValidatePinPayload) error {
 	// Get Context
 	ctx := s.ctx
 
@@ -79,16 +79,16 @@ func (s *Service) ValidatePin(payload *dto.ValidatePinPayload) (string, error) {
 	err := validateIncreasingPin(payload)
 	if err != nil {
 		s.log.Error(`new pin isn't passed validation increasing pin'`, nlogger.Error(err), nlogger.Context(ctx))
-		return "", errx.Trace(err)
+		return errx.Trace(err)
 	}
 
 	err = validateRepetitionPin(payload)
 	if err != nil {
 		s.log.Error(`new pin isn't passed validation increasing pin'`, nlogger.Error(err), nlogger.Context(ctx))
-		return "", errx.Trace(err)
+		return errx.Trace(err)
 	}
 
-	return "PIN sudah valid", nil
+	return nil
 }
 
 func validateIncreasingPin(payload *dto.ValidatePinPayload) error {
@@ -110,13 +110,13 @@ func validateRepetitionPin(payload *dto.ValidatePinPayload) error {
 	return nil
 }
 
-func (s *Service) CheckPinUser(payload *dto.CheckPinPayload) (string, error) {
+func (s *Service) CheckPinUser(payload *dto.CheckPinPayload) error {
 	// Get Context
 	ctx := s.ctx
 
 	// If not check pin
 	if !payload.CheckPIN {
-		return "", nil
+		return nil
 	}
 
 	// Get customer id
@@ -124,7 +124,7 @@ func (s *Service) CheckPinUser(payload *dto.CheckPinPayload) (string, error) {
 	if err != nil {
 		s.log.Error("error found when get customer repo", nlogger.Error(err), nlogger.Context(ctx))
 		err = handleErrorRepository(err, constant.ResourceNotFoundError)
-		return "", errx.Trace(err)
+		return errx.Trace(err)
 	}
 
 	// Get customer pin
@@ -132,17 +132,17 @@ func (s *Service) CheckPinUser(payload *dto.CheckPinPayload) (string, error) {
 	if err != nil {
 		s.log.Error("error found when get credential repo", nlogger.Context(ctx))
 		err = handleErrorRepository(err, constant.AccountPINIsNotActive)
-		return "", errx.Trace(err)
+		return errx.Trace(err)
 	}
 
 	if credential.Pin == "" {
-		return "", constant.AccountPINIsNotActive
+		return constant.AccountPINIsNotActive
 	}
 
 	// Check if pin is blocked
 	if credential.PinBlockedStatus != constant.Unblocked {
 		s.log.Error("pin is blocked", nlogger.Context(ctx))
-		return "", constant.AccountPINIsBlocked
+		return constant.AccountPINIsBlocked
 	}
 
 	// Find pin with md5
@@ -150,21 +150,21 @@ func (s *Service) CheckPinUser(payload *dto.CheckPinPayload) (string, error) {
 	if err != nil {
 		s.log.Error("error found when querying valid pin", nlogger.Error(err), nlogger.Context(ctx))
 		err = handleErrorRepository(err, constant.ResourceNotFoundError)
-		return "", errx.Trace(err)
+		return errx.Trace(err)
 	}
 
 	if !valid {
 		err = s.handlePinNotValid(credential)
-		return "", errx.Trace(err)
+		return errx.Trace(err)
 	}
 
 	// Unblock pin user
 	err = s.unblockPINUser(customer)
 	if err != nil {
-		return "", errx.Trace(err)
+		return errx.Trace(err)
 	}
 
-	return "PIN Tersedia dan sudah di aktifasi finansial", nil
+	return nil
 }
 
 func (s *Service) handlePinNotValid(credential *model.Credential) error {
@@ -227,7 +227,7 @@ func (s *Service) unblockPINUser(customer *model.Customer) error {
 
 func (s *Service) UpdatePin(payload *dto.UpdatePinPayload) (*dto.UpdatePinResult, error) {
 	// If check pin true
-	_, err := s.CheckPinUser(&dto.CheckPinPayload{
+	err := s.CheckPinUser(&dto.CheckPinPayload{
 		Pin:       payload.PIN,
 		UserRefID: payload.UserRefID,
 		CheckPIN:  payload.CheckPIN,
@@ -237,7 +237,7 @@ func (s *Service) UpdatePin(payload *dto.UpdatePinPayload) (*dto.UpdatePinResult
 	}
 
 	// Validate pin user
-	_, err = s.ValidatePin(&dto.ValidatePinPayload{
+	err = s.ValidatePin(&dto.ValidatePinPayload{
 		NewPin: payload.NewPIN,
 	})
 	if err != nil {
@@ -297,13 +297,13 @@ func (s *Service) handleUpdatePin(userRefID string, newPin string) error {
 	return nil
 }
 
-func (s *Service) CheckOTPPinCreate(payload *dto.CheckOTPPinPayload) (string, error) {
+func (s *Service) CheckOTPPinCreate(payload *dto.CheckOTPPinPayload) error {
 	// Get customer id
 	customer, err := s.repo.FindCustomerByUserRefID(payload.UserRefID)
 	if err != nil {
 		s.log.Error("error found when get customer repo", nlogger.Error(err), nlogger.Context(s.ctx))
 		err = handleErrorRepository(err, constant.ResourceNotFoundError)
-		return "", errx.Trace(err)
+		return errx.Trace(err)
 	}
 
 	// Set payload
@@ -317,39 +317,39 @@ func (s *Service) CheckOTPPinCreate(payload *dto.CheckOTPPinPayload) (string, er
 	switchingResponse, err := s.customerActivation(payloadSwitching)
 	if err != nil {
 		s.log.Error("error found when get otp pin create", nlogger.Error(err), nlogger.Context(s.ctx))
-		return "", errx.Trace(err)
+		return errx.Trace(err)
 	}
 
 	// Get from cache when switching response is not success
 	if switchingResponse.ResponseCode != "00" {
-		return "", constant.IncorrectOTPError
+		return constant.IncorrectOTPError
 	}
 
-	return "OTP yang dimasukan valid!", nil
+	return nil
 }
 
-func (s *Service) CreatePinUser(payload *dto.PostCreatePinPayload) (string, error) {
+func (s *Service) CreatePinUser(payload *dto.PostCreatePinPayload) error {
 	// Get user by ref id
 	customer, err := s.repo.FindCustomerByUserRefID(payload.UserRefID)
 	if err != nil {
 		s.log.Error("error found when get customer repo", nlogger.Error(err), nlogger.Context(s.ctx))
 		err = handleErrorRepository(err, constant.ResourceNotFoundError)
-		return "", errx.Trace(err)
+		return errx.Trace(err)
 	}
 
 	// Check OTP
-	msg, err := s.CheckOTPPinCreate(&dto.CheckOTPPinPayload{
+	err = s.CheckOTPPinCreate(&dto.CheckOTPPinPayload{
 		OTP:       payload.OTP,
 		UserRefID: payload.UserRefID,
 	})
 	if err != nil {
-		return msg, errx.Trace(err)
+		return errx.Trace(err)
 	}
 
 	// Unblock pin user
 	err = s.unblockPINUser(customer)
 	if err != nil {
-		return "", errx.Trace(err)
+		return errx.Trace(err)
 	}
 
 	// Update pin
@@ -360,18 +360,18 @@ func (s *Service) CreatePinUser(payload *dto.PostCreatePinPayload) (string, erro
 	})
 	if err != nil {
 		s.log.Error("error found when update customer pin", nlogger.Error(err), nlogger.Context(s.ctx))
-		return "", errx.Trace(err)
+		return errx.Trace(err)
 	}
 
 	// Aktivasi finansial
 	err = s.activateFinancialStatus(customer)
 	if err != nil {
-		return "", errx.Trace(err)
+		return errx.Trace(err)
 	}
 
 	// TODO: Audit log aktifasi finansial
 
-	return "PIN sudah valid", nil
+	return nil
 }
 
 func (s *Service) activateFinancialStatus(customer *model.Customer) error {
@@ -400,12 +400,13 @@ func (s *Service) activateFinancialStatus(customer *model.Customer) error {
 	return nil
 }
 
-func (s *Service) CheckOTPForgetPin(payload *dto.CheckOTPPinPayload) (string, error) { // Get customer id
+func (s *Service) CheckOTPForgetPin(payload *dto.CheckOTPPinPayload) error {
+	// Get customer id
 	customer, err := s.repo.FindCustomerByUserRefID(payload.UserRefID)
 	if err != nil {
 		s.log.Error("error found when get customer repo", nlogger.Error(err), nlogger.Context(s.ctx))
 		err = handleErrorRepository(err, constant.ResourceNotFoundError)
-		return "", errx.Trace(err)
+		return errx.Trace(err)
 	}
 
 	// Set payload
@@ -422,25 +423,25 @@ func (s *Service) CheckOTPForgetPin(payload *dto.CheckOTPPinPayload) (string, er
 	switchingResponse, err := s.otpValidate(payloadSwitching)
 	if err != nil {
 		s.log.Error("error found when get reset pin otp validate", nlogger.Error(err), nlogger.Context(s.ctx))
-		return "", errx.Trace(err)
+		return errx.Trace(err)
 	}
 
 	// Get from cache when switching response is not success
 	if switchingResponse.ResponseCode != "00" {
 		s.log.Error("error rest switching otp reset pin", nlogger.Context(s.ctx))
-		return "", constant.IncorrectOTPError
+		return constant.IncorrectOTPError
 	}
 
-	return "OTP yang dimasukan valid!", nil
+	return nil
 }
 
-func (s *Service) ForgetPin(payload *dto.ForgetPinPayload) (string, error) {
+func (s *Service) ForgetPin(payload *dto.ForgetPinPayload) error {
 	// Get user by ref id
 	customer, err := s.repo.FindCustomerByUserRefID(payload.UserRefID)
 	if err != nil {
 		s.log.Error("error found when get customer repo", nlogger.Error(err), nlogger.Context(s.ctx))
 		err = handleErrorRepository(err, constant.ResourceNotFoundError)
-		return "", errx.Trace(err)
+		return errx.Trace(err)
 	}
 
 	// Check OTP Reset PIN
@@ -449,16 +450,16 @@ func (s *Service) ForgetPin(payload *dto.ForgetPinPayload) (string, error) {
 		UserRefID: payload.UserRefID,
 	}
 
-	msg, err := s.CheckOTPForgetPin(payloadOTP)
+	err = s.CheckOTPForgetPin(payloadOTP)
 	if err != nil {
 		s.log.Error("error found when check otp forget pin", nlogger.Error(err), nlogger.Context(s.ctx))
-		return msg, errx.Trace(err)
+		return errx.Trace(err)
 	}
 
 	// Unblock pin user
 	err = s.unblockPINUser(customer)
 	if err != nil {
-		return "", errx.Trace(err)
+		return errx.Trace(err)
 	}
 
 	// Set payload update pin
@@ -477,10 +478,10 @@ func (s *Service) ForgetPin(payload *dto.ForgetPinPayload) (string, error) {
 	_, err = s.UpdatePin(payloadUpdatePIN)
 	if err != nil {
 		s.log.Error("error found when update customer pin", nlogger.Error(err), nlogger.Context(s.ctx))
-		return "", errx.Trace(err)
+		return errx.Trace(err)
 	}
 
-	return "PIN berhasil diubah", nil
+	return nil
 }
 
 func handleErrorRepository(errRepo error, errMsg error) error {
