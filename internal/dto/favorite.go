@@ -26,3 +26,8 @@ type CreateFavoritePayload struct {
 	GroupMPO        string   `json:"groupMpo"`
 	ServiceCodeMPO  string   `json:"serviceCodeMpo"`
 }
+
+type ListFavoriteResult struct {
+	Rows     []Favorite    `json:"rows"`
+	Metadata *ListMetadata `json:"metadata"`
+}

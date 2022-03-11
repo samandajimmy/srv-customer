@@ -102,6 +102,8 @@ func setUpRoute(router *nhttp.Router, controllers *Controllers) {
 	// Favorite Transaction
 	router.Handle(http.MethodPost, "/favorite", router.HandleFunc(controllers.Account.HandleAuthUser),
 		router.HandleFunc(controllers.Favorite.PostCreate))
+	router.Handle(http.MethodGet, "/favorite", router.HandleFunc(controllers.Account.HandleAuthUser),
+		router.HandleFunc(controllers.Favorite.GetList))
 
 	// Static asset
 	staticDir := "/web/assets/"

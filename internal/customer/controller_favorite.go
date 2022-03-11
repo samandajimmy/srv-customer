@@ -55,3 +55,30 @@ func (c *FavoriteController) PostCreate(rx *nhttp.Request) (*nhttp.Response, err
 
 	return nhttp.Success().SetData(resp), nil
 }
+
+func (c *FavoriteController) GetList(rx *nhttp.Request) (*nhttp.Response, error) {
+	// Get context
+	ctx := rx.Context()
+
+	// Get List Payload
+	payload, err := getListPayload(rx)
+	if err != nil {
+		return nil, errx.Trace(err)
+	}
+
+	// Get UserRefID
+	userRefID := GetUserRefID(rx)
+
+	// Init service
+	svc := c.NewService(ctx)
+	defer svc.Close()
+
+	// Call service
+	resp, err := svc.ListFavorite(userRefID, payload)
+	if err != nil {
+		log.Error("error when call list transaction favorite service", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, err
+	}
+
+	return nhttp.Success().SetData(resp), nil
+}

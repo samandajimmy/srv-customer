@@ -2,6 +2,7 @@ package model
 
 import (
 	"database/sql"
+	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/dto"
 )
 
 type TransactionFavorite struct {
@@ -17,4 +18,24 @@ type TransactionFavorite struct {
 	BankCode        sql.NullString `db:"bankCode"`
 	GroupMPO        sql.NullString `db:"groupMpo"`
 	ServiceCodeMPO  sql.NullString `db:"serviceCodeMpo"`
+}
+
+func ToTransactionFavoriteDTO(m TransactionFavorite) dto.Favorite {
+	return dto.Favorite{
+		BaseField:       ToBaseFieldDTO(&m.BaseField),
+		XID:             m.XID,
+		Type:            m.Type,
+		TypeTransaction: m.TypeTransaction,
+		AccountName:     m.AccountName,
+		AccountNumber:   m.AccountNumber,
+		BankName:        m.BankName.String,
+		BankCode:        m.BankCode.String,
+		GroupMPO:        m.GroupMPO.String,
+		ServiceCodeMPO:  m.ServiceCodeMPO.String,
+	}
+}
+
+type ListTransactionFavoriteResult struct {
+	Rows  []TransactionFavorite
+	Count int64
 }
