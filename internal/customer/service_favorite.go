@@ -83,6 +83,26 @@ func (s *Service) ListFavorite(userRefID string, params *dto.ListPayload) (*dto.
 	}, nil
 }
 
+func (s *Service) DeleteFavorite(payload *dto.GetDetailFavoritePayload) error {
+	// Find customer
+	customer, err := s.findOrFailCustomerByUserRefID(payload.UserRefID)
+	if err != nil {
+		return err
+	}
+
+	// Ownership validate
+	if customer.UserRefID.String != payload.UserRefID {
+		return constant.TransactionFavoriteNotFoundError
+	}
+
+	err = s.repo.DeleteTransactionFavoriteByXID(payload.XID)
+	if err != nil {
+		return errx.Trace(err)
+	}
+
+	return nil
+}
+
 func composeDetailFavorite(row *model.TransactionFavorite) (*dto.Favorite, error) {
 	return &dto.Favorite{
 		BaseField:       model.ToBaseFieldDTO(&row.BaseField),

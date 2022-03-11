@@ -1,6 +1,8 @@
 package customer
 
 import (
+	"errors"
+	"github.com/gorilla/mux"
 	"github.com/nbs-go/errx"
 	"github.com/nbs-go/nlogger/v2"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/validate"
@@ -81,4 +83,35 @@ func (c *FavoriteController) GetList(rx *nhttp.Request) (*nhttp.Response, error)
 	}
 
 	return nhttp.Success().SetData(resp), nil
+}
+
+func (c *FavoriteController) Delete(rx *nhttp.Request) (*nhttp.Response, error) {
+	// Get context
+	ctx := rx.Context()
+
+	// Get xid
+	xid := mux.Vars(rx.Request)["xid"]
+	if xid == "" {
+		err := errors.New("xid is not found on params")
+		log.Errorf("xid is not found on params. err: %v", err)
+		return nil, nhttp.BadRequestError.Wrap(err)
+	}
+
+	// Set payload
+	var payload dto.GetDetailFavoritePayload
+	payload.RequestID = GetRequestID(rx)
+	payload.UserRefID = GetUserRefID(rx)
+	payload.XID = xid
+
+	// Init service
+	svc := c.NewService(ctx)
+	defer svc.Close()
+
+	// Call service
+	err := svc.DeleteFavorite(&payload)
+	if err != nil {
+		return nil, errx.Trace(err)
+	}
+
+	return nhttp.OK(), nil
 }

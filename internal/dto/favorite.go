@@ -31,3 +31,9 @@ type ListFavoriteResult struct {
 	Rows     []Favorite    `json:"rows"`
 	Metadata *ListMetadata `json:"metadata"`
 }
+
+type GetDetailFavoritePayload struct {
+	RequestID string `json:"-"`
+	UserRefID string `json:"-"`
+	XID       string `json:"xid"`
+}

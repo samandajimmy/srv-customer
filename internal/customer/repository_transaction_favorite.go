@@ -10,6 +10,7 @@ import (
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/model"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/statement"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/dto"
+	nsqlDep "repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nsql"
 )
 
 // Define filters
@@ -84,4 +85,21 @@ func (rc *RepositoryContext) ListFavorite(customerID int64, params *dto.ListPayl
 		Count: count,
 	}
 	return &result, err
+}
+
+func (rc *RepositoryContext) FindFavoriteByXID(xid string) (*model.TransactionFavorite, error) {
+	var result model.TransactionFavorite
+	err := rc.stmt.TransactionFavorite.FindByXID.GetContext(rc.ctx, &result, xid)
+	return &result, err
+}
+
+func (rc *RepositoryContext) DeleteTransactionFavoriteByXID(xid string) error {
+	result, err := rc.stmt.TransactionFavorite.DeleteByXID.ExecContext(rc.ctx, xid)
+	if err != nil {
+		return errx.Trace(err)
+	}
+	if !nsqlDep.IsUpdated(result) {
+		return constant.TransactionFavoriteNotFoundError
+	}
+	return nil
 }
