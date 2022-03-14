@@ -536,6 +536,7 @@ func (s *Service) ResetPasswordByOTP(payload dto.ResetPasswordByOTPPayload) (str
 	customer, err := s.repo.FindCustomerByEmailOrPhone(payload.Email)
 	if err != nil {
 		s.log.Error("error found when get customer repo", nlogger.Error(err), nlogger.Context(s.ctx))
+		// TODO: refactor handle error
 		if errors.Is(err, sql.ErrNoRows) {
 			return "", constant.ResourceNotFoundError.Trace()
 		}
@@ -560,6 +561,7 @@ func (s *Service) ResetPasswordByOTP(payload dto.ResetPasswordByOTPPayload) (str
 	credential, err := s.repo.FindCredentialByCustomerID(customer.ID)
 	if err != nil {
 		s.log.Error("error found when get credential repo", nlogger.Error(err), nlogger.Context(s.ctx))
+		// TODO: refactor handle error
 		if errors.Is(err, sql.ErrNoRows) {
 			return "", constant.ResourceNotFoundError.Trace()
 		}
@@ -568,7 +570,7 @@ func (s *Service) ResetPasswordByOTP(payload dto.ResetPasswordByOTPPayload) (str
 
 	// Update credential
 	credential.Password = nval.MD5(payload.Password)
-	credential.BiometricLogin = 0
+	credential.BiometricLogin = constant.Disabled
 	credential.BiometricDeviceID = ""
 	credential.Version++
 
