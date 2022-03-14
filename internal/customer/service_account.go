@@ -705,7 +705,7 @@ func (s *Service) ResetPasswordByOTP(payload dto.ResetPasswordByOTPPayload) erro
 
 	// Update credential
 	credential.Password = nval.MD5(payload.Password)
-	credential.BiometricLogin = nval.ParseInt64Fallback(constant.Disabled, 0)
+	credential.BiometricLogin = constant.Disabled
 	credential.BiometricDeviceID = ""
 	credential.Version++
 
@@ -738,7 +738,7 @@ func (s *Service) ChangeEmail(payload dto.EmailChangePayload) error {
 	customer, err := s.repo.FindCustomerByUserRefID(payload.UserRefID)
 	if err != nil {
 		s.log.Error("error when find current customer", nlogger.Error(err))
-		err = handleErrorRepository(err,constant.ResourceNotFoundError)
+		err = handleErrorRepository(err, constant.ResourceNotFoundError)
 		return errx.Trace(err)
 	}
 
@@ -746,7 +746,7 @@ func (s *Service) ChangeEmail(payload dto.EmailChangePayload) error {
 	verification, err := s.repo.FindVerificationByCustomerID(customer.ID)
 	if err != nil {
 		s.log.Error("error when find current customer", nlogger.Error(err))
-		err = handleErrorRepository(err,constant.ResourceNotFoundError)
+		err = handleErrorRepository(err, constant.ResourceNotFoundError)
 		return errx.Trace(err)
 	}
 
@@ -783,6 +783,54 @@ func (s *Service) ChangeEmail(payload dto.EmailChangePayload) error {
 	}
 
 	// TODO: Send Notification Email Change
+
+	return nil
+}
+
+func (s *Service) PostUpdateSmartAccess(payload dto.UpdateSmartAccessPayload) error {
+	// Get customer
+	customer, err := s.repo.FindCustomerByUserRefID(payload.UserRefID)
+	if err != nil {
+		s.log.Error("error when find current customer", nlogger.Error(err))
+		err = handleErrorRepository(err, constant.ResourceNotFoundError)
+		return errx.Trace(err)
+	}
+
+	// Get credential
+	credential, err := s.repo.FindCredentialByCustomerID(customer.ID)
+	if err != nil {
+		s.log.Error("error when find current credential", nlogger.Error(err))
+		err = handleErrorRepository(err, constant.ResourceNotFoundError)
+		return errx.Trace(err)
+	}
+
+	// Unset biometric
+	err = s.unsetBiometric(credential)
+	if err != nil {
+		return err
+	}
+
+	// Activate biometric
+	credential.BiometricLogin = payload.UseBiometric
+	credential.BiometricDeviceID = payload.DeviceID
+	err = s.repo.UpdateCredential(credential)
+	if err != nil {
+		s.log.Error("error when activate biometric", nlogger.Error(err))
+		return errx.Trace(err)
+	}
+
+	return nil
+}
+
+func (s *Service) unsetBiometric(credential *model.Credential) error {
+	// Unset biometric
+	credential.BiometricDeviceID = ""
+	credential.BiometricLogin = constant.Disabled
+	err := s.repo.UpdateCredential(credential)
+	if err != nil {
+		s.log.Error("error when unset biometric", nlogger.Error(err))
+		return errx.Trace(err)
+	}
 
 	return nil
 }

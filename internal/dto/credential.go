@@ -1,5 +1,7 @@
 package dto
 
+import "repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/constant"
+
 type MetadataCredential struct {
 	TryLoginAt   string `json:"tryLoginAt"`
 	PinCreatedAt string `json:"pinCreatedAt"`
@@ -61,4 +63,10 @@ type ForgetPinPayload struct {
 	OTP                string `json:"otp"`
 	NewPIN             string `json:"new_pin"`
 	NewPINConfirmation string `json:"new_pin_confirmation"`
+}
+
+type UpdateSmartAccessPayload struct {
+	UserRefID    string                 `json:"-"`
+	DeviceID     string                 `json:"device_id"`
+	UseBiometric constant.ControlStatus `json:"use_biometric"`
 }

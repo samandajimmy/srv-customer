@@ -780,3 +780,40 @@ func (c *AccountController) PostChangePhoneNumber(rx *nhttp.Request) (*nhttp.Res
 
 	return nhttp.Success().SetData(resp), nil
 }
+
+func (c *AccountController) PostUpdateSmartAccess(rx *nhttp.Request) (*nhttp.Response, error) {
+	// Get context
+	ctx := rx.Context()
+
+	// Get user UserRefID
+	userRefID := GetUserRefID(rx)
+
+	// Get payload
+	var payload dto.UpdateSmartAccessPayload
+	payload.UserRefID = userRefID
+	err := rx.ParseJSONBody(&payload)
+	if err != nil {
+		log.Error("error when parse json body", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, nhttp.BadRequestError.Wrap(err)
+	}
+
+	// Validate payload
+	err = validate.PostUpdateSmartAccess(&payload)
+	if err != nil {
+		log.Error("Bad request validate payload", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, nhttp.BadRequestError.Trace(errx.Source(err))
+	}
+
+	// Init service
+	svc := c.NewService(rx.Context())
+	defer svc.Close()
+
+	// Call service
+	err = svc.PostUpdateSmartAccess(payload)
+	if err != nil {
+		log.Error("error when call update service", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, err
+	}
+
+	return nhttp.Success().SetMessage(constant.ActivateSmartAccessMessage), nil
+}

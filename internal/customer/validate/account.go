@@ -291,3 +291,16 @@ func PostChangePhoneNumber(p *dto.ChangePhoneNumberPayload) error {
 
 	return nil
 }
+
+func PostUpdateSmartAccess(p *dto.UpdateSmartAccessPayload) error {
+	err := validation.ValidateStruct(p,
+		validation.Field(&p.DeviceID, validation.Required),
+		validation.Field(&p.UseBiometric, validation.Min(0), validation.Max(1)),
+	)
+
+	if err != nil {
+		return nhttp.BadRequestError.Trace(errx.Source(err))
+	}
+
+	return nil
+}
