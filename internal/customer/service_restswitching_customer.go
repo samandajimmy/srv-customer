@@ -85,3 +85,24 @@ func (s *Service) ChangePhoneNumber(payload dto.ChangePhoneNumberRequestCore) (*
 
 	return result, nil
 }
+
+// Endpoint POST /customer/inquiry
+func (s *Service) CheckCIF(cif string) (*ResponseSwitchingSuccess, error) {
+	// Check CIF
+	reqBody := map[string]interface{}{
+		"cif": cif,
+	}
+
+	sp := PostDataPayload{
+		Url:  "/customer/inquiry",
+		Data: reqBody,
+	}
+
+	data, err := s.RestSwitchingPostData(sp)
+	if err != nil {
+		s.log.Error("error found when get gold savings", nlogger.Error(err))
+		return nil, errx.Trace(err)
+	}
+
+	return data, nil
+}

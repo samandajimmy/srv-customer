@@ -46,3 +46,14 @@ func PostUpdateNPWP(p *dto.UpdateNPWPPayload) error {
 	}
 	return nil
 }
+
+func PostUpdateLinkCif(p *dto.UpdateLinkCifPayload) error {
+	err := validation.ValidateStruct(p,
+		validation.Field(&p.Cif, validation.Required),
+		validation.Field(&p.PhoneNumber, validation.Required),
+	)
+	if err != nil {
+		return nhttp.BadRequestError.Trace(errx.Source(err))
+	}
+	return nil
+}
