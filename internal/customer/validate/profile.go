@@ -57,3 +57,13 @@ func PostUpdateLinkCif(p *dto.UpdateLinkCifPayload) error {
 	}
 	return nil
 }
+
+func PostUnlinkCif(p *dto.UnlinkCifPayload) error {
+	err := validation.ValidateStruct(p,
+		validation.Field(&p.Cif, validation.Required),
+	)
+	if err != nil {
+		return nhttp.BadRequestError.Trace(errx.Source(err))
+	}
+	return nil
+}

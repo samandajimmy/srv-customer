@@ -376,6 +376,74 @@ func (s *Service) UpdateLinkCif(payload dto.UpdateLinkCifPayload) error {
 	return nil
 }
 
+func (s *Service) UnlinkCif(payload dto.UnlinkCifPayload) error {
+	ctx := s.ctx
+
+	// Get customer by phone
+	customer, err := s.repo.FindCustomerByPhoneOrCIF(payload.Cif)
+	if err != nil {
+		s.log.Error("error when find current customer", nlogger.Error(err))
+		err = handleErrorRepository(err, constant.ResourceNotFoundError)
+		return errx.Trace(err)
+	}
+
+	// Get verification
+	verification, err := s.repo.FindVerificationByCustomerID(customer.ID)
+	if err != nil {
+		s.log.Error("error when find current verification", nlogger.Error(err))
+		err = handleErrorRepository(err, constant.ResourceNotFoundError)
+		return errx.Trace(err)
+	}
+
+	// Get verification
+	credential, err := s.repo.FindCredentialByCustomerID(customer.ID)
+	if err != nil {
+		s.log.Error("error when find credential customer", nlogger.Error(err))
+		err = handleErrorRepository(err, constant.ResourceNotFoundError)
+		return errx.Trace(err)
+	}
+
+	tx, err := s.repo.conn.BeginTxx(ctx, nil)
+	if err != nil {
+		return errx.Trace(err)
+	}
+	defer s.repo.ReleaseTx(tx, &err)
+
+	// Unlink cif ( update pin, cif, financial transaction status)
+	// Customer
+	customer.Cif = ""
+	err = s.repo.UpdateCustomerByUserRefID(customer, customer.UserRefID.String)
+	if err != nil {
+		s.log.Error("error when update customer cif", nlogger.Error(err))
+		return errx.Trace(err)
+	}
+
+	// Credential
+	credential.Pin = ""
+	credential.PinUpdatedAt = sql.NullTime{
+		Time:  time.Now(),
+		Valid: true,
+	}
+	err = s.repo.UpdateCredential(credential)
+	if err != nil {
+		s.log.Error("error when update customer credential pin", nlogger.Error(err))
+		return errx.Trace(err)
+	}
+
+	// Verification
+	verification.FinancialTransactionStatus = constant.Disabled
+	verification.FinancialTransactionActivatedAt = sql.NullTime{}
+	err = s.repo.UpdateVerification(verification)
+	if err != nil {
+		s.log.Error("error when update customer verification financial", nlogger.Error(err))
+		return errx.Trace(err)
+	}
+
+	// TODO: Update eKyc is_success_activation_customer 0 & is_success_register_gte 0 (is not customer scope)
+
+	return nil
+}
+
 func (s *Service) composeProfileResponse(customer *model.Customer, address *model.Address, financial *model.FinancialData,
 	verification *model.Verification, gs interface{}) dto.ProfileResponse {
 	avatarURL := s.AssetGetPublicURL(constant.AssetAvatarProfile, customer.Photos.FileName)
