@@ -275,10 +275,6 @@ func (s *Service) handleUpdatePin(userRefID string, newPin string) error {
 		return errx.Trace(err)
 	}
 
-	if credential.Pin == "" {
-		return constant.AccountPINIsNotActive
-	}
-
 	// Prepare update pin
 	credential.Pin = nval.MD5(newPin)
 	credential.UpdatedAt = time.Now()
