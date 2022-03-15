@@ -704,7 +704,8 @@ func (s *Service) ResetPasswordByOTP(payload dto.ResetPasswordByOTPPayload) erro
 	}
 
 	// Update credential
-	credential.Password = nval.MD5(payload.Password)
+	password := nval.MD5(payload.Password)
+	credential.Password = password
 	credential.BiometricLogin = constant.Disabled
 	credential.BiometricDeviceID = ""
 	credential.Version++
@@ -712,6 +713,12 @@ func (s *Service) ResetPasswordByOTP(payload dto.ResetPasswordByOTPPayload) erro
 	err = s.repo.UpdateCredential(credential)
 	if err != nil {
 		s.log.Error("error when update credential.", nlogger.Error(err), nlogger.Context(s.ctx))
+		return errx.Trace(err)
+	}
+
+	// Synchronize Password PDS
+	err = s.HandleSynchronizePassword(customer, password)
+	if err != nil {
 		return errx.Trace(err)
 	}
 
@@ -864,4 +871,23 @@ func (s *Service) GetSmartAccessStatus(payload dto.GetSmartAccessStatusPayload) 
 		IsSetBiometric:       isMatchDevice,
 		IsSetBiometricDevice: credential.BiometricLogin,
 	}, nil
+}
+
+func (s *Service) HandleSynchronizePassword(customer *model.Customer, password string) error {
+	resp, err := s.SynchronizePassword(dto.RegisterPayload{
+		PhoneNumber: customer.Phone,
+		Password:    password,
+	})
+	if err != nil {
+		s.log.Error("error found when sync data customer via API PDS", nlogger.Error(err), nlogger.Context(s.ctx))
+		return errx.Trace(err)
+	}
+
+	// handle status error
+	if resp.Status != "success" {
+		s.log.Error("Get Error from SynchronizePassword.", nlogger.Error(err))
+		return nhttp.InternalError.Trace(errx.Errorf(resp.Message))
+	}
+
+	return nil
 }
