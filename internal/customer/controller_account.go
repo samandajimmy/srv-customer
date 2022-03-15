@@ -672,13 +672,13 @@ func (c *AccountController) PostSendOTPResetPassword(rx *nhttp.Request) (*nhttp.
 	defer svc.Close()
 
 	// Call service
-	resp, err := svc.SendOTPResetPassword(payload)
+	err = svc.SendOTPResetPassword(payload)
 	if err != nil {
 		log.Error("error found when call service", nlogger.Error(err), nlogger.Context(ctx))
 		return nil, err
 	}
 
-	return nhttp.Success().SetMessage(resp), nil
+	return nhttp.Success().SetMessage(constant.ResendOTPPasswordMessage), nil
 }
 
 func (c *AccountController) PostVerifyOTPResetPassword(rx *nhttp.Request) (*nhttp.Response, error) {
@@ -705,13 +705,13 @@ func (c *AccountController) PostVerifyOTPResetPassword(rx *nhttp.Request) (*nhtt
 	defer svc.Close()
 
 	// Call service
-	resp, err := svc.VerifyOTPResetPassword(payload)
+	err = svc.VerifyOTPResetPassword(payload)
 	if err != nil {
 		log.Error("error found when call service", nlogger.Error(err), nlogger.Context(ctx))
 		return nil, err
 	}
 
-	return nhttp.Success().SetMessage(resp), nil
+	return nhttp.Success().SetMessage(constant.ValidOTPPasswordMessage), nil
 }
 
 func (c *AccountController) PostResetPasswordByOTP(rx *nhttp.Request) (*nhttp.Response, error) {
@@ -738,11 +738,11 @@ func (c *AccountController) PostResetPasswordByOTP(rx *nhttp.Request) (*nhttp.Re
 	defer svc.Close()
 
 	// Call service
-	resp, err := svc.ResetPasswordByOTP(payload)
+	err = svc.ResetPasswordByOTP(payload)
 	if err != nil {
 		log.Error("error found when call service", nlogger.Error(err), nlogger.Context(ctx))
 		return nil, err
 	}
 
-	return nhttp.Success().SetMessage(resp), nil
+	return nhttp.Success().SetMessage(constant.SuccessfullyResetPassword), nil
 }

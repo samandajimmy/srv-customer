@@ -110,3 +110,7 @@ var WrongPINInput2 = b.NewError("E_PIN_6",
 var NotEqualPINError = b.NewError("E_PIN_7",
 	"Masukan PIN yang sama dengan sebelumnya",
 	nhttp.WithStatus(http.StatusBadRequest))
+
+// Password
+var AccountIsNotActiveError = b.NewError("E_PASS_1", "Akun anda belum aktif",
+	nhttp.WithStatus(http.StatusBadRequest))

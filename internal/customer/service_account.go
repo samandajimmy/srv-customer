@@ -488,7 +488,7 @@ func handleErrorRepository(errRepo error, errMsg error) error {
 	return errRepo
 }
 
-func (s *Service) SendOTPResetPassword(payload dto.OTPResetPasswordPayload) (string, error) {
+func (s *Service) SendOTPResetPassword(payload dto.OTPResetPasswordPayload) (error) {
 	// Send OTP To Phone Number
 	resp, err := s.SendOTP(dto.SendOTPRequest{
 		PhoneNumber: payload.Email,
@@ -496,20 +496,20 @@ func (s *Service) SendOTPResetPassword(payload dto.OTPResetPasswordPayload) (str
 	})
 	if err != nil {
 		s.log.Error("error found when call send OTP service", nlogger.Error(err), nlogger.Context(s.ctx))
-		return "", errx.Trace(err)
+		return errx.Trace(err)
 	}
 
 	s.log.Debugf("Debug: reset password message %s", resp.Message)
 
 	if resp.ResponseCode != "00" {
 		s.log.Error("error rest switching otp reset pin", nlogger.Context(s.ctx))
-		return "", constant.InvalidOTPError.Trace()
+		return constant.InvalidOTPError.Trace()
 	}
 
-	return "Resend OTP Successfully", nil
+	return nil
 }
 
-func (s *Service) VerifyOTPResetPassword(payload dto.VerifyOTPResetPasswordPayload) (string, error) {
+func (s *Service) VerifyOTPResetPassword(payload dto.VerifyOTPResetPasswordPayload) error {
 	// Send OTP To Phone Number
 	resp, err := s.VerifyOTP(dto.VerifyOTPRequest{
 		PhoneNumber: payload.Email,
@@ -518,43 +518,43 @@ func (s *Service) VerifyOTPResetPassword(payload dto.VerifyOTPResetPasswordPaylo
 	})
 	if err != nil {
 		s.log.Error("error found when call send OTP service", nlogger.Error(err), nlogger.Context(s.ctx))
-		return "", errx.Trace(err)
+		return errx.Trace(err)
 	}
 
 	s.log.Debugf("Debug: verify reset password otp message %s", resp.Message)
 
 	if resp.ResponseCode != "00" {
 		s.log.Error("error rest switching otp reset pin")
-		return "", constant.InvalidOTPError.Trace()
+		return constant.InvalidOTPError.Trace()
 	}
 
-	return "Kode OTP yang dimasukan valid!", nil
+	return nil
 }
 
-func (s *Service) ResetPasswordByOTP(payload dto.ResetPasswordByOTPPayload) (string, error) {
+func (s *Service) ResetPasswordByOTP(payload dto.ResetPasswordByOTPPayload) error {
 	// Get customer
 	customer, err := s.repo.FindCustomerByEmailOrPhone(payload.Email)
 	if err != nil {
 		s.log.Error("error found when get customer repo", nlogger.Error(err), nlogger.Context(s.ctx))
 		// TODO: refactor handle error
 		if errors.Is(err, sql.ErrNoRows) {
-			return "", constant.ResourceNotFoundError.Trace()
+			return constant.ResourceNotFoundError.Trace()
 		}
-		return "", errx.Trace(err)
+		return errx.Trace(err)
 	}
 
 	if customer.Status != constant.Enabled {
-		return "Akun anda belum aktif", nil
+		return constant.AccountIsNotActiveError
 	}
 
 	// Check OTP Reset Password
-	msg, err := s.VerifyOTPResetPassword(dto.VerifyOTPResetPasswordPayload{
+	err = s.VerifyOTPResetPassword(dto.VerifyOTPResetPasswordPayload{
 		Email: payload.Email,
 		OTP:   payload.OTP,
 	})
 	if err != nil {
 		s.log.Error("Error when check otp reset password")
-		return msg, errx.Trace(err)
+		return errx.Trace(err)
 	}
 
 	// Get credential customer
@@ -563,9 +563,9 @@ func (s *Service) ResetPasswordByOTP(payload dto.ResetPasswordByOTPPayload) (str
 		s.log.Error("error found when get credential repo", nlogger.Error(err), nlogger.Context(s.ctx))
 		// TODO: refactor handle error
 		if errors.Is(err, sql.ErrNoRows) {
-			return "", constant.ResourceNotFoundError.Trace()
+			return constant.ResourceNotFoundError.Trace()
 		}
-		return "", errx.Trace(err)
+		return errx.Trace(err)
 	}
 
 	// Update credential
@@ -577,8 +577,8 @@ func (s *Service) ResetPasswordByOTP(payload dto.ResetPasswordByOTPPayload) (str
 	err = s.repo.UpdateCredential(credential)
 	if err != nil {
 		s.log.Error("error when update credential.", nlogger.Error(err), nlogger.Context(s.ctx))
-		return "", errx.Trace(err)
+		return errx.Trace(err)
 	}
 
-	return "Password diperbaharui", nil
+	return nil
 }
