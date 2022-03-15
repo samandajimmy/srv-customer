@@ -834,3 +834,34 @@ func (s *Service) unsetBiometric(credential *model.Credential) error {
 
 	return nil
 }
+
+func (s *Service) GetSmartAccessStatus(payload dto.GetSmartAccessStatusPayload) (*dto.GetSmartAccessStatusResult, error) {
+	// Get customer
+	customer, err := s.repo.FindCustomerByUserRefID(payload.UserRefID)
+	if err != nil {
+		s.log.Error("error when find current customer", nlogger.Error(err))
+		err = handleErrorRepository(err, constant.ResourceNotFoundError)
+		return nil, errx.Trace(err)
+	}
+
+	// Get credential
+	credential, err := s.repo.FindCredentialByCustomerID(customer.ID)
+	if err != nil {
+		s.log.Error("error when find current credential", nlogger.Error(err))
+		err = handleErrorRepository(err, constant.ResourceNotFoundError)
+		return nil, errx.Trace(err)
+	}
+
+	// validate device id
+	isMatchDevice := true
+	if credential.BiometricDeviceID != payload.DeviceID {
+		isMatchDevice = false
+	}
+
+	return &dto.GetSmartAccessStatusResult{
+		UserRefID:            customer.UserRefID.String,
+		DeviceID:             credential.BiometricDeviceID,
+		IsSetBiometric:       isMatchDevice,
+		IsSetBiometricDevice: credential.BiometricLogin,
+	}, nil
+}

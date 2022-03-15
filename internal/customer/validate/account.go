@@ -304,3 +304,15 @@ func PostUpdateSmartAccess(p *dto.UpdateSmartAccessPayload) error {
 
 	return nil
 }
+
+func GetSmartAccessStatus(p *dto.GetSmartAccessStatusPayload) error {
+	err := validation.ValidateStruct(p,
+		validation.Field(&p.DeviceID, validation.Required),
+	)
+
+	if err != nil {
+		return nhttp.BadRequestError.Trace(errx.Source(err))
+	}
+
+	return nil
+}
