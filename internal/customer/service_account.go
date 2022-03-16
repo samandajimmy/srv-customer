@@ -503,7 +503,7 @@ func (s *Service) SendOTPResetPassword(payload dto.OTPResetPasswordPayload) (err
 
 	if resp.ResponseCode != "00" {
 		s.log.Error("error rest switching otp reset pin", nlogger.Context(s.ctx))
-		return constant.InvalidOTPError.Trace()
+		return constant.FailedResendOTP.Trace()
 	}
 
 	return nil

@@ -86,6 +86,8 @@ var ExpiredOTPError = b.NewError("E_OTP_4", "otp has been expired",
 	nhttp.WithStatus(http.StatusBadRequest))
 var InvalidOTPError = b.NewError("E_OTP_5", "OTP yang dimasukan tidak valid",
 	nhttp.WithStatus(http.StatusBadRequest))
+var FailedResendOTP = b.NewError("E_OTP_6", "Resend OTP Failed",
+	nhttp.WithStatus(http.StatusBadRequest))
 
 // PIN Errors
 
