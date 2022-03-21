@@ -4,6 +4,7 @@ import (
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/go-ozzo/ozzo-validation/v4/is"
 	"github.com/nbs-go/errx"
+	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/constant"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/dto"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nhttp"
 )
@@ -103,6 +104,118 @@ func PutUpdatePassword(p *dto.UpdatePasswordPayload) error {
 		validation.Field(&p.NewPassword, validation.Required),
 	)
 
+	if err != nil {
+		return nhttp.BadRequestError.Trace(errx.Source(err))
+	}
+
+	return nil
+}
+
+func PostValidatePin(p *dto.ValidatePinPayload) error {
+	err := validation.ValidateStruct(p,
+		validation.Field(&p.NewPin, validation.Required, validation.Length(6, 6)),
+	)
+
+	if err != nil {
+		return nhttp.BadRequestError.Trace(errx.Source(err))
+	}
+
+	return nil
+}
+
+func PostCheckPin(p *dto.CheckPinPayload) error {
+	err := validation.ValidateStruct(p,
+		validation.Field(&p.Pin, validation.Required, validation.Length(6, 6)),
+		validation.Field(&p.UserRefID, validation.Required),
+	)
+
+	if err != nil {
+		return nhttp.BadRequestError.Trace(errx.Source(err))
+	}
+
+	return nil
+}
+
+func PostUpdatePin(p *dto.UpdatePinPayload) error {
+	err := validation.ValidateStruct(p,
+		validation.Field(&p.PIN, validation.Required, validation.Length(6, 6)),
+		validation.Field(&p.NewPIN, validation.Required, validation.Length(6, 6)),
+		validation.Field(&p.NewPINConfirmation, validation.Required, validation.Length(6, 6)),
+	)
+	if err != nil {
+		return nhttp.BadRequestError.Trace(errx.Source(err))
+	}
+
+	// Validate pin confirmation
+	err = PINConfirmation(&dto.PINConfirmation{
+		NewPIN:             p.NewPIN,
+		NewPINConfirmation: p.NewPINConfirmation,
+	})
+	if err != nil {
+		return nhttp.BadRequestError.Trace(errx.Source(err))
+	}
+
+	return nil
+}
+
+func PINConfirmation(p *dto.PINConfirmation) error {
+	if p.NewPIN != p.NewPINConfirmation {
+		return constant.NotEqualPINError
+	}
+
+	return nil
+}
+
+func CheckPostOTP(p *dto.CheckOTPPinPayload) error {
+	err := validation.ValidateStruct(p,
+		validation.Field(&p.OTP, validation.Required),
+		validation.Field(&p.UserRefID, validation.Required),
+	)
+	if err != nil {
+		return nhttp.BadRequestError.Trace(errx.Source(err))
+	}
+
+	return nil
+}
+
+func PostCreatePin(p *dto.PostCreatePinPayload) error {
+	err := validation.ValidateStruct(p,
+		validation.Field(&p.UserRefID, validation.Required),
+		validation.Field(&p.NewPIN, validation.Required, validation.Length(6, 6)),
+		validation.Field(&p.NewPINConfirmation, validation.Required, validation.Length(6, 6)),
+		validation.Field(&p.OTP, validation.Required),
+	)
+	if err != nil {
+		return nhttp.BadRequestError.Trace(errx.Source(err))
+	}
+
+	// Validate pin confirmation
+	err = PINConfirmation(&dto.PINConfirmation{
+		NewPIN:             p.NewPIN,
+		NewPINConfirmation: p.NewPINConfirmation,
+	})
+	if err != nil {
+		return nhttp.BadRequestError.Trace(errx.Source(err))
+	}
+
+	return nil
+}
+
+func PostForgetPin(p *dto.ForgetPinPayload) error {
+	err := validation.ValidateStruct(p,
+		validation.Field(&p.OTP, validation.Required),
+		validation.Field(&p.NewPIN, validation.Required, validation.Length(6, 6)),
+		validation.Field(&p.NewPINConfirmation, validation.Required, validation.Length(6, 6)),
+	)
+	if err != nil {
+		return err
+	}
+
+	// Validate pin confirmation
+	err = PINConfirmation(&dto.PINConfirmation{
+		NewPIN:             p.NewPIN,
+		NewPINConfirmation: p.NewPINConfirmation,
+	})
 	if err != nil {
 		return nhttp.BadRequestError.Trace(errx.Source(err))
 	}

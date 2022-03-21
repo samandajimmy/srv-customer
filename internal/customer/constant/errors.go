@@ -53,6 +53,12 @@ var InvalidTokenError = b.NewError("E_AUTH_11", "Invalid token",
 	nhttp.WithStatus(http.StatusBadRequest))
 var InvalidPasswordError = b.NewError("E_AUTH_12", "Password tidak sesuai",
 	nhttp.WithStatus(http.StatusBadRequest))
+var InvalidJWTFormatError = b.NewError("E_AUTH_13", "Invalid JWT Format",
+	nhttp.WithStatus(http.StatusBadRequest))
+var InvalidJWTIssuerError = b.NewError("E_AUTH_14", "Invalid JWT Issuer",
+	nhttp.WithStatus(http.StatusUnauthorized))
+var ExpiredJWTError = b.NewError("E_AUTH_15", "Expired JWT",
+	nhttp.WithStatus(http.StatusUnauthorized))
 
 var InvalidFormatError = b.NewError("E_COMM_5", "Invalid Format")
 
@@ -72,9 +78,33 @@ var EmailHasBeenRegisteredError = b.NewError("E_REG_2", "Email sudah terdaftar",
 
 // OTP Errors
 
-var IncorrectOTPError = b.NewError("E_OTP_1", "incorrect otp",
+var IncorrectOTPError = b.NewError("E_OTP_1", "OTP yang dimasukan tidak valid",
 	nhttp.WithStatus(http.StatusBadRequest))
 var OTPReachResendLimitError = b.NewError("E_OTP_3", "Mohon tunggu 300 detik lagi",
 	nhttp.WithStatus(http.StatusBadRequest))
 var ExpiredOTPError = b.NewError("E_OTP_4", "otp has been expired",
+	nhttp.WithStatus(http.StatusBadRequest))
+
+// PIN Errors
+
+var InvalidIncrementalPIN = b.NewError("E_PIN_1",
+	"PIN terlalu lemah. Hindari menggunakan angka berurut seperti 123456",
+	nhttp.WithStatus(http.StatusBadRequest))
+var InvalidRepeatedPIN = b.NewError("E_PIN_2",
+	"PIN terlalu lemah. Hindari menggunakan angka sama seperti 111111",
+	nhttp.WithStatus(http.StatusBadRequest))
+var AccountPINIsNotActive = b.NewError("E_PIN_3",
+	"Akun anda belum aktivasi PIN",
+	nhttp.WithStatus(http.StatusForbidden))
+var AccountPINIsBlocked = b.NewError("E_PIN_4",
+	"PIN kamu terkunci, Silahkan datang ke Outlet Pegadaian terdekat untuk melakukan atur ulang PIN",
+	nhttp.WithStatus(http.StatusUnauthorized))
+var WrongPINInput1 = b.NewError("E_PIN_5",
+	"Masukan PIN yang sesuai. Sisa 2 kesempatan sebelum PIN dikunci.",
+	nhttp.WithStatus(http.StatusUnauthorized))
+var WrongPINInput2 = b.NewError("E_PIN_6",
+	"Masukan PIN yang sesuai. Sisa 1 kesempatan sebelum PIN dikunci.",
+	nhttp.WithStatus(http.StatusUnauthorized))
+var NotEqualPINError = b.NewError("E_PIN_7",
+	"Masukan PIN yang sama dengan sebelumnya",
 	nhttp.WithStatus(http.StatusBadRequest))

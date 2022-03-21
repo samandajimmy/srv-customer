@@ -7,8 +7,8 @@ import "github.com/lestrrat-go/jwx/jwa"
 type ControlStatus = int8
 
 const (
-	Enabled = ControlStatus(iota + 1)
-	Disabled
+	Enabled  = ControlStatus(iota + 1)
+	Disabled = 0
 )
 
 const (
@@ -74,6 +74,7 @@ const (
 	RequestTypeRegister     = "register"
 	RequestTypeBlockOneHour = "block-login-hour"
 	RequestTypeBlockOneDay  = "block-login-day"
+	RequestTypePinReset     = "pin-reset-pds"
 )
 
 const (
@@ -93,4 +94,15 @@ const (
 const (
 	JWTSignature = jwa.HS256
 	JWTIssuer    = "https://www.pegadaian.co.id"
+)
+
+const (
+	Unblocked = 0
+	Blocked   = 1
+)
+
+const (
+	WrongPIN    = 1
+	WrongPIN2   = 2
+	MaxWrongPIN = 3
 )

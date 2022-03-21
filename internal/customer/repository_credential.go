@@ -87,3 +87,9 @@ func (rc *RepositoryContext) UpdatePassword(customerId int64, password string) e
 
 	return nil
 }
+
+func (rc *RepositoryContext) IsValidPin(id int64, pin string) (bool, error) {
+	var isValid bool
+	err := rc.stmt.Credential.IsValidPin.GetContext(rc.ctx, &isValid, id, pin)
+	return isValid, err
+}

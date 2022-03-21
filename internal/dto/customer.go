@@ -389,3 +389,8 @@ type CustomerInquiryVO struct {
 	IsDukcapilVerified string `json:"isDukcapilVerified"`
 	Agama              string `json:"agama"`
 }
+
+type PINConfirmation struct {
+	NewPIN             string `json:"new_pin"`
+	NewPINConfirmation string `json:"new_pin_confirmation"`
+}

@@ -12,75 +12,82 @@ import (
 
 // User model old structure from PDS-API
 type User struct {
-	UserAiid                  int64          `db:"user_AIID"`
-	JenisIdentitas            string         `db:"jenis_identitas"`
-	NoKtp                     sql.NullString `db:"no_ktp"`
-	TanggalExpiredIdentitas   sql.NullString `db:"tanggal_expired_identitas"`
-	Cif                       string         `db:"cif"`
-	Email                     sql.NullString `db:"email"`
-	NoHp                      sql.NullString `db:"no_hp"`
-	Password                  sql.NullString `db:"password"`
-	NextPasswordReset         sql.NullTime   `db:"next_password_reset"`
-	Pin                       sql.NullString `db:"pin"`
-	Nama                      sql.NullString `db:"nama"`
-	NamaIbu                   sql.NullString `db:"nama_ibu"`
-	JenisKelamin              string         `db:"jenis_kelamin"`
-	TempatLahir               sql.NullString `db:"tempat_lahir"`
-	Agama                     sql.NullString `db:"agama"`
-	TglLahir                  sql.NullTime   `db:"tgl_lahir"`
-	Alamat                    sql.NullString `db:"alamat"`
-	Domisili                  sql.NullString `db:"domisili"`
-	Kewarganegaraan           string         `db:"kewarganegaraan"`
-	StatusKawin               string         `db:"status_kawin"`
-	Kodepos                   sql.NullString `db:"kodepos"`
-	IDKelurahan               string         `db:"id_kelurahan"`
-	NoNpwp                    string         `db:"no_npwp"`
-	FotoNpwp                  string         `db:"foto_npwp"`
-	NoSid                     sql.NullString `db:"no_sid"`
-	FotoSid                   sql.NullString `db:"foto_sid"`
-	KodeCabang                string         `db:"kode_cabang"`
-	FotoURL                   sql.NullString `db:"foto_url"`
-	FotoKtpURL                string         `db:"foto_ktp_url"`
-	Status                    sql.NullInt64  `db:"status"`
-	IsLocked                  sql.NullInt64  `db:"is_locked"`
-	LoginFailCount            int64          `db:"login_fail_count"`
-	EmailVerified             int64          `db:"email_verified"`
-	KycVerified               int64          `db:"kyc_verified"`
-	EmailVerificationToken    string         `db:"email_verification_token"`
-	Token                     sql.NullString `db:"token"`
-	TokenWeb                  string         `db:"token_web"`
-	FcmToken                  string         `db:"fcm_token"`
-	LastUpdate                sql.NullTime   `db:"last_update"`
-	Norek                     string         `db:"norek"`
-	Saldo                     int64          `db:"saldo"`
-	PinTemp                   sql.NullString `db:"pin_temp"`
-	LastUpdateDataNasabah     string         `db:"last_update_data_nasabah"`
-	LastUpdateDataNpwp        sql.NullTime   `db:"last_update_data_npwp"`
-	LastUpdateLinkCif         sql.NullTime   `db:"last_update_link_cif"`
-	LastUpdateUnlinkCif       sql.NullTime   `db:"last_update_unlink_cif"`
-	LastUpdatePin             sql.NullTime   `db:"last_update_pin"`
-	AktifasiTransFinansial    int64          `db:"aktifasiTransFinansial"`
-	TanggalAktifasiFinansial  sql.NullTime   `db:"tanggal_aktifasi_finansial"`
-	IsDukcapilVerified        sql.NullInt64  `db:"is_dukcapil_verified"`
-	IsOpenTe                  sql.NullInt64  `db:"is_open_te"`
-	ReferralCode              sql.NullString `db:"referral_code"`
-	GoldcardApplicationNumber sql.NullString `db:"goldcard_application_number"`
-	GoldcardAccountNumber     sql.NullString `db:"goldcard_account_number"`
-	TryLoginDate              sql.NullTime   `db:"try_login_date"`
-	WrongPasswordCount        int64          `db:"wrong_password_count"`
-	BlockedDate               sql.NullTime   `db:"blocked_date"`
-	BlockedToDate             sql.NullTime   `db:"blocked_to_date"`
-	NorekUtama                sql.NullString `db:"norek_utama"`
-	IsSetBiometric            sql.NullInt64  `db:"is_set_biometric"`
-	DeviceIDBiometric         sql.NullString `db:"device_id_biometric"`
+	UserAiid                  int64                  `db:"user_AIID"`
+	JenisIdentitas            string                 `db:"jenis_identitas"`
+	NoKtp                     sql.NullString         `db:"no_ktp"`
+	TanggalExpiredIdentitas   sql.NullString         `db:"tanggal_expired_identitas"`
+	Cif                       string                 `db:"cif"`
+	Email                     sql.NullString         `db:"email"`
+	NoHp                      sql.NullString         `db:"no_hp"`
+	Password                  sql.NullString         `db:"password"`
+	NextPasswordReset         sql.NullTime           `db:"next_password_reset"`
+	Pin                       sql.NullString         `db:"pin"`
+	Nama                      sql.NullString         `db:"nama"`
+	NamaIbu                   sql.NullString         `db:"nama_ibu"`
+	JenisKelamin              string                 `db:"jenis_kelamin"`
+	TempatLahir               sql.NullString         `db:"tempat_lahir"`
+	Agama                     sql.NullString         `db:"agama"`
+	TglLahir                  sql.NullTime           `db:"tgl_lahir"`
+	Alamat                    sql.NullString         `db:"alamat"`
+	Domisili                  sql.NullString         `db:"domisili"`
+	Kewarganegaraan           string                 `db:"kewarganegaraan"`
+	StatusKawin               string                 `db:"status_kawin"`
+	Kodepos                   sql.NullString         `db:"kodepos"`
+	IDKelurahan               string                 `db:"id_kelurahan"`
+	NoNpwp                    string                 `db:"no_npwp"`
+	FotoNpwp                  string                 `db:"foto_npwp"`
+	NoSid                     sql.NullString         `db:"no_sid"`
+	FotoSid                   sql.NullString         `db:"foto_sid"`
+	KodeCabang                string                 `db:"kode_cabang"`
+	FotoURL                   sql.NullString         `db:"foto_url"`
+	FotoKtpURL                string                 `db:"foto_ktp_url"`
+	Status                    sql.NullInt64          `db:"status"`
+	IsLocked                  sql.NullInt64          `db:"is_locked"`
+	LoginFailCount            int64                  `db:"login_fail_count"`
+	EmailVerified             int64                  `db:"email_verified"`
+	KycVerified               int64                  `db:"kyc_verified"`
+	EmailVerificationToken    string                 `db:"email_verification_token"`
+	Token                     sql.NullString         `db:"token"`
+	TokenWeb                  string                 `db:"token_web"`
+	FcmToken                  string                 `db:"fcm_token"`
+	LastUpdate                sql.NullTime           `db:"last_update"`
+	Norek                     string                 `db:"norek"`
+	Saldo                     int64                  `db:"saldo"`
+	PinTemp                   sql.NullString         `db:"pin_temp"`
+	LastUpdateDataNasabah     string                 `db:"last_update_data_nasabah"`
+	LastUpdateDataNpwp        sql.NullTime           `db:"last_update_data_npwp"`
+	LastUpdateLinkCif         sql.NullTime           `db:"last_update_link_cif"`
+	LastUpdateUnlinkCif       sql.NullTime           `db:"last_update_unlink_cif"`
+	LastUpdatePin             sql.NullTime           `db:"last_update_pin"`
+	AktifasiTransFinansial    constant.ControlStatus `db:"aktifasiTransFinansial"`
+	TanggalAktifasiFinansial  sql.NullTime           `db:"tanggal_aktifasi_finansial"`
+	IsDukcapilVerified        sql.NullInt64          `db:"is_dukcapil_verified"`
+	IsOpenTe                  sql.NullInt64          `db:"is_open_te"`
+	ReferralCode              sql.NullString         `db:"referral_code"`
+	GoldcardApplicationNumber sql.NullString         `db:"goldcard_application_number"`
+	GoldcardAccountNumber     sql.NullString         `db:"goldcard_account_number"`
+	TryLoginDate              sql.NullTime           `db:"try_login_date"`
+	WrongPasswordCount        int64                  `db:"wrong_password_count"`
+	BlockedDate               sql.NullTime           `db:"blocked_date"`
+	BlockedToDate             sql.NullTime           `db:"blocked_to_date"`
+	NorekUtama                sql.NullString         `db:"norek_utama"`
+	IsSetBiometric            sql.NullInt64          `db:"is_set_biometric"`
+	DeviceIDBiometric         sql.NullString         `db:"device_id_biometric"`
 }
 
 func UserToCustomerProfileDTO(user *User) *dto.CustomerProfileVO {
+	dateOfBirth := sql.NullString{}
+
+	if dob := user.TglLahir; dob.Valid && !dob.Time.IsZero() {
+		dateOfBirth.Valid = true
+		dateOfBirth.String = nval.ParseStringFallback(user.TglLahir.Time.Format("02-01-2006"), "")
+	}
+
 	return &dto.CustomerProfileVO{
 		MaidenName:         user.NamaIbu.String,
 		Gender:             user.JenisKelamin,
 		Nationality:        user.Kewarganegaraan,
-		DateOfBirth:        nval.ParseStringFallback(user.TglLahir.Time.Format("02-01-2006"), ""),
+		DateOfBirth:        dateOfBirth.String,
 		PlaceOfBirth:       user.TempatLahir.String,
 		IdentityPhotoFile:  user.FotoKtpURL,
 		MarriageStatus:     user.StatusKawin,
@@ -227,25 +234,50 @@ func UserToFinancialData(user *User) (*FinancialData, error) {
 
 func UserToAddress(user *User, userAddress *AddressExternal) (*Address, error) {
 	var purpose int64
+	purpose = constant.IdentityCard
 	if user.Domisili.String == "1" {
 		purpose = constant.Domicile
-	} else {
-		purpose = constant.IdentityCard
 	}
 
 	address := &Address{
-		Xid:             strings.ToUpper(xid.New().String()),
-		Purpose:         purpose,
-		ProvinceID:      userAddress.IDProvinsi,
-		ProvinceName:    userAddress.Provinsi,
-		CityID:          userAddress.IDKabupaten,
-		CityName:        userAddress.Kabupaten,
-		DistrictID:      userAddress.IDKecamatan,
-		DistrictName:    userAddress.Kecamatan,
-		SubDistrictID:   userAddress.IDKelurahan,
-		SubDistrictName: userAddress.Kelurahan,
-		PostalCode:      userAddress.Kodepos,
-		BaseField:       EmptyBaseField,
+		BaseField: EmptyBaseField,
+		XID:       strings.ToUpper(xid.New().String()),
+		Purpose:   purpose,
+		ProvinceID: sql.NullInt64{
+			Int64: userAddress.IDProvinsi.Int64,
+			Valid: true,
+		},
+		ProvinceName: sql.NullString{
+			String: userAddress.Provinsi.String,
+			Valid:  true,
+		},
+		CityID: sql.NullInt64{
+			Int64: userAddress.IDKabupaten.Int64,
+			Valid: true,
+		},
+		CityName: sql.NullString{
+			String: userAddress.Kabupaten.String,
+			Valid:  true,
+		},
+		DistrictID: sql.NullInt64{
+			Int64: userAddress.IDKecamatan.Int64,
+			Valid: true,
+		},
+		DistrictName: sql.NullString{
+			String: userAddress.Kecamatan.String,
+			Valid:  true,
+		},
+		SubDistrictID: sql.NullInt64{
+			Int64: userAddress.IDKelurahan.Int64,
+			Valid: true,
+		},
+		SubDistrictName: sql.NullString{
+			String: userAddress.Kelurahan.String,
+			Valid:  true,
+		},
+		PostalCode: userAddress.Kodepos,
+		Line:       sql.NullString{String: "", Valid: false},
+		IsPrimary:  sql.NullBool{Bool: false, Valid: false},
 	}
 
 	return address, nil

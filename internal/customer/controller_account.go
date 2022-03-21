@@ -40,7 +40,7 @@ func (c *AccountController) HandleAuthUser(rx *nhttp.Request) (*nhttp.Response, 
 	// Get UserRefID
 	userRefID, err := svc.ValidateTokenAndRetrieveUserRefID(tokenString)
 	if err != nil {
-		return nil, err
+		return nil, errx.Trace(err)
 	}
 
 	rx.SetContextValue(constant.UserRefIDContextKey, userRefID)
@@ -365,4 +365,285 @@ func (c *AccountController) PutUpdatePassword(rx *nhttp.Request) (*nhttp.Respons
 	}
 
 	return nhttp.Success().SetMessage("Password diperbarui"), nil
+}
+
+func (c *AccountController) PostValidatePin(rx *nhttp.Request) (*nhttp.Response, error) {
+	// Get context
+	ctx := rx.Context()
+
+	// Get Payload
+	var payload dto.ValidatePinPayload
+	err := rx.ParseJSONBody(&payload)
+	if err != nil {
+		log.Error("error when parse json body", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, nhttp.BadRequestError.Wrap(err)
+	}
+
+	// Validate payload
+	err = validate.PostValidatePin(&payload)
+	if err != nil {
+		log.Error("Bad request validate payload", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, nhttp.BadRequestError.Trace(errx.Source(err))
+	}
+
+	// Init service
+	svc := c.NewService(ctx)
+	defer svc.Close()
+
+	// Call service
+	err = svc.ValidatePin(&payload)
+	if err != nil {
+		log.Error("error when call update service", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, err
+	}
+
+	return nhttp.Success().SetMessage(constant.IsValidPINMessage), nil
+}
+
+func (c *AccountController) PostCheckPin(rx *nhttp.Request) (*nhttp.Response, error) {
+	// Get context
+	ctx := rx.Context()
+
+	// Get user UserRefID
+	userRefID, err := getUserRefID(rx)
+	if err != nil {
+		log.Errorf("error: %v", err, nlogger.Error(err), nlogger.Context(ctx))
+		return nil, errx.Trace(err)
+	}
+
+	// Get Payload
+	var payload dto.CheckPinPayload
+	payload.UserRefID = userRefID
+	payload.CheckPIN = true
+	err = rx.ParseJSONBody(&payload)
+	if err != nil {
+		log.Error("error when parse json body", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, nhttp.BadRequestError.Wrap(err)
+	}
+
+	// Validate payload
+	err = validate.PostCheckPin(&payload)
+	if err != nil {
+		log.Error("Bad request validate payload", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, nhttp.BadRequestError.Trace(errx.Source(err))
+	}
+
+	// Init service
+	svc := c.NewService(ctx)
+	defer svc.Close()
+
+	// Call service
+	err = svc.CheckPinUser(&payload)
+	if err != nil {
+		log.Error("error when call update service", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, err
+	}
+
+	return nhttp.Success().SetMessage(constant.IsCheckValidMessage), nil
+}
+
+func (c *AccountController) PostUpdatePin(rx *nhttp.Request) (*nhttp.Response, error) {
+	// Get context
+	ctx := rx.Context()
+
+	// Get user UserRefID
+	userRefID, err := getUserRefID(rx)
+	if err != nil {
+		log.Errorf("error: %v", err, nlogger.Error(err), nlogger.Context(ctx))
+		return nil, errx.Trace(err)
+	}
+
+	// Get Payload
+	var payload dto.UpdatePinPayload
+	payload.UserRefID = userRefID
+	payload.CheckPIN = true
+	err = rx.ParseJSONBody(&payload)
+	if err != nil {
+		log.Error("error when parse json body", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, nhttp.BadRequestError.Wrap(err)
+	}
+
+	// Validate payload
+	err = validate.PostUpdatePin(&payload)
+	if err != nil {
+		log.Error("Bad request validate payload", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, err
+	}
+
+	// Init service
+	svc := c.NewService(ctx)
+	defer svc.Close()
+
+	// Call service
+	resp, err := svc.UpdatePin(&payload)
+	if err != nil {
+		log.Errorf("error found when call service", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, err
+	}
+
+	return nhttp.Success().SetData(resp).SetMessage(resp.Title), nil
+}
+
+func (c *AccountController) PostCheckOTPPinCreate(rx *nhttp.Request) (*nhttp.Response, error) {
+	// Get context
+	ctx := rx.Context()
+
+	// Get user UserRefID
+	userRefID, err := getUserRefID(rx)
+	if err != nil {
+		log.Errorf("error: %v", err, nlogger.Error(err), nlogger.Context(ctx))
+		return nil, errx.Trace(err)
+	}
+
+	// Get Payload
+	var payload dto.CheckOTPPinPayload
+	payload.UserRefID = userRefID
+	err = rx.ParseJSONBody(&payload)
+	if err != nil {
+		log.Error("error when parse json body", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, nhttp.BadRequestError.Wrap(err)
+	}
+
+	// Validate payload
+	err = validate.CheckPostOTP(&payload)
+	if err != nil {
+		log.Error("Bad request validate payload", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, err
+	}
+
+	// Init service
+	svc := c.NewService(ctx)
+	defer svc.Close()
+
+	// Call service
+	err = svc.CheckOTPPinCreate(&payload)
+	if err != nil {
+		log.Errorf("error found when call service", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, err
+	}
+
+	return nhttp.Success().SetMessage(constant.OTPValidMessage), nil
+}
+
+func (c *AccountController) PostCreatePin(rx *nhttp.Request) (*nhttp.Response, error) {
+	// Get context
+	ctx := rx.Context()
+
+	// Get user UserRefID
+	userRefID, err := getUserRefID(rx)
+	if err != nil {
+		log.Errorf("error: %v", err, nlogger.Error(err), nlogger.Context(ctx))
+		return nil, errx.Trace(err)
+	}
+
+	// Get Payload
+	var payload dto.PostCreatePinPayload
+	payload.UserRefID = userRefID
+	err = rx.ParseJSONBody(&payload)
+	if err != nil {
+		log.Error("error when parse json body", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, nhttp.BadRequestError.Wrap(err)
+	}
+
+	// Validate payload
+	err = validate.PostCreatePin(&payload)
+	if err != nil {
+		log.Error("Bad request validate payload", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, err
+	}
+
+	// Init service
+	svc := c.NewService(ctx)
+	defer svc.Close()
+
+	// Call service
+	err = svc.CreatePinUser(&payload)
+	if err != nil {
+		log.Errorf("error found when call service", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, err
+	}
+
+	return nhttp.Success().SetMessage(constant.IsValidPINMessage), nil
+}
+
+func (c *AccountController) PostOTPForgetPin(rx *nhttp.Request) (*nhttp.Response, error) {
+	// Get context
+	ctx := rx.Context()
+
+	// Get user UserRefID
+	userRefID, err := getUserRefID(rx)
+	if err != nil {
+		log.Errorf("error: %v", err, nlogger.Error(err), nlogger.Context(ctx))
+		return nil, errx.Trace(err)
+	}
+
+	// Get Payload
+	var payload dto.CheckOTPPinPayload
+	payload.UserRefID = userRefID
+	err = rx.ParseJSONBody(&payload)
+	if err != nil {
+		log.Error("error when parse json body", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, nhttp.BadRequestError.Wrap(err)
+	}
+
+	// Validate payload
+	err = validate.CheckPostOTP(&payload)
+	if err != nil {
+		log.Error("Bad request validate payload", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, err
+	}
+
+	// Init service
+	svc := c.NewService(ctx)
+	defer svc.Close()
+
+	// Call service
+	err = svc.CheckOTPForgetPin(&payload)
+	if err != nil {
+		log.Errorf("error found when call service", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, err
+	}
+
+	return nhttp.Success().SetMessage(constant.OTPValidMessage), nil
+}
+
+func (c *AccountController) PostForgetPin(rx *nhttp.Request) (*nhttp.Response, error) {
+	// Get context
+	ctx := rx.Context()
+
+	// Get user UserRefID
+	userRefID, err := getUserRefID(rx)
+	if err != nil {
+		log.Error("error when parse json body", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, nhttp.BadRequestError.Wrap(err)
+	}
+
+	// Get Payload
+	var payload dto.ForgetPinPayload
+	payload.UserRefID = userRefID
+	err = rx.ParseJSONBody(&payload)
+	if err != nil {
+		log.Error("error when parse json body", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, nhttp.BadRequestError.Wrap(err)
+	}
+
+	// Validate payload
+	err = validate.PostForgetPin(&payload)
+	if err != nil {
+		log.Error("Bad request validate payload", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, err
+	}
+
+	// Init service
+	svc := c.NewService(ctx)
+	defer svc.Close()
+
+	// Call service
+	err = svc.ForgetPin(&payload)
+	if err != nil {
+		log.Errorf("error found when call service", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, err
+	}
+
+	return nhttp.Success().SetMessage(constant.IsUpdatedPINMessage), nil
 }
