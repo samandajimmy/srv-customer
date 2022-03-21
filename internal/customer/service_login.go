@@ -91,6 +91,12 @@ func (s *Service) Login(payload dto.LoginPayload) (*dto.LoginResult, error) {
 		return nil, errB
 	}
 
+	// If password verified remove counter
+	err = s.UnblockPassword(credential)
+	if err != nil {
+		return nil, err
+	}
+
 	// get userRefId from external DB
 	if !customer.UserRefID.Valid {
 		registerPayload := &dto.CustomerSynchronizeRequest{
@@ -507,9 +513,9 @@ func (s *Service) setTokenAuthentication(customer *model.Customer, agen string, 
 func (s *Service) ValidatePassword(password string) *dto.ValidatePasswordResult {
 	var validation dto.ValidatePasswordResult
 
-	lowerCase, _ := regexp.Compile(`[a-z]+`)
-	upperCase, _ := regexp.Compile(`[A-Z]+`)
-	allNumber, _ := regexp.Compile(`[0-9]+`)
+	lowerCase := regexp.MustCompile(`[a-z]+`)
+	upperCase := regexp.MustCompile(`[A-Z]+`)
+	allNumber := regexp.MustCompile(`[0-9]+`)
 
 	if len(lowerCase.FindStringSubmatch(password)) < 1 {
 		validation.IsValid = false
@@ -688,6 +694,20 @@ func (s *Service) HandleWrongPassword(credential *model.Credential, customer *mo
 	}
 
 	return err
+}
+
+func (s *Service) UnblockPassword(credential *model.Credential) error {
+	credential.BlockedAt = sql.NullTime{}
+	credential.BlockedUntilAt = sql.NullTime{}
+	credential.WrongPasswordCount = 0
+
+	err := s.repo.UpdateCredential(credential)
+	if err != nil {
+		s.log.Error("error when update credential.", nlogger.Error(err))
+		return errx.Trace(err)
+	}
+
+	return nil
 }
 
 func GetChannelByAgen(agen string) string {
