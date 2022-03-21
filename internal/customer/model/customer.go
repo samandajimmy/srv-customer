@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"database/sql/driver"
 	"encoding/json"
+	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/constant"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/dto"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nsql"
 )
@@ -23,7 +24,7 @@ type Customer struct {
 	Cif            string           `db:"cif"`
 	Sid            string           `db:"sid"`
 	ReferralCode   sql.NullString   `db:"referralCode"`
-	Status         int64            `db:"status"`
+	Status         constant.ControlStatus            `db:"status"`
 }
 
 type CustomerPhoto struct {

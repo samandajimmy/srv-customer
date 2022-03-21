@@ -84,6 +84,10 @@ var OTPReachResendLimitError = b.NewError("E_OTP_3", "Mohon tunggu 300 detik lag
 	nhttp.WithStatus(http.StatusBadRequest))
 var ExpiredOTPError = b.NewError("E_OTP_4", "otp has been expired",
 	nhttp.WithStatus(http.StatusBadRequest))
+var InvalidOTPError = b.NewError("E_OTP_5", "OTP yang dimasukan tidak valid",
+	nhttp.WithStatus(http.StatusBadRequest))
+var FailedResendOTP = b.NewError("E_OTP_6", "Resend OTP Failed",
+	nhttp.WithStatus(http.StatusBadRequest))
 
 // PIN Errors
 
@@ -107,4 +111,8 @@ var WrongPINInput2 = b.NewError("E_PIN_6",
 	nhttp.WithStatus(http.StatusUnauthorized))
 var NotEqualPINError = b.NewError("E_PIN_7",
 	"Masukan PIN yang sama dengan sebelumnya",
+	nhttp.WithStatus(http.StatusBadRequest))
+
+// Password
+var AccountIsNotActiveError = b.NewError("E_PASS_1", "Akun anda belum aktif",
 	nhttp.WithStatus(http.StatusBadRequest))

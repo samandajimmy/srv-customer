@@ -486,3 +486,92 @@ func handleErrorRepository(errRepo error, errMsg error) error {
 	}
 	return errRepo
 }
+
+func (s *Service) SendOTPResetPassword(payload dto.OTPResetPasswordPayload) error {
+	// Send OTP To Phone Number
+	resp, err := s.SendOTP(dto.SendOTPRequest{
+		PhoneNumber: payload.Email,
+		RequestType: constant.RequestResetPassword,
+	})
+	if err != nil {
+		s.log.Error("error found when call send OTP service", nlogger.Error(err), nlogger.Context(s.ctx))
+		return errx.Trace(err)
+	}
+
+	s.log.Debugf("Debug: reset password message %s", resp.Message)
+
+	if resp.ResponseCode != "00" {
+		s.log.Error("error rest switching otp reset pin", nlogger.Context(s.ctx))
+		return constant.FailedResendOTP.Trace()
+	}
+
+	return nil
+}
+
+func (s *Service) VerifyOTPResetPassword(payload dto.VerifyOTPResetPasswordPayload) error {
+	// Send OTP To Phone Number
+	resp, err := s.VerifyOTP(dto.VerifyOTPRequest{
+		PhoneNumber: payload.Email,
+		RequestType: constant.RequestResetPassword,
+		Token:       payload.OTP,
+	})
+	if err != nil {
+		s.log.Error("error found when call send OTP service", nlogger.Error(err), nlogger.Context(s.ctx))
+		return errx.Trace(err)
+	}
+
+	s.log.Debugf("Debug: verify reset password otp message %s", resp.Message)
+
+	if resp.ResponseCode != "00" {
+		s.log.Error("error rest switching otp reset pin")
+		return constant.InvalidOTPError.Trace()
+	}
+
+	return nil
+}
+
+func (s *Service) ResetPasswordByOTP(payload dto.ResetPasswordByOTPPayload) error {
+	// Get customer
+	customer, err := s.repo.FindCustomerByEmailOrPhone(payload.Email)
+	if err != nil {
+		s.log.Error("error found when get customer repo", nlogger.Error(err), nlogger.Context(s.ctx))
+		err = handleErrorRepository(err, constant.ResourceNotFoundError)
+		return errx.Trace(err)
+	}
+
+	if customer.Status != constant.Enabled {
+		return constant.AccountIsNotActiveError
+	}
+
+	// Check OTP Reset Password
+	err = s.VerifyOTPResetPassword(dto.VerifyOTPResetPasswordPayload{
+		Email: payload.Email,
+		OTP:   payload.OTP,
+	})
+	if err != nil {
+		s.log.Error("Error when check otp reset password")
+		return errx.Trace(err)
+	}
+
+	// Get credential customer
+	credential, err := s.repo.FindCredentialByCustomerID(customer.ID)
+	if err != nil {
+		s.log.Error("error found when get credential repo", nlogger.Error(err), nlogger.Context(s.ctx))
+		err = handleErrorRepository(err, constant.ResourceNotFoundError)
+		return errx.Trace(err)
+	}
+
+	// Update credential
+	credential.Password = nval.MD5(payload.Password)
+	credential.BiometricLogin = constant.Disabled
+	credential.BiometricDeviceID = ""
+	credential.Version++
+
+	err = s.repo.UpdateCredential(credential)
+	if err != nil {
+		s.log.Error("error when update credential.", nlogger.Error(err), nlogger.Context(s.ctx))
+		return errx.Trace(err)
+	}
+
+	return nil
+}

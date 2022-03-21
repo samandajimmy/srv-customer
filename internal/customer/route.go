@@ -77,6 +77,14 @@ func setUpRoute(router *nhttp.Router, controllers *Controllers) {
 		router.HandleFunc(controllers.Account.HandleAuthUser),
 		router.HandleFunc(controllers.Account.PostForgetPin))
 
+	// Management reset password
+	router.Handle(http.MethodPost, "/accounts/reset-password/resend-otp",
+		router.HandleFunc(controllers.Account.PostSendOTPResetPassword))
+	router.Handle(http.MethodPost, "/accounts/reset-password/check-otp",
+		router.HandleFunc(controllers.Account.PostVerifyOTPResetPassword))
+	router.Handle(http.MethodPost, "/accounts/reset-password",
+		router.HandleFunc(controllers.Account.PostResetPasswordByOTP))
+
 	// Static asset
 	staticDir := "/web/assets/"
 	router.PathPrefix(staticDir).Handler(http.StripPrefix(staticDir, http.FileServer(http.Dir("."+staticDir))))
