@@ -57,7 +57,7 @@ func (s *Service) CreateBankAccount(payload *dto.CreateBankAccountPayload) (*dto
 		AccountNumber: payload.AccountNumber,
 		AccountName:   payload.AccountName,
 		Bank:          model.ToBank(payload.Bank),
-		Status:        constant.Active,
+		Status:        constant.Enabled,
 		BaseField:     model.NewBaseField(model.ToModifier(payload.Subject.ModifiedBy())),
 	}
 

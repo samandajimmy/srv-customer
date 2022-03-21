@@ -575,7 +575,7 @@ func (s *Service) ResetPasswordByOTP(payload dto.ResetPasswordByOTPPayload) erro
 
 	// Update credential
 	credential.Password = nval.MD5(payload.Password)
-	credential.BiometricLogin = constant.Disabled
+	credential.BiometricLogin = nval.ParseInt64Fallback(constant.Disabled, 0)
 	credential.BiometricDeviceID = ""
 	credential.Version++
 
