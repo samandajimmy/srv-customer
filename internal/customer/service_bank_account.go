@@ -10,6 +10,7 @@ import (
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/constant"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/model"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/dto"
+	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nval"
 )
 
 func (s *Service) ListBankAccount(userRefID string, params *dto.ListPayload) (*dto.ListBankAccountResult, error) {
@@ -19,8 +20,11 @@ func (s *Service) ListBankAccount(userRefID string, params *dto.ListPayload) (*d
 		return nil, err
 	}
 
+	// set filter customerId
+	params.Filters["customerId"] = nval.ParseStringFallback(customer.ID, "0")
+
 	// Query
-	queryResult, err := s.repo.ListBankAccount(customer.ID, params)
+	queryResult, err := s.repo.ListBankAccount(params)
 	if err != nil {
 		s.log.Error("error found when get list bank account", nlogger.Error(err))
 		return nil, errx.Trace(err)

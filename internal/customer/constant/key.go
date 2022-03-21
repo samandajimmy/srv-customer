@@ -5,6 +5,7 @@ package constant
 const (
 	AccountNameKey   = "accountName"
 	AccountNumberKey = "accountNumber"
+	CustomerIDKey    = "customerId"
 )
 
 // Sort by options

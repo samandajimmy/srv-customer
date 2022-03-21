@@ -17,20 +17,15 @@ import (
 var bankAccountFilters = map[string]nsql.FilterParser{
 	constant.AccountNameKey:   query.LikeFilter("accountName", op.LikeSubString, option.Schema(statement.BankAccountSchema)),
 	constant.AccountNumberKey: query.LikeFilter("accountNumber", op.LikeSubString, option.Schema(statement.BankAccountSchema)),
+	constant.CustomerIDKey:    newEqualFilter(statement.BankAccountSchema, "customerId"),
 }
 
-func (rc *RepositoryContext) ListBankAccount(customerID int64, params *dto.ListPayload) (*model.ListBankAccountResult, error) {
-	// Init query builder
-	b := query.From(statement.BankAccountSchema)
-
+func (rc *RepositoryContext) ListBankAccount(params *dto.ListPayload) (*model.ListBankAccountResult, error) {
 	// Set where
 	filters := query.NewFilter(params.Filters, bankAccountFilters)
-	b.Where(
-		query.And(
-			query.Equal(query.Column("customerId", query.Schema(statement.BankAccountSchema)), query.BindVar()),
-		),
-		filters.Conditions(),
-	)
+
+	// Init query builder
+	b := query.From(statement.BankAccountSchema).Where(filters.Conditions())
 
 	// Set order by
 	switch params.SortBy {
@@ -50,8 +45,8 @@ func (rc *RepositoryContext) ListBankAccount(customerID int64, params *dto.ListP
 	countQuery := b.Select(query.Count("*", option.Schema(statement.BankAccountSchema), option.As("count"))).Build()
 	countQuery = rc.conn.Rebind(countQuery)
 
-	// Combine arguments with customerId from filters
-	args := append([]interface{}{customerID}, filters.Args()...)
+	// Get args
+	args := filters.Args()
 
 	// Execute query
 	var rows []model.BankAccount
