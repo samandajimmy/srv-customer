@@ -12,7 +12,6 @@ import (
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/model"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/dto"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nhttp"
-	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/dto"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nval"
 	"time"
 )
@@ -488,7 +487,7 @@ func handleErrorRepository(errRepo error, errMsg error) error {
 	return errRepo
 }
 
-func (s *Service) SendOTPResetPassword(payload dto.OTPResetPasswordPayload) (error) {
+func (s *Service) SendOTPResetPassword(payload dto.OTPResetPasswordPayload) error {
 	// Send OTP To Phone Number
 	resp, err := s.SendOTP(dto.SendOTPRequest{
 		PhoneNumber: payload.Email,
@@ -536,10 +535,7 @@ func (s *Service) ResetPasswordByOTP(payload dto.ResetPasswordByOTPPayload) erro
 	customer, err := s.repo.FindCustomerByEmailOrPhone(payload.Email)
 	if err != nil {
 		s.log.Error("error found when get customer repo", nlogger.Error(err), nlogger.Context(s.ctx))
-		// TODO: refactor handle error
-		if errors.Is(err, sql.ErrNoRows) {
-			return constant.ResourceNotFoundError.Trace()
-		}
+		err = handleErrorRepository(err, constant.ResourceNotFoundError)
 		return errx.Trace(err)
 	}
 
@@ -561,10 +557,7 @@ func (s *Service) ResetPasswordByOTP(payload dto.ResetPasswordByOTPPayload) erro
 	credential, err := s.repo.FindCredentialByCustomerID(customer.ID)
 	if err != nil {
 		s.log.Error("error found when get credential repo", nlogger.Error(err), nlogger.Context(s.ctx))
-		// TODO: refactor handle error
-		if errors.Is(err, sql.ErrNoRows) {
-			return constant.ResourceNotFoundError.Trace()
-		}
+		err = handleErrorRepository(err, constant.ResourceNotFoundError)
 		return errx.Trace(err)
 	}
 
