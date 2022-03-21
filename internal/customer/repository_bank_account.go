@@ -74,8 +74,8 @@ func (rc *RepositoryContext) ListBankAccount(customerID int64, params *dto.ListP
 	return &result, err
 }
 
-func (rc *RepositoryContext) CreateBankAccount(row model.BankAccount) error {
-	_, err := rc.stmt.BankAccount.Insert.ExecContext(rc.ctx, row)
+func (rc *RepositoryContext) CreateBankAccount(row *model.BankAccount) error {
+	_, err := rc.stmt.BankAccount.Insert.ExecContext(rc.ctx, &row)
 	if err != nil {
 		return err
 	}
@@ -108,4 +108,10 @@ func (rc *RepositoryContext) DeleteBankAccountByXID(xid string) error {
 		return constant.BankAccountNotFoundError
 	}
 	return nil
+}
+
+func (rc *RepositoryContext) FindBankAccountByAccountNumberAndCustomerID(accountNumber string, customerID int64) (*model.BankAccount, error) {
+	var result model.BankAccount
+	err := rc.stmt.BankAccount.FindByAccountNumberAndCustomerID.GetContext(rc.ctx, &result, accountNumber, customerID)
+	return &result, err
 }

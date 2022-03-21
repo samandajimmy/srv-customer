@@ -45,13 +45,23 @@ func (s *Service) CreateBankAccount(payload *dto.CreateBankAccountPayload) (*dto
 		return nil, err
 	}
 
+	// Account Number exist
+	bankAccount, err := s.repo.FindBankAccountByAccountNumberAndCustomerID(payload.AccountNumber, customer.ID)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return nil, errx.Trace(err)
+	}
+
+	if bankAccount.ID != 0 {
+		return composeDetailBankAccount(bankAccount)
+	}
+
 	// Initialize data to insert
 	xid, err := gonanoid.Generate(constant.AlphaNumUpperCaseRandomSet, 8)
 	if err != nil {
 		panic(fmt.Errorf("failed to generate xid. Error = %w", err))
 	}
 
-	bankAccount := model.BankAccount{
+	bankAccount = &model.BankAccount{
 		XID:           xid,
 		CustomerID:    customer.ID,
 		AccountNumber: payload.AccountNumber,
@@ -66,7 +76,7 @@ func (s *Service) CreateBankAccount(payload *dto.CreateBankAccountPayload) (*dto
 		return nil, errx.Trace(err)
 	}
 
-	return composeDetailBankAccount(&bankAccount)
+	return composeDetailBankAccount(bankAccount)
 }
 
 func (s *Service) GetDetailBankAccount(payload *dto.GetDetailBankAccountPayload) (*dto.GetDetailBankAccountResult, error) {
