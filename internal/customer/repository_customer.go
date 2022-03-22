@@ -213,3 +213,12 @@ func (rc *RepositoryContext) FindCombineCustomerDataByUserRefID(userRefID string
 
 	return customer, verification, credential, nil
 }
+
+func (rc *RepositoryContext) EmailIsExists(email string) (bool, error) {
+	var isExists bool
+	err := rc.stmt.Customer.EmailIsExists.GetContext(rc.ctx, &isExists, email)
+	if err != nil {
+		return false, err
+	}
+	return isExists, nil
+}

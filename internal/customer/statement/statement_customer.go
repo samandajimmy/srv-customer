@@ -3,6 +3,7 @@ package statement
 import (
 	"fmt"
 	"github.com/jmoiron/sqlx"
+	"github.com/nbs-go/nsql/option"
 	"github.com/nbs-go/nsql/pq/query"
 	"github.com/nbs-go/nsql/schema"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/model"
@@ -23,6 +24,7 @@ type Customer struct {
 	FindByEmailOrPhone *sqlx.Stmt
 	ReferralCodeExist  *sqlx.Stmt
 	UpdateByCIF        *sqlx.NamedStmt
+	EmailIsExists      *sqlx.Stmt
 }
 
 func NewCustomer(db *nsql.DatabaseContext) *Customer {
@@ -94,6 +96,12 @@ func NewCustomer(db *nsql.DatabaseContext) *Customer {
 		Where(query.Equal(query.Column("phone"))).
 		Build()
 
+	emailIsExists := query.
+		Select(query.GreaterThan(query.Count("id"), query.IntVar(0), option.As("isExists"))).
+		From(CustomerSchema).
+		Where(query.Equal(query.Column("email"))).
+		Build()
+
 	return &Customer{
 		Insert:             db.PrepareNamedFmtRebind(insert),
 		FindByID:           db.PrepareFmtRebind(findByID),
@@ -106,5 +114,6 @@ func NewCustomer(db *nsql.DatabaseContext) *Customer {
 		UpdateByCIF:        db.PrepareNamedFmtRebind(updateByCif),
 		UpdateByUserRefID:  db.PrepareNamedFmtRebind(updateByUserRefID),
 		UpdateByPhone:      db.PrepareNamedFmtRebind(updateByPhone),
+		EmailIsExists:      db.PrepareFmtRebind(emailIsExists),
 	}
 }

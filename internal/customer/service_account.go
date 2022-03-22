@@ -587,3 +587,72 @@ func (s *Service) ResetPasswordByOTP(payload dto.ResetPasswordByOTPPayload) erro
 
 	return nil
 }
+
+func (s *Service) ChangeEmail(payload dto.EmailChangePayload) error {
+
+	// TODO: Validation check if token is admin
+
+	// Check if email is available
+	isExist, err := s.repo.EmailIsExists(payload.Email)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		s.log.Error("error when check email is exists", nlogger.Error(err))
+		return errx.Trace(err)
+	}
+
+	if isExist {
+		s.log.Debug("Email has been registered")
+		return constant.EmailHasBeenRegisteredError.Trace()
+	}
+
+	// Find customer
+	customer, err := s.repo.FindCustomerByUserRefID(payload.UserRefID)
+	if err != nil {
+		s.log.Error("error when find current customer", nlogger.Error(err))
+		err = handleErrorRepository(err,constant.ResourceNotFoundError)
+		return errx.Trace(err)
+	}
+
+	// Find verification
+	verification, err := s.repo.FindVerificationByCustomerID(customer.ID)
+	if err != nil {
+		s.log.Error("error when find current customer", nlogger.Error(err))
+		err = handleErrorRepository(err,constant.ResourceNotFoundError)
+		return errx.Trace(err)
+	}
+
+	// Begin transaction
+	tx, err := s.repo.conn.BeginTxx(s.ctx, nil)
+	if err != nil {
+		return errx.Trace(err)
+	}
+	defer s.repo.ReleaseTx(tx, &err)
+
+	// Update email
+	customer.Email = payload.Email
+	customer.UpdatedAt = time.Now()
+	customer.Version++
+
+	// Persist update email
+	err = s.repo.UpdateCustomerByUserRefID(customer, payload.UserRefID)
+	if err != nil {
+		s.log.Error("error when update email", nlogger.Error(err))
+		return errx.Trace(err)
+	}
+
+	// Update verification
+	verification.EmailVerificationToken = nval.RandomString(74)
+	verification.EmailVerifiedStatus = 0
+	verification.EmailVerifiedAt = sql.NullTime{}
+	verification.UpdatedAt = time.Now()
+	verification.Version++
+
+	err = s.repo.UpdateVerificationByCustomerID(verification)
+	if err != nil {
+		s.log.Error("error when update verification email", nlogger.Error(err))
+		return errx.Trace(err)
+	}
+
+	// TODO: Send Notification Email Change
+
+	return nil
+}

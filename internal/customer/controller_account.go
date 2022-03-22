@@ -714,3 +714,36 @@ func (c *AccountController) PostResetPasswordByOTP(rx *nhttp.Request) (*nhttp.Re
 
 	return nhttp.Success().SetMessage(constant.SuccessfullyResetPassword), nil
 }
+
+func (c *AccountController) PostChangeEmail(rx *nhttp.Request) (*nhttp.Response, error) {
+	// Get context
+	ctx := rx.Context()
+
+	// Get payload
+	var payload dto.EmailChangePayload
+	err := rx.ParseJSONBody(&payload)
+	if err != nil {
+		log.Error("error when parse json body", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, nhttp.BadRequestError.Wrap(err)
+	}
+
+	// Validate payload
+	err = validate.PostChangeEmail(&payload)
+	if err != nil {
+		log.Error("Bad request validate payload", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, nhttp.BadRequestError.Trace(errx.Source(err))
+	}
+
+	// Init service
+	svc := c.NewService(rx.Context())
+	defer svc.Close()
+
+	// Call service
+	err = svc.ChangeEmail(payload)
+	if err != nil {
+		log.Error("error when call update service", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, err
+	}
+
+	return nhttp.Success().SetMessage("Email user berhasil diperbaharui."), nil
+}

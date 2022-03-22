@@ -13,3 +13,8 @@ type EmailBlock struct {
 	LastTryLogin string
 	BaseURL      string
 }
+
+type EmailChangePayload struct {
+	Email     string `json:"email"`
+	UserRefID string `json:"userRefID"`
+}
