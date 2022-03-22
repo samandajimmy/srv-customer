@@ -13,6 +13,14 @@ import (
 
 var EmptyBaseField = NewBaseField(&Modifier{ID: "", Role: "", FullName: ""})
 
+type NullBaseField struct {
+	CreatedAt  pq.NullTime      `db:"createdAt"`
+	UpdatedAt  pq.NullTime      `db:"updatedAt"`
+	ModifiedBy *Modifier        `db:"modifiedBy"`
+	Version    sql.NullInt64    `db:"version"`
+	Metadata   *json.RawMessage `db:"metadata"`
+}
+
 type BaseField struct {
 	CreatedAt  time.Time       `db:"createdAt"`
 	UpdatedAt  time.Time       `db:"updatedAt"`
@@ -21,12 +29,20 @@ type BaseField struct {
 	Metadata   json.RawMessage `db:"metadata"`
 }
 
-type NullBaseField struct {
-	CreatedAt  pq.NullTime      `db:"createdAt"`
-	UpdatedAt  pq.NullTime      `db:"updatedAt"`
-	ModifiedBy *Modifier        `db:"modifiedBy"`
-	Version    sql.NullInt64    `db:"version"`
-	Metadata   *json.RawMessage `db:"metadata"`
+func (m *BaseField) Upgrade(modifiedBy *Modifier, opts ...time.Time) BaseField {
+	var t time.Time
+	if len(opts) > 0 {
+		t = opts[0]
+	} else {
+		t = time.Now()
+	}
+
+	return BaseField{
+		CreatedAt:  m.CreatedAt,
+		UpdatedAt:  t,
+		ModifiedBy: modifiedBy,
+		Version:    m.Version + 1,
+	}
 }
 
 func NewBaseField(modifiedBy *Modifier) BaseField {
@@ -39,6 +55,15 @@ func NewBaseField(modifiedBy *Modifier) BaseField {
 		ModifiedBy: modifiedBy,
 		Version:    1,
 		Metadata:   nsql.EmptyObjectJSON,
+	}
+}
+
+func ToBaseFieldDTO(m *BaseField) *dto.BaseField {
+	return &dto.BaseField{
+		UpdatedAt:  m.UpdatedAt.Unix(),
+		CreatedAt:  m.CreatedAt.Unix(),
+		ModifiedBy: ToModifierDTO(m.ModifiedBy),
+		Version:    m.Version,
 	}
 }
 

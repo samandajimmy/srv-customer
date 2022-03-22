@@ -9,6 +9,7 @@ type Statements struct {
 	Address         *Address
 	AuditLogin      *AuditLogin
 	Credential      *Credential
+	BankAccount     *BankAccount
 	Customer        *Customer
 	FinancialData   *FinancialData
 	OTP             *OTP
@@ -32,6 +33,7 @@ func New(db *nsql.DatabaseContext) *Statements {
 		OTP:             NewOTP(db),
 		Verification:    NewVerification(db),
 		VerificationOTP: NewVerificationOTP(db),
+		BankAccount:     NewBankAccount(db),
 	}
 }
 

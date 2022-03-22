@@ -48,15 +48,15 @@ func (c *AccountController) HandleAuthUser(rx *nhttp.Request) (*nhttp.Response, 
 	return nhttp.Continue(), nil
 }
 
-func getUserRefID(rx *nhttp.Request) (string, error) {
+func GetUserRefID(rx *nhttp.Request) string {
 	v := rx.GetContextValue(constant.UserRefIDContextKey)
 
 	userRefID, ok := v.(string)
 	if !ok {
-		return "", fmt.Errorf("unexpected userRefID value in context. Type: %T", v)
+		panic(fmt.Errorf("unexpected userRefID value in context. Type: %T", v))
 	}
 
-	return userRefID, nil
+	return userRefID
 }
 
 func (c *AccountController) PostLogin(rx *nhttp.Request) (*nhttp.Response, error) {
@@ -288,15 +288,11 @@ func (c *AccountController) PostUpdatePasswordCheck(rx *nhttp.Request) (*nhttp.R
 	ctx := rx.Context()
 
 	// Get user UserRefID
-	userRefID, err := getUserRefID(rx)
-	if err != nil {
-		log.Errorf("error: %v", err, nlogger.Error(err), nlogger.Context(ctx))
-		return nil, errx.Trace(err)
-	}
+	userRefID := GetUserRefID(rx)
 
 	// Get payload
 	var payload dto.UpdatePasswordCheckPayload
-	err = rx.ParseJSONBody(&payload)
+	err := rx.ParseJSONBody(&payload)
 	if err != nil {
 		log.Error("error when parse json body", nlogger.Error(err), nlogger.Context(ctx))
 		return nil, nhttp.BadRequestError.Wrap(err)
@@ -332,15 +328,11 @@ func (c *AccountController) PutUpdatePassword(rx *nhttp.Request) (*nhttp.Respons
 	ctx := rx.Context()
 
 	// Get user UserRefID
-	userRefID, err := getUserRefID(rx)
-	if err != nil {
-		log.Errorf("error: %v", err, nlogger.Error(err), nlogger.Context(ctx))
-		return nil, errx.Trace(err)
-	}
+	userRefID := GetUserRefID(rx)
 
 	// Get payload
 	var payload dto.UpdatePasswordPayload
-	err = rx.ParseJSONBody(&payload)
+	err := rx.ParseJSONBody(&payload)
 	if err != nil {
 		log.Error("error when parse json body", nlogger.Error(err), nlogger.Context(ctx))
 		return nil, nhttp.BadRequestError.Wrap(err)
@@ -405,17 +397,13 @@ func (c *AccountController) PostCheckPin(rx *nhttp.Request) (*nhttp.Response, er
 	ctx := rx.Context()
 
 	// Get user UserRefID
-	userRefID, err := getUserRefID(rx)
-	if err != nil {
-		log.Errorf("error: %v", err, nlogger.Error(err), nlogger.Context(ctx))
-		return nil, errx.Trace(err)
-	}
+	userRefID := GetUserRefID(rx)
 
 	// Get Payload
 	var payload dto.CheckPinPayload
 	payload.UserRefID = userRefID
 	payload.CheckPIN = true
-	err = rx.ParseJSONBody(&payload)
+	err := rx.ParseJSONBody(&payload)
 	if err != nil {
 		log.Error("error when parse json body", nlogger.Error(err), nlogger.Context(ctx))
 		return nil, nhttp.BadRequestError.Wrap(err)
@@ -447,17 +435,13 @@ func (c *AccountController) PostUpdatePin(rx *nhttp.Request) (*nhttp.Response, e
 	ctx := rx.Context()
 
 	// Get user UserRefID
-	userRefID, err := getUserRefID(rx)
-	if err != nil {
-		log.Errorf("error: %v", err, nlogger.Error(err), nlogger.Context(ctx))
-		return nil, errx.Trace(err)
-	}
+	userRefID := GetUserRefID(rx)
 
 	// Get Payload
 	var payload dto.UpdatePinPayload
 	payload.UserRefID = userRefID
 	payload.CheckPIN = true
-	err = rx.ParseJSONBody(&payload)
+	err := rx.ParseJSONBody(&payload)
 	if err != nil {
 		log.Error("error when parse json body", nlogger.Error(err), nlogger.Context(ctx))
 		return nil, nhttp.BadRequestError.Wrap(err)
@@ -489,16 +473,12 @@ func (c *AccountController) PostCheckOTPPinCreate(rx *nhttp.Request) (*nhttp.Res
 	ctx := rx.Context()
 
 	// Get user UserRefID
-	userRefID, err := getUserRefID(rx)
-	if err != nil {
-		log.Errorf("error: %v", err, nlogger.Error(err), nlogger.Context(ctx))
-		return nil, errx.Trace(err)
-	}
+	userRefID := GetUserRefID(rx)
 
 	// Get Payload
 	var payload dto.CheckOTPPinPayload
 	payload.UserRefID = userRefID
-	err = rx.ParseJSONBody(&payload)
+	err := rx.ParseJSONBody(&payload)
 	if err != nil {
 		log.Error("error when parse json body", nlogger.Error(err), nlogger.Context(ctx))
 		return nil, nhttp.BadRequestError.Wrap(err)
@@ -530,16 +510,12 @@ func (c *AccountController) PostCreatePin(rx *nhttp.Request) (*nhttp.Response, e
 	ctx := rx.Context()
 
 	// Get user UserRefID
-	userRefID, err := getUserRefID(rx)
-	if err != nil {
-		log.Errorf("error: %v", err, nlogger.Error(err), nlogger.Context(ctx))
-		return nil, errx.Trace(err)
-	}
+	userRefID := GetUserRefID(rx)
 
 	// Get Payload
 	var payload dto.PostCreatePinPayload
 	payload.UserRefID = userRefID
-	err = rx.ParseJSONBody(&payload)
+	err := rx.ParseJSONBody(&payload)
 	if err != nil {
 		log.Error("error when parse json body", nlogger.Error(err), nlogger.Context(ctx))
 		return nil, nhttp.BadRequestError.Wrap(err)
@@ -571,16 +547,12 @@ func (c *AccountController) PostOTPForgetPin(rx *nhttp.Request) (*nhttp.Response
 	ctx := rx.Context()
 
 	// Get user UserRefID
-	userRefID, err := getUserRefID(rx)
-	if err != nil {
-		log.Errorf("error: %v", err, nlogger.Error(err), nlogger.Context(ctx))
-		return nil, errx.Trace(err)
-	}
+	userRefID := GetUserRefID(rx)
 
 	// Get Payload
 	var payload dto.CheckOTPPinPayload
 	payload.UserRefID = userRefID
-	err = rx.ParseJSONBody(&payload)
+	err := rx.ParseJSONBody(&payload)
 	if err != nil {
 		log.Error("error when parse json body", nlogger.Error(err), nlogger.Context(ctx))
 		return nil, nhttp.BadRequestError.Wrap(err)
@@ -612,16 +584,12 @@ func (c *AccountController) PostForgetPin(rx *nhttp.Request) (*nhttp.Response, e
 	ctx := rx.Context()
 
 	// Get user UserRefID
-	userRefID, err := getUserRefID(rx)
-	if err != nil {
-		log.Error("error when parse json body", nlogger.Error(err), nlogger.Context(ctx))
-		return nil, nhttp.BadRequestError.Wrap(err)
-	}
+	userRefID := GetUserRefID(rx)
 
 	// Get Payload
 	var payload dto.ForgetPinPayload
 	payload.UserRefID = userRefID
-	err = rx.ParseJSONBody(&payload)
+	err := rx.ParseJSONBody(&payload)
 	if err != nil {
 		log.Error("error when parse json body", nlogger.Error(err), nlogger.Context(ctx))
 		return nil, nhttp.BadRequestError.Wrap(err)

@@ -26,11 +26,7 @@ func (c *ProfileController) GetDetail(rx *nhttp.Request) (*nhttp.Response, error
 	ctx := rx.Context()
 
 	// Get user UserRefID
-	userRefID, err := getUserRefID(rx)
-	if err != nil {
-		log.Errorf("error: %v", err, nlogger.Error(err), nlogger.Context(ctx))
-		return nil, errx.Trace(err)
-	}
+	userRefID := GetUserRefID(rx)
 
 	// Init service
 	svc := c.NewService(ctx)
@@ -51,15 +47,11 @@ func (c *ProfileController) PutUpdate(rx *nhttp.Request) (*nhttp.Response, error
 	ctx := rx.Context()
 
 	// Get user UserRefID
-	userRefID, err := getUserRefID(rx)
-	if err != nil {
-		log.Errorf("error: %v", err, nlogger.Error(err), nlogger.Context(ctx))
-		return nil, errx.Trace(err)
-	}
+	userRefID := GetUserRefID(rx)
 
 	// Get Payload
 	var payload dto.UpdateProfilePayload
-	err = rx.ParseJSONBody(&payload)
+	err := rx.ParseJSONBody(&payload)
 	if err != nil {
 		log.Error("error when parse json body", nlogger.Context(ctx))
 		return nil, nhttp.BadRequestError.Wrap(err)
@@ -91,11 +83,7 @@ func (c *ProfileController) PostUpdateAvatar(rx *nhttp.Request) (*nhttp.Response
 	ctx := rx.Context()
 
 	// Get user UserRefID
-	userRefID, err := getUserRefID(rx)
-	if err != nil {
-		log.Error("error user auth", nlogger.Error(err), nlogger.Context(ctx))
-		return nil, errx.Trace(err)
-	}
+	userRefID := GetUserRefID(rx)
 
 	// Get multipart file
 	file, err := nhttp.GetFile(rx.Request, constant.KeyUserFile, nhttp.MaxFileSizeImage, nhttp.MimeTypesImage)
@@ -149,11 +137,7 @@ func (c *ProfileController) PostUpdateKTP(rx *nhttp.Request) (*nhttp.Response, e
 	ctx := rx.Context()
 
 	// Get user UserRefID
-	userRefID, err := getUserRefID(rx)
-	if err != nil {
-		log.Error("error user auth", nlogger.Error(err), nlogger.Context(ctx))
-		return nil, errx.Trace(err)
-	}
+	userRefID := GetUserRefID(rx)
 
 	// Get multipart file
 	file, err := nhttp.GetFile(rx.Request, constant.KeyUserFile, nhttp.MaxFileSizeImage, nhttp.MimeTypesImage)
@@ -200,11 +184,7 @@ func (c *ProfileController) PostUpdateNPWP(rx *nhttp.Request) (*nhttp.Response, 
 	ctx := rx.Context()
 
 	// Get user UserRefID
-	userRefID, err := getUserRefID(rx)
-	if err != nil {
-		log.Error("error user auth", nlogger.Error(err), nlogger.Context(ctx))
-		return nil, errx.Trace(err)
-	}
+	userRefID := GetUserRefID(rx)
 
 	// Get multipart file
 	file, err := nhttp.GetFile(rx.Request, constant.KeyUserFile, nhttp.MaxFileSizeImage, nhttp.MimeTypesImage)
@@ -261,11 +241,7 @@ func (c *ProfileController) PostUpdateSID(rx *nhttp.Request) (*nhttp.Response, e
 	ctx := rx.Context()
 
 	// Get user UserRefID
-	userRefID, err := getUserRefID(rx)
-	if err != nil {
-		log.Error("error user auth", nlogger.Error(err), nlogger.Context(ctx))
-		return nil, errx.Trace(err)
-	}
+	userRefID := GetUserRefID(rx)
 
 	// Get multipart file
 	file, err := nhttp.GetFile(rx.Request, constant.KeyUserFile, nhttp.MaxFileSizeImage, nhttp.MimeTypesImage)
@@ -321,11 +297,7 @@ func (c *ProfileController) GetStatus(rx *nhttp.Request) (*nhttp.Response, error
 	ctx := rx.Context()
 
 	// Get user UserRefID
-	userRefID, err := getUserRefID(rx)
-	if err != nil {
-		log.Errorf("error: %v", err, nlogger.Error(err), nlogger.Context(ctx))
-		return nil, errx.Trace(err)
-	}
+	userRefID := GetUserRefID(rx)
 
 	// Init service
 	svc := c.NewService(ctx)

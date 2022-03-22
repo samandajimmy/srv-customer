@@ -107,7 +107,7 @@ func UserToCustomer(user *User) (*Customer, error) {
 
 	photo := &CustomerPhoto{
 		Xid:      strings.ToUpper(xid.New().String()),
-		FileName: nval.ParseStringFallback(user.FotoURL, ""),
+		FileName: user.FotoURL.String,
 		FileSize: 0,
 		Mimetype: "",
 	}
