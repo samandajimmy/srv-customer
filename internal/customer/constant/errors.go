@@ -129,3 +129,8 @@ var CustomerNotFoundError = ResourceNotFoundError.AddMetadata(nhttp.MessageMetad
 // Transaction Favorite Errors
 
 var TransactionFavoriteNotFoundError = ResourceNotFoundError.AddMetadata(nhttp.MessageMetadata, "Transaction Favorite not found")
+
+// Change Phone Number Errors
+
+var ChangePhoneNumberError = b.NewError("E_PHN_4", "Failed change phone number on core pds API.",
+	nhttp.WithStatus(http.StatusBadRequest))

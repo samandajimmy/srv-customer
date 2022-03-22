@@ -54,3 +54,34 @@ func (s *Service) otpValidate(payload *dto.RestSwitchingOTPForgetPin) (*Response
 
 	return data, nil
 }
+
+func (s *Service) ChangePhoneNumber(payload dto.ChangePhoneNumberRequestCore) (*ResponseSwitchingSuccess, error) {
+	// Set payload
+	reqBody := map[string]interface{}{
+		"noHp":         payload.CurrentPhoneNumber,
+		"noHpNew":      payload.NewPhoneNumber,
+		"clientId":     "9997",
+		"channelId":    6017,
+		"cif":          payload.Cif,
+		"ibuKandung":   payload.MaidenName,
+		"namaNasabah":  payload.FullName,
+		"tanggalLahir": payload.DateOfBirth,
+	}
+
+	sp := PostDataPayload{
+		Url:  "/customer/phonenumber",
+		Data: reqBody,
+	}
+
+	// Send OTP Rest Switching
+	r, err := s.RestSwitchingPostData(sp)
+	if err != nil {
+		s.log.Error("Error when change phone number request", nlogger.Error(err), nlogger.Context(s.ctx))
+		return nil, errx.Trace(err)
+	}
+
+	// Set result
+	result := r
+
+	return result, nil
+}

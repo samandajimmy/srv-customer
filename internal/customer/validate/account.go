@@ -274,3 +274,20 @@ func PostChangeEmail(p *dto.EmailChangePayload) error {
 
 	return nil
 }
+
+func PostChangePhoneNumber(p *dto.ChangePhoneNumberPayload) error {
+	err := validation.ValidateStruct(p,
+		validation.Field(&p.UserRefID, validation.Required),
+		validation.Field(&p.MaidenName, validation.Required),
+		validation.Field(&p.FullName, validation.Required),
+		validation.Field(&p.DateOfBirth, validation.Required),
+		validation.Field(&p.CurrentPhoneNumber, validation.Required),
+		validation.Field(&p.NewPhoneNumber, validation.Required),
+	)
+
+	if err != nil {
+		return nhttp.BadRequestError.Trace(errx.Source(err))
+	}
+
+	return nil
+}

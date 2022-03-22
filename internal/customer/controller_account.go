@@ -747,3 +747,36 @@ func (c *AccountController) PostChangeEmail(rx *nhttp.Request) (*nhttp.Response,
 
 	return nhttp.Success().SetMessage("Email user berhasil diperbaharui."), nil
 }
+
+func (c *AccountController) PostChangePhoneNumber(rx *nhttp.Request) (*nhttp.Response, error) {
+	// Get context
+	ctx := rx.Context()
+
+	// Get payload
+	var payload dto.ChangePhoneNumberPayload
+	err := rx.ParseJSONBody(&payload)
+	if err != nil {
+		log.Error("error when parse json body", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, nhttp.BadRequestError.Wrap(err)
+	}
+
+	// Validate payload
+	err = validate.PostChangePhoneNumber(&payload)
+	if err != nil {
+		log.Error("Bad request validate payload")
+		return nil, err
+	}
+
+	// Init service
+	svc := c.NewService(ctx)
+	defer svc.Close()
+
+	// Call service
+	resp, err := svc.UpdatePhoneNumber(payload)
+	if err != nil {
+		log.Error("error when call update phone number service", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, errx.Trace(err)
+	}
+
+	return nhttp.Success().SetData(resp), nil
+}
