@@ -15,3 +15,4 @@ var SuccessfullyResetPassword = "Password diperbaharui"
 // Profile
 
 const UpdateLinkCifMessage = "CIF Sukses di update"
+const UnlinkCifMessage = "unlink cif data PDS berhasil"

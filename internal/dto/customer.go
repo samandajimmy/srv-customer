@@ -436,3 +436,7 @@ type UpdateLinkCifPayload struct {
 	Cif         string `json:"cif"`
 	PhoneNumber string `json:"no_tlp"`
 }
+
+type UnlinkCifPayload struct {
+	Cif string `json:"cif"`
+}

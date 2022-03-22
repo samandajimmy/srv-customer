@@ -345,3 +345,36 @@ func (c *ProfileController) PostUpdateLinkCif(rx *nhttp.Request) (*nhttp.Respons
 
 	return nhttp.Success().SetMessage(constant.UpdateLinkCifMessage), nil
 }
+
+func (c *ProfileController) PostUnlinkCif(rx *nhttp.Request) (*nhttp.Response, error) {
+	// Get context
+	ctx := rx.Context()
+
+	// Get Payload
+	var payload dto.UnlinkCifPayload
+	err := rx.ParseJSONBody(&payload)
+	if err != nil {
+		log.Error("error when parse json body", nlogger.Context(ctx))
+		return nil, nhttp.BadRequestError.Wrap(err)
+	}
+
+	// Validate payload
+	err = validate.PostUnlinkCif(&payload)
+	if err != nil {
+		log.Error("Bad request validate payload")
+		return nil, err
+	}
+
+	// Init service
+	svc := c.NewService(ctx)
+	defer svc.Close()
+
+	// Call service
+	err = svc.UnlinkCif(payload)
+	if err != nil {
+		log.Error("error found when call check status service", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, err
+	}
+
+	return nhttp.Success().SetMessage(constant.UnlinkCifMessage), nil
+}

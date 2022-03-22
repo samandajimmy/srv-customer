@@ -118,6 +118,8 @@ func setUpRoute(router *nhttp.Router, controllers *Controllers) {
 	// Update Cif
 	router.Handle(http.MethodPost, "/profiles/update-cif", router.HandleFunc(controllers.Account.HandleAuthUser),
 		router.HandleFunc(controllers.Profile.PostUpdateLinkCif))
+	router.Handle(http.MethodPost, "/profiles/unlink-cif", router.HandleFunc(controllers.Account.HandleAuthUser),
+		router.HandleFunc(controllers.Profile.PostUnlinkCif))
 
 	// Static asset
 	staticDir := "/web/assets/"
