@@ -168,7 +168,7 @@ func UserToCredential(user *User, userPin *UserPin) (*Credential, error) {
 		WrongPasswordCount:  user.WrongPasswordCount,
 		BlockedAt:           ModifierNullTime(user.BlockedDate),
 		BlockedUntilAt:      ModifierNullTime(user.BlockedToDate),
-		BiometricLogin:      user.IsSetBiometric.Int64,
+		BiometricLogin:      constant.ControlStatus(user.IsSetBiometric.Int64),
 		BiometricDeviceID:   user.DeviceIDBiometric.String,
 		BaseField:           EmptyBaseField,
 	}

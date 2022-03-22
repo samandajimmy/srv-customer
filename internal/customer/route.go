@@ -121,6 +121,11 @@ func setUpRoute(router *nhttp.Router, controllers *Controllers) {
 	router.Handle(http.MethodPost, "/profiles/unlink-cif", router.HandleFunc(controllers.Account.HandleAuthUser),
 		router.HandleFunc(controllers.Profile.PostUnlinkCif))
 
+	// Smart Access (Biometric)
+	router.Handle(http.MethodPost, "/accounts/biometric",
+		router.HandleFunc(controllers.Account.HandleAuthUser),
+		router.HandleFunc(controllers.Account.PostUpdateSmartAccess))
+
 	// Static asset
 	staticDir := "/web/assets/"
 	router.PathPrefix(staticDir).Handler(http.StripPrefix(staticDir, http.FileServer(http.Dir("."+staticDir))))
