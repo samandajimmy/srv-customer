@@ -99,6 +99,7 @@ type Controllers struct {
 	Profile     *ProfileController
 	Account     *AccountController
 	BankAccount *BankAccountController
+	Favorite    *FavoriteController
 }
 
 func NewControllers(manifest ncore.Manifest, h *Handler) *Controllers {
@@ -107,6 +108,7 @@ func NewControllers(manifest ncore.Manifest, h *Handler) *Controllers {
 		Profile:     NewProfileController(h),
 		Account:     NewAccountController(h),
 		BankAccount: NewBankAccountController(h),
+		Favorite:    NewFavoriteController(h),
 	}
 }
 

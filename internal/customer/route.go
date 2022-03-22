@@ -99,6 +99,14 @@ func setUpRoute(router *nhttp.Router, controllers *Controllers) {
 	router.Handle(http.MethodDelete, "/bank-accounts/{xid}", router.HandleFunc(controllers.Account.HandleAuthUser),
 		router.HandleFunc(controllers.BankAccount.DeleteBankAccount))
 
+	// Favorite Transaction
+	router.Handle(http.MethodPost, "/favorite", router.HandleFunc(controllers.Account.HandleAuthUser),
+		router.HandleFunc(controllers.Favorite.PostCreate))
+	router.Handle(http.MethodGet, "/favorite", router.HandleFunc(controllers.Account.HandleAuthUser),
+		router.HandleFunc(controllers.Favorite.GetList))
+	router.Handle(http.MethodDelete, "/favorite/{xid}", router.HandleFunc(controllers.Account.HandleAuthUser),
+		router.HandleFunc(controllers.Favorite.Delete))
+
 	// Static asset
 	staticDir := "/web/assets/"
 	router.PathPrefix(staticDir).Handler(http.StripPrefix(staticDir, http.FileServer(http.Dir("."+staticDir))))

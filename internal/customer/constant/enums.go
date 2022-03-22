@@ -12,6 +12,13 @@ const (
 )
 
 const (
+	Unknown ControlStatus = iota
+	Active
+	Inactive
+)
+
+
+const (
 	Prefix = "PDSAPI"
 )
 
