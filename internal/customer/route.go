@@ -115,6 +115,10 @@ func setUpRoute(router *nhttp.Router, controllers *Controllers) {
 	router.Handle(http.MethodPost, "/accounts/change-phone",
 		router.HandleFunc(controllers.Account.PostChangePhoneNumber))
 
+	// Update Cif
+	router.Handle(http.MethodPost, "/profiles/update-cif", router.HandleFunc(controllers.Account.HandleAuthUser),
+		router.HandleFunc(controllers.Profile.PostUpdateLinkCif))
+
 	// Static asset
 	staticDir := "/web/assets/"
 	router.PathPrefix(staticDir).Handler(http.StripPrefix(staticDir, http.FileServer(http.Dir("."+staticDir))))

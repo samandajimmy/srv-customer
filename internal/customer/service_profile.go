@@ -357,26 +357,23 @@ func (s *Service) UploadUserFile(payload dto.UploadUserFilePayload) (*dto.Upload
 	return uploaded, nil
 }
 
-// Endpoint POST /customer/inquiry
-
-func (s *Service) CheckCIF(cif string) (*ResponseSwitchingSuccess, error) {
-	// Check CIF
-	reqBody := map[string]interface{}{
-		"cif": cif,
-	}
-
-	sp := PostDataPayload{
-		Url:  "/customer/inquiry",
-		Data: reqBody,
-	}
-
-	data, err := s.RestSwitchingPostData(sp)
+func (s *Service) UpdateLinkCif(payload dto.UpdateLinkCifPayload) error {
+	// Get customer by phone
+	customer, err := s.repo.FindCustomerByPhone(payload.PhoneNumber)
 	if err != nil {
-		s.log.Error("error found when get gold savings", nlogger.Error(err))
-		return nil, errx.Trace(err)
+		err = handleErrorRepository(err, constant.ResourceNotFoundError)
+		return errx.Trace(err)
 	}
 
-	return data, nil
+	// Update customer
+	customer.Cif = payload.Cif
+	err = s.repo.UpdateCustomerByPhone(customer)
+	if err != nil {
+		s.log.Error("error when update customer cif", nlogger.Error(err))
+		return errx.Trace(err)
+	}
+
+	return nil
 }
 
 func (s *Service) composeProfileResponse(customer *model.Customer, address *model.Address, financial *model.FinancialData,

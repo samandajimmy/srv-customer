@@ -312,3 +312,36 @@ func (c *ProfileController) GetStatus(rx *nhttp.Request) (*nhttp.Response, error
 
 	return nhttp.Success().SetData(resp), nil
 }
+
+func (c *ProfileController) PostUpdateLinkCif(rx *nhttp.Request) (*nhttp.Response, error) {
+	// Get context
+	ctx := rx.Context()
+
+	// Get Payload
+	var payload dto.UpdateLinkCifPayload
+	err := rx.ParseJSONBody(&payload)
+	if err != nil {
+		log.Error("error when parse json body", nlogger.Context(ctx))
+		return nil, nhttp.BadRequestError.Wrap(err)
+	}
+
+	// Validate payload
+	err = validate.PostUpdateLinkCif(&payload)
+	if err != nil {
+		log.Error("Bad request validate payload")
+		return nil, err
+	}
+
+	// Init service
+	svc := c.NewService(ctx)
+	defer svc.Close()
+
+	// Call service
+	err = svc.UpdateLinkCif(payload)
+	if err != nil {
+		log.Error("error found when call check status service", nlogger.Error(err), nlogger.Context(ctx))
+		return nil, err
+	}
+
+	return nhttp.Success().SetMessage(constant.UpdateLinkCifMessage), nil
+}
