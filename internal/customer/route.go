@@ -125,6 +125,9 @@ func setUpRoute(router *nhttp.Router, controllers *Controllers) {
 	router.Handle(http.MethodPost, "/accounts/biometric",
 		router.HandleFunc(controllers.Account.HandleAuthUser),
 		router.HandleFunc(controllers.Account.PostUpdateSmartAccess))
+	router.Handle(http.MethodGet, "/accounts/biometric",
+		router.HandleFunc(controllers.Account.HandleAuthUser),
+		router.HandleFunc(controllers.Account.GetSmartAccessStatus))
 
 	// Static asset
 	staticDir := "/web/assets/"

@@ -70,3 +70,15 @@ type UpdateSmartAccessPayload struct {
 	DeviceID     string                 `json:"device_id"`
 	UseBiometric constant.ControlStatus `json:"use_biometric"`
 }
+
+type GetSmartAccessStatusPayload struct {
+	UserRefID string `json:"-"`
+	DeviceID  string `json:"device_id"`
+}
+
+type GetSmartAccessStatusResult struct {
+	UserRefID            string                 `json:"userRefId"`
+	DeviceID             string                 `json:"deviceId"`
+	IsSetBiometric       bool                   `json:"isSetBiometric"`
+	IsSetBiometricDevice constant.ControlStatus `json:"isSetBiometricDevice"`
+}
