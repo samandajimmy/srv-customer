@@ -142,6 +142,12 @@ func (s *Service) UpdatePassword(userRefID string, payload dto.UpdatePasswordPay
 		return errx.Trace(err)
 	}
 
+	// Synchronize Password PDS
+	err = s.HandleSynchronizePassword(customer, password)
+	if err != nil {
+		return errx.Trace(err)
+	}
+
 	return nil
 }
 
