@@ -2,7 +2,7 @@ package main
 
 var (
 	// AppName Application Name
-	AppName = "Customer Service"
+	AppName = "PDS Customer Service"
 	// AppVersion value will be overridden during automated build
 	AppVersion = "local"
 	// BuildSignature value will be overridden during automated build

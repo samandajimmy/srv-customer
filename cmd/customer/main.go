@@ -1,9 +1,14 @@
 package main
 
 import (
+	// Inject logger before loading other packages
+	_ "repo.pegadaian.co.id/ms-pds/srv-customer/cmd/customer/logger"
+	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nhttp"
+
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
 	"github.com/nbs-go/nlogger/v2"
+	logOption "github.com/nbs-go/nlogger/v2/option"
 	"net/http"
 	"os"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer"
@@ -11,7 +16,11 @@ import (
 	"time"
 )
 
-var log = nlogger.Get()
+var log nlogger.Logger
+
+func init() {
+	log = nlogger.Get()
+}
 
 func main() {
 	// Capture started at
@@ -39,16 +48,18 @@ func main() {
 
 	// Set router
 	router := customer.InitRouter(c.WorkDir, &config, handlers)
-	serverConfig := config.ServerConfig
 
 	// Start server
 	log.Infof("Starting %s...", c.Manifest.AppName)
 	log.Infof("NodeId = %s, Environment = %s", c.NodeID, c.GetEnvironmentString())
 	log.Debugf("Boot Time: %s", time.Since(startedAt))
 
-	err = http.ListenAndServe(serverConfig.GetListenPort(), router)
+	port := nhttp.ListenPort(config.ListenPort)
+	log.Debugf("Listen Port %s", port)
+
+	err = http.ListenAndServe(port, router)
 	if err != nil {
-		log.Fatal("failed to serve", nlogger.Error(err))
+		log.Fatal("failed to serve", logOption.Error(err))
 		os.Exit(2)
 	}
 }
