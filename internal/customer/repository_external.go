@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"github.com/nbs-go/errx"
 	"github.com/nbs-go/nlogger/v2"
+	logOption "github.com/nbs-go/nlogger/v2/option"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/statement"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nsql"
 )
@@ -49,7 +50,7 @@ func (r *RepositoryExternal) WithContext(ctx context.Context) *RepositoryContext
 	// Get connection
 	conn, err := r.db.GetConnection(ctx)
 	if err != nil {
-		log.Error("failed to retrieve connection to db", nlogger.Error(err))
+		log.Error("failed to retrieve connection to db", logOption.Error(err))
 		panic(errx.Trace(err))
 	}
 
@@ -57,7 +58,7 @@ func (r *RepositoryExternal) WithContext(ctx context.Context) *RepositoryContext
 		ctx:  ctx,
 		conn: conn,
 		stmt: r.stmt,
-		log:  nlogger.Get().NewChild(nlogger.Context(ctx)),
+		log:  nlogger.Get().NewChild(logOption.Context(ctx)),
 	}
 }
 
@@ -68,7 +69,7 @@ func (r *RepositoryExternal) InitializeStatement(ctx context.Context) {
 		log.Debugf("initialize connection to database external...")
 		err := r.db.InitContext(ctx)
 		if err != nil {
-			log.Error("failed to initiate connection to db", nlogger.Error(err))
+			log.Error("failed to initiate connection to db", logOption.Error(err))
 			panic(errx.Trace(err))
 		}
 

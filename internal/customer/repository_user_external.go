@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/nbs-go/errx"
-	"github.com/nbs-go/nlogger/v2"
+	logOption "github.com/nbs-go/nlogger/v2/option"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/model"
 )
 
@@ -30,7 +30,7 @@ func (rc *RepositoryContext) FindUserExternalAddressByCustomerID(id int64) (*mod
 	var row []model.AddressExternal
 	err := rc.conn.SelectContext(rc.ctx, &row, q)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		rc.log.Error("error found when get address external", nlogger.Error(err), nlogger.Context(rc.ctx))
+		rc.log.Error("error found when get address external", logOption.Error(err), logOption.Context(rc.ctx))
 		return nil, errx.Trace(err)
 	}
 

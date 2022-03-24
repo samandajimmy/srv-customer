@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"github.com/nbs-go/errx"
-	"github.com/nbs-go/nlogger/v2"
+	logOption "github.com/nbs-go/nlogger/v2/option"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/constant"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/model"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nsql"
@@ -53,7 +53,7 @@ func (rc *RepositoryContext) InsertOrUpdateAddress(row *model.Address) error {
 
 	err = rc.CreateAddress(row)
 	if err != nil {
-		rc.log.Error("cannot create address", nlogger.Error(err), nlogger.Context(rc.ctx))
+		rc.log.Error("cannot create address", logOption.Error(err), logOption.Context(rc.ctx))
 		return errx.Trace(err)
 	}
 
