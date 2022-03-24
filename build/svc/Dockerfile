@@ -43,4 +43,4 @@ WORKDIR /usr/src/app
 
 EXPOSE ${ARG_PORT}
 
-ENTRYPOINT ["./customer-svc"]
+ENTRYPOINT ["./customer"]
