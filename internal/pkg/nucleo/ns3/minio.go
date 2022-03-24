@@ -3,6 +3,7 @@ package ns3
 import (
 	"github.com/minio/minio-go"
 	"github.com/nbs-go/nlogger/v2"
+	logOption "github.com/nbs-go/nlogger/v2/option"
 	"io"
 )
 
@@ -41,7 +42,7 @@ func (m *Minio) Upload(file io.Reader, contentType, dest string) error {
 		ContentType: contentType,
 	})
 	if err != nil {
-		log.Error("error when upload object", nlogger.Error(err))
+		log.Error("error when upload object", logOption.Error(err))
 		return err
 	}
 
@@ -51,7 +52,7 @@ func (m *Minio) Upload(file io.Reader, contentType, dest string) error {
 func (m *Minio) Remove(objectName string) error {
 	err := m.Client.RemoveObject(m.BucketName, objectName)
 	if err != nil {
-		log.Error("error when removing object", nlogger.Error(err))
+		log.Error("error when removing object", logOption.Error(err))
 		return err
 	}
 

@@ -6,12 +6,16 @@ import (
 )
 
 const (
-	HttpStatusMetadata = "httpStatus"
-	MessageMetadata    = "message"
+	HttpStatusMetadata      = "httpStatus"
+	OverrideMessageMetadata = "message"
 )
 
 func WithStatus(status int) errx.SetOptionFn {
 	return errx.AddMetadata(HttpStatusMetadata, status)
+}
+
+func OverrideMessage(message string) errx.SetOptionFn {
+	return errx.AddMetadata(OverrideMessageMetadata, message)
 }
 
 var b = errx.NewBuilder(pkgNamespace)
