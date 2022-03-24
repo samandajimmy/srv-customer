@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/kelseyhightower/envconfig"
 	gonanoid "github.com/matoous/go-nanoid/v2"
-	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nvalidate"
 )
 
 type BootOptions struct {
@@ -40,9 +39,6 @@ func Boot(destConfig interface{}, destConfigExternal interface{}, args ...BootOp
 	if err != nil {
 		panic(err)
 	}
-
-	// Load validation message
-	nvalidate.Init()
 
 	return &core
 }
