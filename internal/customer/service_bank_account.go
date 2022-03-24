@@ -6,10 +6,11 @@ import (
 	"fmt"
 	gonanoid "github.com/matoous/go-nanoid/v2"
 	"github.com/nbs-go/errx"
-	"github.com/nbs-go/nlogger/v2"
+	logOption "github.com/nbs-go/nlogger/v2/option"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/constant"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/model"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/dto"
+	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nhttp"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nval"
 )
 
@@ -26,7 +27,7 @@ func (s *Service) ListBankAccount(userRefID string, params *dto.ListPayload) (*d
 	// Query
 	queryResult, err := s.repo.ListBankAccount(params)
 	if err != nil {
-		s.log.Error("error found when get list bank account", nlogger.Error(err))
+		s.log.Error("error found when get list bank account", logOption.Error(err))
 		return nil, errx.Trace(err)
 	}
 
@@ -155,7 +156,7 @@ func (s *Service) DeleteBankAccount(payload *dto.GetDetailBankAccountPayload) er
 
 	// Ownership validate
 	if customer.UserRefID.String != payload.UserRefID {
-		return constant.BankAccountNotFoundError
+		return constant.BankAccountNotFoundError.Trace(nhttp.OverrideMessage("Bank Account not found"))
 	}
 
 	err = s.repo.DeleteBankAccountByXID(payload.XID)

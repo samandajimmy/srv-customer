@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"github.com/lestrrat-go/jwx/jwt"
 	"github.com/nbs-go/errx"
-	"github.com/nbs-go/nlogger/v2"
+	logOption "github.com/nbs-go/nlogger/v2/option"
 	"regexp"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/constant"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/model"
@@ -20,12 +20,11 @@ import (
 )
 
 func (s *Service) Login(payload dto.LoginPayload) (*dto.LoginResult, error) {
-	ctx := s.ctx
 	// Check if user exists
 	t := time.Now()
 	customer, err := s.repo.FindCustomerByEmailOrPhone(payload.Email)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		s.log.Error("failed to retrieve customer", nlogger.Error(err), nlogger.Context(ctx))
+		s.log.Error("failed to retrieve customer", logOption.Error(err))
 		return nil, errx.Trace(err)
 	}
 
@@ -35,7 +34,7 @@ func (s *Service) Login(payload dto.LoginPayload) (*dto.LoginResult, error) {
 		// Update profile json
 		err = s.repo.UpdateCustomerByPhone(customer)
 		if err != nil {
-			s.log.Error("error when update customer by phone", nlogger.Error(err), nlogger.Context(ctx))
+			s.log.Error("error when update customer by phone", logOption.Error(err))
 			return nil, errx.Trace(err)
 		}
 	}
@@ -45,7 +44,7 @@ func (s *Service) Login(payload dto.LoginPayload) (*dto.LoginResult, error) {
 		// If data not found on internal database check on external database.
 		user, errExternal := s.repoExternal.FindUserExternalByEmailOrPhone(payload.Email)
 		if errExternal != nil && !errors.Is(errExternal, sql.ErrNoRows) {
-			s.log.Error("error found when query find by email or phone", nlogger.Error(errExternal), nlogger.Context(ctx))
+			s.log.Error("error found when query find by email or phone", logOption.Error(errExternal))
 			return nil, errx.Trace(errExternal)
 		}
 
@@ -57,7 +56,7 @@ func (s *Service) Login(payload dto.LoginPayload) (*dto.LoginResult, error) {
 		// sync data external to internal
 		customer, err = s.syncExternalToInternal(user)
 		if err != nil {
-			s.log.Error("error while sync data External to Internal", nlogger.Error(err), nlogger.Context(ctx))
+			s.log.Error("error while sync data External to Internal", logOption.Error(err))
 			return nil, errx.Trace(err)
 		}
 	}
@@ -65,11 +64,7 @@ func (s *Service) Login(payload dto.LoginPayload) (*dto.LoginResult, error) {
 	// Get credential customer
 	credential, err := s.repo.FindCredentialByCustomerID(customer.ID)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			s.log.Error("failed to retrieve credential not found", nlogger.Error(err), nlogger.Context(ctx))
-			return nil, constant.InvalidEmailPassInputError.Trace()
-		}
-		s.log.Error("failed to retrieve credential", nlogger.Error(err), nlogger.Context(ctx))
+		err = handleErrorRepository(err, constant.InvalidEmailPassInputError.Trace())
 		return nil, errx.Trace(err)
 	}
 
@@ -81,7 +76,7 @@ func (s *Service) Login(payload dto.LoginPayload) (*dto.LoginResult, error) {
 		message := "Akun dikunci hingga %v karena gagal login %v kali. Hubungi call center jika ini bukan kamu"
 		timeBlocked := ntime.ChangeTimezone(credential.BlockedUntilAt.Time, constant.WIB).Format("02-Jan-2006 15:04:05")
 		return nil, nhttp.UnauthorizedError.
-			AddMetadata(nhttp.MessageMetadata, fmt.Sprintf(message, timeBlocked, credential.WrongPasswordCount))
+			AddMetadata(nhttp.OverrideMessageMetadata, fmt.Sprintf(message, timeBlocked, credential.WrongPasswordCount))
 	}
 
 	// Counter wrong password count
@@ -109,7 +104,7 @@ func (s *Service) Login(payload dto.LoginPayload) (*dto.LoginResult, error) {
 		// sync data from customer service to PDS API
 		resultSync, errInternal := s.syncInternalToExternal(registerPayload)
 		if errInternal != nil {
-			s.log.Error("error found when sync to pds api", nlogger.Error(errInternal), nlogger.Context(ctx))
+			s.log.Error("error found when sync to pds api", logOption.Error(errInternal))
 			return nil, errx.Trace(errInternal)
 		}
 		// set userRefId
@@ -120,7 +115,7 @@ func (s *Service) Login(payload dto.LoginPayload) (*dto.LoginResult, error) {
 		// update customer
 		err = s.repo.UpdateCustomerByPhone(customer)
 		if err != nil {
-			s.log.Error("failed to update userRefId", nlogger.Error(err), nlogger.Context(ctx))
+			s.log.Error("failed to update userRefId", logOption.Error(err))
 			return nil, errx.Trace(err)
 		}
 	}
@@ -130,14 +125,14 @@ func (s *Service) Login(payload dto.LoginPayload) (*dto.LoginResult, error) {
 	cacheTokenKey := fmt.Sprintf("%v:%v:%v", constant.Prefix, constant.CacheTokenJWT, customer.UserRefID.String)
 	token, err = s.setTokenAuthentication(customer, payload.Agen, payload.Version, cacheTokenKey)
 	if err != nil {
-		s.log.Error("error found when get access token from cache", nlogger.Error(err), nlogger.Context(ctx))
+		s.log.Error("error found when get access token from cache", logOption.Error(err))
 		return nil, errx.Trace(err)
 	}
 
 	// Check account is first login or not
 	countAuditLog, err := s.repo.CountAuditLogin(customer.ID)
 	if err != nil {
-		s.log.Error("error found when count audit login", nlogger.Error(err), nlogger.Context(ctx))
+		s.log.Error("error found when count audit login", logOption.Error(err))
 		return nil, errx.Trace(err)
 	}
 
@@ -168,7 +163,7 @@ func (s *Service) Login(payload dto.LoginPayload) (*dto.LoginResult, error) {
 	// Persist audit login
 	err = s.repo.CreateAuditLogin(&auditLogin)
 	if err != nil {
-		s.log.Error("error found when create audit login", nlogger.Error(err), nlogger.Context(ctx))
+		s.log.Error("error found when create audit login", logOption.Error(err))
 		return nil, constant.InvalidCredentialError.Trace()
 	}
 
@@ -184,7 +179,7 @@ func (s *Service) Login(payload dto.LoginPayload) (*dto.LoginResult, error) {
 	if errors.Is(err, sql.ErrNoRows) {
 		address = &model.Address{}
 	} else if err != nil {
-		s.log.Error("error found when get customer address", nlogger.Error(err), nlogger.Context(ctx))
+		s.log.Error("error found when get customer address", logOption.Error(err))
 		return nil, constant.InvalidEmailPassInputError.Trace()
 	}
 
@@ -193,7 +188,7 @@ func (s *Service) Login(payload dto.LoginPayload) (*dto.LoginResult, error) {
 	if errors.Is(err, sql.ErrNoRows) {
 		verification = &model.Verification{}
 	} else if err != nil {
-		s.log.Error("error found when get data verification", nlogger.Error(err), nlogger.Context(ctx))
+		s.log.Error("error found when get data verification", logOption.Error(err))
 		return nil, constant.InvalidEmailPassInputError.Trace()
 	}
 
@@ -238,9 +233,6 @@ func (s *Service) Login(payload dto.LoginPayload) (*dto.LoginResult, error) {
 }
 
 func (s *Service) syncInternalToExternal(payload *dto.CustomerSynchronizeRequest) (*dto.UserVO, error) {
-	// Get context
-	ctx := s.ctx
-
 	// call register pds api
 	registerCustomer := dto.RegisterPayload{
 		Name:        payload.Name,
@@ -252,13 +244,13 @@ func (s *Service) syncInternalToExternal(payload *dto.CustomerSynchronizeRequest
 	// sync
 	resp, err := s.SynchronizeCustomer(registerCustomer)
 	if err != nil {
-		log.Error("error found when sync data customer via API PDS", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("error found when sync data customer via API PDS", logOption.Error(err))
 		return nil, errx.Trace(err)
 	}
 
 	// handle status error
 	if resp.Status != "success" {
-		log.Error("Get Error from SynchronizeCustomer.", nlogger.Error(err))
+		log.Error("Get Error from SynchronizeCustomer.", logOption.Error(err))
 		return nil, nhttp.InternalError.Trace(errx.Errorf(resp.Message))
 	}
 
@@ -277,14 +269,11 @@ func (s *Service) syncInternalToExternal(payload *dto.CustomerSynchronizeRequest
 }
 
 func (s *Service) syncExternalToInternal(user *model.User) (*model.Customer, error) {
-	// Get context
-	ctx := s.ctx
-
 	// prepare customer
 	customer, err := model.UserToCustomer(user)
 	if err != nil {
-		s.log.Error("failed to convert to model customer", nlogger.Error(err), nlogger.Context(ctx))
-		return nil, err
+		s.log.Error("failed to convert to model customer", logOption.Error(err))
+		return nil, errx.Trace(err)
 	}
 
 	// Check has userPin or not
@@ -292,8 +281,8 @@ func (s *Service) syncExternalToInternal(user *model.User) (*model.Customer, err
 	if errors.Is(err, sql.ErrNoRows) {
 		userPin = &model.UserPin{}
 	} else if err != nil {
-		s.log.Error("failed retrieve user pin from external database", nlogger.Error(err), nlogger.Context(ctx))
-		return nil, err
+		s.log.Error("failed retrieve user pin from external database", logOption.Error(err))
+		return nil, errx.Trace(err)
 	}
 
 	// Check user address on external database
@@ -301,43 +290,43 @@ func (s *Service) syncExternalToInternal(user *model.User) (*model.Customer, err
 	if errors.Is(err, sql.ErrNoRows) {
 		addressExternal = &model.AddressExternal{}
 	} else if err != nil {
-		s.log.Error("failed retrieve address from external database", nlogger.Error(err), nlogger.Context(ctx))
-		return nil, err
+		s.log.Error("failed retrieve address from external database", logOption.Error(err))
+		return nil, errx.Trace(err)
 	}
 
 	// Prepare credential
 	credential, err := model.UserToCredential(user, userPin)
 	if err != nil {
-		s.log.Error("failed convert to credential model", nlogger.Error(err), nlogger.Context(ctx))
-		return nil, err
+		s.log.Error("failed convert to credential model", logOption.Error(err))
+		return nil, errx.Trace(err)
 	}
 
 	// Prepare financial data
 	financialData, err := model.UserToFinancialData(user)
 	if err != nil {
-		s.log.Error("failed convert to financial data", nlogger.Error(err), nlogger.Context(ctx))
-		return nil, err
+		s.log.Error("failed convert to financial data", logOption.Error(err))
+		return nil, errx.Trace(err)
 	}
 
 	// Prepare verification
 	verification, err := model.UserToVerification(user)
 	if err != nil {
-		s.log.Error("failed convert to verification", nlogger.Error(err), nlogger.Context(ctx))
-		return nil, err
+		s.log.Error("failed convert to verification", logOption.Error(err))
+		return nil, errx.Trace(err)
 	}
 
 	// Prepare address
 	address, err := model.UserToAddress(user, addressExternal)
 	if err != nil {
-		s.log.Error("failed convert address", nlogger.Error(err), nlogger.Context(ctx))
-		return nil, err
+		s.log.Error("failed convert address", logOption.Error(err))
+		return nil, errx.Trace(err)
 	}
 
 	// Persist customer data
 	customerID, err := s.repo.CreateCustomer(customer)
 	if err != nil {
-		s.log.Error("failed to persist customer", nlogger.Error(err), nlogger.Context(ctx))
-		return nil, err
+		s.log.Error("failed to persist customer", logOption.Error(err))
+		return nil, errx.Trace(err)
 	}
 
 	// Set credential customer id to last inserted
@@ -349,34 +338,34 @@ func (s *Service) syncExternalToInternal(user *model.User) (*model.Customer, err
 	// persist credential
 	err = s.repo.InsertOrUpdateCredential(credential)
 	if err != nil {
-		s.log.Error("failed persist to credential", nlogger.Error(err), nlogger.Context(ctx))
-		return nil, err
+		s.log.Error("failed persist to credential", logOption.Error(err))
+		return nil, errx.Trace(err)
 	}
 
 	// persist financial data
 	err = s.repo.InsertOrUpdateFinancialData(financialData)
 	if err != nil {
-		s.log.Error("failed persist to financial data", nlogger.Error(err), nlogger.Context(ctx))
-		return nil, err
+		s.log.Error("failed persist to financial data", logOption.Error(err))
+		return nil, errx.Trace(err)
 	}
 
 	// persist verification
 	err = s.repo.InsertOrUpdateVerification(verification)
 	if err != nil {
-		s.log.Error("failed persist verification.", nlogger.Error(err), nlogger.Context(ctx))
-		return nil, err
+		s.log.Error("failed persist verification.", logOption.Error(err))
+		return nil, errx.Trace(err)
 	}
 
 	// persist address
 	err = s.repo.InsertOrUpdateAddress(address)
 	if err != nil {
-		s.log.Error("failed persist address", nlogger.Error(err), nlogger.Context(ctx))
-		return nil, err
+		s.log.Error("failed persist address", logOption.Error(err))
+		return nil, errx.Trace(err)
 	}
 
 	customer, err = s.repo.FindCustomerByID(customerID)
 	if err != nil {
-		s.log.Error("failed to retrieve customer not found", nlogger.Error(err), nlogger.Context(ctx))
+		s.log.Error("failed to retrieve customer not found", logOption.Error(err))
 		return nil, constant.ResourceNotFoundError.Trace()
 	}
 
@@ -460,21 +449,13 @@ func (s *Service) setTokenAuthentication(customer *model.Customer, agen string, 
 	var accessToken string
 	accessToken, err := s.CacheGet(cacheTokenKey)
 	if err != nil {
-		s.log.Error("error found when get cache", nlogger.Error(err), nlogger.Context(s.ctx))
+		s.log.Error("error found when get cache", logOption.Error(err))
 		return "", err
 	}
 
-	if accessToken == "" {
-		// Generate access token
-		newAccessToken := nval.Bin2Hex(nval.RandStringBytes(78))
-		// Set token to cache
-		cacheToken, errCache := s.CacheSetThenGet(cacheTokenKey, newAccessToken, s.config.ClientConfig.JWTExpiry)
-		if errCache != nil {
-			s.log.Error("error found when set token to cache", nlogger.Error(err), nlogger.Context(s.ctx))
-			return "", errx.Trace(errCache)
-		}
-		// Set access token
-		accessToken = cacheToken
+	accessToken, err = s.setNewAccessToken(accessToken, cacheTokenKey)
+	if err != nil {
+		return "", errx.Trace(err)
 	}
 
 	channelID := GetChannelByAgen(agen)
@@ -495,7 +476,7 @@ func (s *Service) setTokenAuthentication(customer *model.Customer, agen string, 
 		Issuer(constant.JWTIssuer).
 		Build()
 	if err != nil {
-		s.log.Error("error found when generate JWT", nlogger.Error(err), nlogger.Context(s.ctx))
+		s.log.Error("error found when generate JWT", logOption.Error(err))
 		return "", err
 	}
 
@@ -505,12 +486,27 @@ func (s *Service) setTokenAuthentication(customer *model.Customer, agen string, 
 	// sign token
 	signed, err := jwt.Sign(token, constant.JWTSignature, jwtKeyBytes)
 	if err != nil {
-		s.log.Error("failed to sign token", nlogger.Error(err), nlogger.Context(s.ctx))
+		s.log.Error("failed to sign token", logOption.Error(err))
 		return "", errx.Trace(err)
 	}
 	tokenString := string(signed)
 
 	return tokenString, nil
+}
+
+func (s *Service) setNewAccessToken(accessToken string, cacheTokenKey string) (string, error) {
+	if accessToken != "" {
+		return accessToken, nil
+	}
+	// Generate access token
+	newAccessToken := nval.Bin2Hex(nval.RandStringBytes(78))
+	// Set token to cache
+	cacheToken, cErr := s.CacheSetThenGet(cacheTokenKey, newAccessToken, s.config.ClientConfig.JWTExpiry)
+	if cErr != nil {
+		s.log.Error("error found when set token to cache", logOption.Error(cErr))
+		return "", errx.Trace(cErr)
+	}
+	return cacheToken, nil
 }
 
 func (s *Service) ValidatePassword(password string) *dto.ValidatePasswordResult {
@@ -568,7 +564,7 @@ func (s *Service) HandleWrongPassword(credential *model.Credential, customer *mo
 	var Metadata dto.MetadataCredential
 	err := json.Unmarshal(credential.Metadata, &Metadata)
 	if err != nil {
-		s.log.Error("error found when unmarshal metadata credential", nlogger.Error(err))
+		s.log.Error("error found when unmarshal metadata credential", logOption.Error(err))
 		return errx.Trace(err)
 	}
 	// Parse time from metadata string to time
@@ -616,7 +612,7 @@ func (s *Service) HandleWrongPassword(credential *model.Credential, customer *mo
 		message := "Akun dikunci hingga %v WIB karena gagal login %v kali. Hubungi call center jika ini bukan kamu"
 		timeBlocked := ntime.ChangeTimezone(credential.BlockedUntilAt.Time, constant.WIB).Format("02-Jan-2006 15:04:05")
 		err = nhttp.UnauthorizedError.
-			AddMetadata(nhttp.MessageMetadata, fmt.Sprintf(message, timeBlocked, credential.WrongPasswordCount))
+			AddMetadata(nhttp.OverrideMessageMetadata, fmt.Sprintf(message, timeBlocked, credential.WrongPasswordCount))
 
 		// Send OTP To Phone Number
 		request := dto.SendOTPRequest{
@@ -625,7 +621,7 @@ func (s *Service) HandleWrongPassword(credential *model.Credential, customer *mo
 		}
 		_, errOTP := s.SendOTP(request)
 		if errOTP != nil {
-			s.log.Debug("error found when sending otp block one hour", nlogger.Error(errOTP))
+			s.log.Debug("error found when sending otp block one hour", logOption.Error(errOTP))
 		}
 
 		// Send Notification Blocked Login One Hour
@@ -654,7 +650,7 @@ func (s *Service) HandleWrongPassword(credential *model.Credential, customer *mo
 		message := "Akun dikunci hingga %v WIB karena gagal login %v kali. Hubungi call center jika ini bukan kamu"
 		timeBlocked := ntime.ChangeTimezone(credential.BlockedUntilAt.Time, constant.WIB).Format("02-Jan-2006 15:04:05")
 		err = nhttp.UnauthorizedError.
-			AddMetadata(nhttp.MessageMetadata, fmt.Sprintf(message, timeBlocked, credential.WrongPasswordCount))
+			AddMetadata(nhttp.OverrideMessageMetadata, fmt.Sprintf(message, timeBlocked, credential.WrongPasswordCount))
 
 		// Send OTP To Phone Number
 		request := dto.SendOTPRequest{
@@ -663,7 +659,7 @@ func (s *Service) HandleWrongPassword(credential *model.Credential, customer *mo
 		}
 		_, errOTP := s.SendOTP(request)
 		if errOTP != nil {
-			s.log.Debug("Error when sending otp block one hour", nlogger.Error(errOTP))
+			s.log.Debug("Error when sending otp block one hour", logOption.Error(errOTP))
 		}
 
 		// Send Notification Blocked Login One Day
@@ -679,7 +675,7 @@ func (s *Service) HandleWrongPassword(credential *model.Credential, customer *mo
 
 	// Handle notification error
 	if err != nil {
-		s.log.Debug("Error when sending notification block", nlogger.Error(err), nlogger.Context(s.ctx))
+		s.log.Debug("Error when sending notification block", logOption.Error(err))
 	}
 
 	// Set trying login at to metadata
@@ -692,7 +688,7 @@ func (s *Service) HandleWrongPassword(credential *model.Credential, customer *mo
 
 	uErr := s.repo.UpdateCredential(credential)
 	if uErr != nil {
-		s.log.Error("error when update credential.", nlogger.Error(err))
+		s.log.Error("error when update credential.", logOption.Error(err))
 		return errx.Trace(uErr)
 	}
 
@@ -706,7 +702,7 @@ func (s *Service) UnblockPassword(credential *model.Credential) error {
 
 	err := s.repo.UpdateCredential(credential)
 	if err != nil {
-		s.log.Error("error when update credential.", nlogger.Error(err))
+		s.log.Error("error when update credential.", logOption.Error(err))
 		return errx.Trace(err)
 	}
 

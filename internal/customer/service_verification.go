@@ -2,9 +2,8 @@ package customer
 
 import (
 	"database/sql"
-	"errors"
 	"github.com/nbs-go/errx"
-	"github.com/nbs-go/nlogger/v2"
+	logOption "github.com/nbs-go/nlogger/v2/option"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/constant"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/model"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/dto"
@@ -23,31 +22,27 @@ func (s *Service) VerifyEmailCustomer(payload dto.VerificationPayload) (string, 
 	// Get verification
 	ver, err := s.repo.FindVerificationByEmailToken(payload.VerificationToken)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			s.log.Error("failed to retrieve verification not found", nlogger.Error(err))
-			return "", constant.ResourceNotFoundError.Trace()
-		}
-		s.log.Errorf("failed to retrieve verification. error: %v", nlogger.Error(err))
+		s.log.Error("failed to retrieve verification")
+		err = handleErrorRepository(err, constant.ResourceNotFoundError.Trace())
+
 		return "", errx.Trace(err)
 	}
 
 	// Get customer
 	customer, err := s.repo.FindCustomerByID(ver.CustomerID)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			log.Error("failed to retrieve customer not found", nlogger.Error(err))
-			return "", constant.ResourceNotFoundError.Trace()
-		}
-		s.log.Errorf("failed to retrieve customer. error: %v", nlogger.Error(err))
+		log.Error("failed to retrieve customer not found", logOption.Error(err))
+		err = handleErrorRepository(err, constant.ResourceNotFoundError.Trace())
 
 		return alreadyVerifiedView, errx.Trace(err)
 	}
 
+	if !ver.EmailVerifiedAt.Time.IsZero() && err != nil {
+		return "", err
+	}
+
 	// If email already verified
 	if !ver.EmailVerifiedAt.Time.IsZero() {
-		if err != nil {
-			return "", err
-		}
 		return alreadyVerifiedView, nil
 	}
 

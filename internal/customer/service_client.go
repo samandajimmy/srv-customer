@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"github.com/imdario/mergo"
 	"github.com/nbs-go/errx"
-	"github.com/nbs-go/nlogger/v2"
+	logOption "github.com/nbs-go/nlogger/v2/option"
 	"net/http"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/constant"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/dto"
@@ -43,8 +43,6 @@ func (s *Service) clientRestSwitching() *nclient.Nclient {
 }
 
 func (s *Service) RestSwitchingPostData(payload PostDataPayload) (*ResponseSwitchingSuccess, error) {
-	// Get context
-	ctx := s.ctx
 	// Default counter for retrying hit to url
 	payload.Counter = 0
 
@@ -63,7 +61,7 @@ func (s *Service) RestSwitchingPostData(payload PostDataPayload) (*ResponseSwitc
 	// Merge Request Body
 	err = mergo.Merge(&reqBody, payload.Data)
 	if err != nil {
-		s.log.Error("error when merge request body", nlogger.Error(err), nlogger.Context(ctx))
+		s.log.Error("error when merge request body", logOption.Error(err))
 		return nil, errx.Trace(err)
 	}
 
@@ -116,7 +114,7 @@ func (s *Service) restSwitchingSuccessResponse(restResponse *http.Response) (*Re
 	var responseSwitching *ResponseSwitchingSuccess
 	err := json.NewDecoder(restResponse.Body).Decode(&responseSwitching)
 	if err != nil {
-		s.log.Error("error when get response rest switching.", nlogger.Error(err), nlogger.Context(s.ctx))
+		s.log.Error("error when get response rest switching.", logOption.Error(err))
 		return nil, errx.Trace(err)
 	}
 
@@ -127,7 +125,7 @@ func (s *Service) restSwitchingErrorResponse(restResponse *http.Response) (*Resp
 	var responseSwitching *ResponseSwitchingError
 	err := json.NewDecoder(restResponse.Body).Decode(&responseSwitching)
 	if err != nil {
-		s.log.Error("error when get response rest switching.", nlogger.Error(err), nlogger.Context(s.ctx))
+		s.log.Error("error when get response rest switching.", logOption.Error(err))
 		return nil, errx.Trace(err)
 	}
 
@@ -221,16 +219,13 @@ func (s *Service) clientPDS() *nclient.Nclient {
 }
 
 func (s *Service) PdsPostData(payload PostDataPayload) (*ResponsePdsAPI, error) {
-	// Get context
-	ctx := s.ctx
-
 	// Set request body
 	reqBody := map[string]interface{}{}
 
 	// Merge Request Body
 	err := mergo.Merge(&reqBody, payload.Data)
 	if err != nil {
-		s.log.Error("error when merge request body", nlogger.Error(err), nlogger.Context(ctx))
+		s.log.Error("error when merge request body", logOption.Error(err))
 		return nil, errx.Trace(err)
 	}
 
@@ -264,7 +259,7 @@ func (s *Service) pdsAPISuccessResponse(restResponse *http.Response) (*ResponseP
 	var responseSwitching *ResponsePdsAPI
 	err := json.NewDecoder(restResponse.Body).Decode(&responseSwitching)
 	if err != nil {
-		s.log.Error("error when get response rest switching.", nlogger.Error(err), nlogger.Context(s.ctx))
+		s.log.Error("error when get response rest switching.", logOption.Error(err))
 		return nil, errx.Trace(err)
 	}
 

@@ -2,7 +2,7 @@ package customer
 
 import (
 	"github.com/nbs-go/errx"
-	"github.com/nbs-go/nlogger/v2"
+	logOption "github.com/nbs-go/nlogger/v2/option"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/dto"
 )
 
@@ -22,7 +22,7 @@ func (s *Service) customerActivation(payload *dto.RestSwitchingOTPPinCreate) (*R
 
 	data, err := s.RestSwitchingPostData(sp)
 	if err != nil {
-		s.log.Error("error found when get otp pin activation", nlogger.Error(err), nlogger.Context(s.ctx))
+		s.log.Error("error found when get otp pin activation", logOption.Error(err))
 		return nil, errx.Trace(err)
 	}
 
@@ -48,7 +48,7 @@ func (s *Service) otpValidate(payload *dto.RestSwitchingOTPForgetPin) (*Response
 
 	data, err := s.RestSwitchingPostData(sp)
 	if err != nil {
-		s.log.Error("error found when get reset pin otp validate", nlogger.Error(err), nlogger.Context(s.ctx))
+		s.log.Error("error found when get reset pin otp validate", logOption.Error(err))
 		return nil, errx.Trace(err)
 	}
 
@@ -76,7 +76,7 @@ func (s *Service) ChangePhoneNumber(payload dto.ChangePhoneNumberRequestCore) (*
 	// Send OTP Rest Switching
 	r, err := s.RestSwitchingPostData(sp)
 	if err != nil {
-		s.log.Error("Error when change phone number request", nlogger.Error(err), nlogger.Context(s.ctx))
+		s.log.Error("Error when change phone number request", logOption.Error(err))
 		return nil, errx.Trace(err)
 	}
 
@@ -100,7 +100,7 @@ func (s *Service) CheckCIF(cif string) (*ResponseSwitchingSuccess, error) {
 
 	data, err := s.RestSwitchingPostData(sp)
 	if err != nil {
-		s.log.Error("error found when get gold savings", nlogger.Error(err))
+		s.log.Error("error found when get gold savings", logOption.Error(err))
 		return nil, errx.Trace(err)
 	}
 

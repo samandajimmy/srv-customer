@@ -1,7 +1,7 @@
 package customer
 
 import (
-	"github.com/nbs-go/nlogger/v2"
+	logOption "github.com/nbs-go/nlogger/v2/option"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/dto"
 )
 
@@ -30,7 +30,7 @@ func (s *Service) SynchronizeCustomer(payload dto.RegisterPayload) (*ResponsePds
 
 	resp, err := s.PdsPostData(postDataPayload)
 	if err != nil {
-		s.log.Error("error found when sync customer to PDS API", nlogger.Error(err), nlogger.Context(s.ctx))
+		s.log.Error("error found when sync customer to PDS API", logOption.Error(err))
 		return nil, err
 	}
 
@@ -62,7 +62,7 @@ func (s *Service) SynchronizePassword(payload dto.RegisterPayload) (*ResponsePds
 
 	resp, err := s.PdsPostData(postDataPayload)
 	if err != nil {
-		s.log.Error("error found when sync customer password to PDS API", nlogger.Error(err), nlogger.Context(s.ctx))
+		s.log.Error("error found when sync customer password to PDS API", logOption.Error(err))
 		return nil, err
 	}
 

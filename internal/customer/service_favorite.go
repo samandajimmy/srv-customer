@@ -6,7 +6,7 @@ import (
 	"fmt"
 	gonanoid "github.com/matoous/go-nanoid/v2"
 	"github.com/nbs-go/errx"
-	"github.com/nbs-go/nlogger/v2"
+	logOption "github.com/nbs-go/nlogger/v2/option"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/constant"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/model"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/dto"
@@ -67,7 +67,7 @@ func (s *Service) ListFavorite(userRefID string, params *dto.ListPayload) (*dto.
 	// Query
 	queryResult, err := s.repo.ListFavorite(customer.ID, params)
 	if err != nil {
-		s.log.Error("error found when get list bank account", nlogger.Error(err))
+		s.log.Error("error found when get list bank account", logOption.Error(err))
 		return nil, errx.Trace(err)
 	}
 
