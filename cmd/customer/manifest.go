@@ -1,7 +1,5 @@
 package main
 
-const EnvPrefix = "CUSTOMER_SVC"
-
 var (
 	// AppName Application Name
 	AppName = "Customer Service"

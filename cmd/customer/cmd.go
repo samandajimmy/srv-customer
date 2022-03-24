@@ -56,7 +56,7 @@ func handleCmdFlags() BootOptions {
 			Environment: ncore.ParseEnvironment(*cmdFlags.OptEnvironment),
 			WorkDir:     *cmdFlags.OptWorkDir,
 			NodeID:      *cmdFlags.OptNodeID,
-			EnvPrefix:   EnvPrefix,
+			EnvPrefix:   "",
 		},
 	}
 }
