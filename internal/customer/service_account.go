@@ -87,6 +87,7 @@ func (s *Service) UpdatePhoneNumber(payload dto.ChangePhoneNumberPayload) (*dto.
 	customer, err := s.repo.FindCustomerByUserRefID(payload.UserRefID)
 	if err != nil {
 		s.log.Error("error when find current customer", logOption.Error(err))
+		err = handleErrorRepository(err, constant.CustomerNotFoundError)
 		return nil, errx.Trace(err)
 	}
 
