@@ -120,15 +120,15 @@ var AccountIsNotActiveError = b.NewError("E_PASS_1", "Akun anda belum aktif",
 
 // Bank Account Errors
 
-var BankAccountNotFoundError = ResourceNotFoundError.AddMetadata(nhttp.MessageMetadata, "Bank Account not found")
+var BankAccountNotFoundError = ResourceNotFoundError.AddMetadata(nhttp.OverrideMessageMetadata, "Bank Account not found")
 
 // Customer Errors
 
-var CustomerNotFoundError = ResourceNotFoundError.AddMetadata(nhttp.MessageMetadata, "Customer not found")
+var CustomerNotFoundError = ResourceNotFoundError.AddMetadata(nhttp.OverrideMessageMetadata, "Customer not found")
 
 // Transaction Favorite Errors
 
-var TransactionFavoriteNotFoundError = ResourceNotFoundError.AddMetadata(nhttp.MessageMetadata, "Transaction Favorite not found")
+var TransactionFavoriteNotFoundError = ResourceNotFoundError.AddMetadata(nhttp.OverrideMessageMetadata, "Transaction Favorite not found")
 
 // Change Phone Number Errors
 

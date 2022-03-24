@@ -11,20 +11,20 @@ import (
 
 type Customer struct {
 	BaseField
-	ID             int64            `db:"id"`
-	CustomerXID    string           `db:"xid"`
-	FullName       string           `db:"fullName"`
-	Phone          string           `db:"phone"`
-	Email          string           `db:"email"`
-	IdentityType   int64            `db:"identityType"`
-	IdentityNumber string           `db:"identityNumber"`
-	UserRefID      sql.NullString   `db:"userRefId"`
-	Photos         *CustomerPhoto   `db:"photos"`
-	Profile        *CustomerProfile `db:"profile"`
-	Cif            string           `db:"cif"`
-	Sid            string           `db:"sid"`
-	ReferralCode   sql.NullString   `db:"referralCode"`
-	Status         constant.ControlStatus            `db:"status"`
+	ID             int64                  `db:"id"`
+	CustomerXID    string                 `db:"xid"`
+	FullName       string                 `db:"fullName"`
+	Phone          string                 `db:"phone"`
+	Email          string                 `db:"email"`
+	IdentityType   int64                  `db:"identityType"`
+	IdentityNumber string                 `db:"identityNumber"`
+	UserRefID      sql.NullString         `db:"userRefId"`
+	Photos         *CustomerPhoto         `db:"photos"`
+	Profile        *CustomerProfile       `db:"profile"`
+	Cif            string                 `db:"cif"`
+	Sid            string                 `db:"sid"`
+	ReferralCode   sql.NullString         `db:"referralCode"`
+	Status         constant.ControlStatus `db:"status"`
 }
 
 type CustomerPhoto struct {
