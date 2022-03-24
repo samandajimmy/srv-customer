@@ -99,7 +99,7 @@ func (s *Service) AssetGetPublicURL(assetType constant.AssetType, fileName strin
 }
 
 func (s *Service) buildURL(filePath string) string {
-	return s.config.AssetURL + "/" + filePath
+	return s.config.MinioURL + "/" + filePath
 }
 
 func (s *Service) AssetDirectory(assetType int) (string, error) {

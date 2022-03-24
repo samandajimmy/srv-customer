@@ -195,6 +195,7 @@ func (s *Service) Login(payload dto.LoginPayload) (*dto.LoginResult, error) {
 	// Get financial data
 	financial, err := s.repo.FindFinancialDataByCustomerID(customer.ID)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		s.log.Error("error found when get financial data", logOption.Error(err))
 		return nil, errx.Trace(err)
 	}
 
@@ -233,7 +234,7 @@ func (s *Service) Login(payload dto.LoginPayload) (*dto.LoginResult, error) {
 }
 
 func (s *Service) syncInternalToExternal(payload *dto.CustomerSynchronizeRequest) (*dto.UserVO, error) {
-	// call register pds api
+	// Call register pds api
 	registerCustomer := dto.RegisterPayload{
 		Name:        payload.Name,
 		Email:       payload.Email,
@@ -241,16 +242,16 @@ func (s *Service) syncInternalToExternal(payload *dto.CustomerSynchronizeRequest
 		Password:    payload.Password,
 		FcmToken:    payload.FcmToken,
 	}
-	// sync
+	// Sync customer
 	resp, err := s.SynchronizeCustomer(registerCustomer)
 	if err != nil {
-		log.Error("error found when sync data customer via API PDS", logOption.Error(err))
+		s.log.Error("error found when sync data customer via API PDS", logOption.Error(err))
 		return nil, errx.Trace(err)
 	}
 
 	// handle status error
 	if resp.Status != "success" {
-		log.Error("Get Error from SynchronizeCustomer.", logOption.Error(err))
+		s.log.Error("Get Error from SynchronizeCustomer")
 		return nil, nhttp.InternalError.Trace(errx.Errorf(resp.Message))
 	}
 
@@ -258,7 +259,7 @@ func (s *Service) syncInternalToExternal(payload *dto.CustomerSynchronizeRequest
 	var user dto.UserVO
 	err = json.Unmarshal(resp.Data, &user)
 	if err != nil {
-		log.Errorf("Cannot unmarshall data login pds. err: %v", err)
+		s.log.Error("Cannot unmarshall data login pds", logOption.Error(err))
 		return nil, errx.Trace(err)
 	}
 
@@ -278,20 +279,22 @@ func (s *Service) syncExternalToInternal(user *model.User) (*model.Customer, err
 
 	// Check has userPin or not
 	userPin, err := s.repoExternal.FindUserPINByCustomerID(customer.ID)
-	if errors.Is(err, sql.ErrNoRows) {
-		userPin = &model.UserPin{}
-	} else if err != nil {
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		s.log.Error("failed retrieve user pin from external database", logOption.Error(err))
 		return nil, errx.Trace(err)
+	}
+	if err != nil && errors.Is(err, sql.ErrNoRows) {
+		userPin = &model.UserPin{}
 	}
 
 	// Check user address on external database
 	addressExternal, err := s.repoExternal.FindUserExternalAddressByCustomerID(user.UserAiid)
-	if errors.Is(err, sql.ErrNoRows) {
-		addressExternal = &model.AddressExternal{}
-	} else if err != nil {
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		s.log.Error("failed retrieve address from external database", logOption.Error(err))
 		return nil, errx.Trace(err)
+	}
+	if err != nil && errors.Is(err, sql.ErrNoRows) {
+		addressExternal = &model.AddressExternal{}
 	}
 
 	// Prepare credential

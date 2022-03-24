@@ -188,7 +188,7 @@ func (s *Service) SendNotificationBlock(data dto.NotificationBlock) error {
 	}
 	sendEmail, err := s.SendEmail(emailPayload)
 	if err != nil {
-		s.log.Debugf("Error when send email block account. Payload %v", emailPayload)
+		s.log.Debug("Error when send email block account. Payload %v", logOption.Format(emailPayload), logOption.Error(err))
 	}
 	defer handleClose(sendEmail.Body)
 
