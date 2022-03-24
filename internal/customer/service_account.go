@@ -718,6 +718,19 @@ func (s *Service) ChangeEmail(payload dto.EmailChangePayload) error {
 
 	// TODO: Validation check if token is admin
 
+	// Find customer
+	customer, err := s.repo.FindCustomerByUserRefID(payload.UserRefID)
+	if err != nil {
+		s.log.Error("error when find current customer", logOption.Error(err))
+		err = handleErrorRepository(err, constant.ResourceNotFoundError)
+		return errx.Trace(err)
+	}
+
+	// Handle if email doesn't change
+	if customer.Email == payload.Email {
+		return nil
+	}
+
 	// Check if email is available
 	isExist, err := s.repo.EmailIsExists(payload.Email)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
@@ -728,14 +741,6 @@ func (s *Service) ChangeEmail(payload dto.EmailChangePayload) error {
 	if isExist {
 		s.log.Debug("Email has been registered")
 		return constant.EmailHasBeenRegisteredError.Trace()
-	}
-
-	// Find customer
-	customer, err := s.repo.FindCustomerByUserRefID(payload.UserRefID)
-	if err != nil {
-		s.log.Error("error when find current customer", logOption.Error(err))
-		err = handleErrorRepository(err, constant.ResourceNotFoundError)
-		return errx.Trace(err)
 	}
 
 	// Find verification
