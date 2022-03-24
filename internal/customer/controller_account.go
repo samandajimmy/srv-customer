@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/nbs-go/errx"
-	"github.com/nbs-go/nlogger/v2"
+	logOption "github.com/nbs-go/nlogger/v2/option"
 	"net/http"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/constant"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/validate"
@@ -29,7 +29,7 @@ func (c *AccountController) HandleAuthUser(rx *nhttp.Request) (*nhttp.Response, 
 	// Get token
 	tokenString, err := nhttp.ExtractBearerAuth(rx.Request)
 	if err != nil {
-		log.Error("error when extract token", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("error when extract token", logOption.Error(err), logOption.Context(ctx))
 		return nil, errx.Trace(err)
 	}
 
@@ -67,7 +67,7 @@ func (c *AccountController) PostLogin(rx *nhttp.Request) (*nhttp.Response, error
 	var payload dto.LoginPayload
 	err := rx.ParseJSONBody(&payload)
 	if err != nil {
-		log.Error("error when parse json body", nlogger.Context(ctx))
+		log.Error("error when parse json body", logOption.Context(ctx))
 		return nil, nhttp.BadRequestError.Wrap(err)
 	}
 
@@ -85,7 +85,7 @@ func (c *AccountController) PostLogin(rx *nhttp.Request) (*nhttp.Response, error
 	// Call service
 	resp, err := svc.Login(payload)
 	if err != nil {
-		log.Error("error found when call service", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("error found when call service", logOption.Error(err), logOption.Context(ctx))
 		return nil, err
 	}
 
@@ -140,7 +140,7 @@ func (c *AccountController) renderSuccess(w http.ResponseWriter, htmlBody string
 	w.Header().Add(nhttp.ContentTypeHeader, "text/html")
 	_, err := w.Write([]byte(htmlBody))
 	if err != nil {
-		log.Errorf("failed to write response", nlogger.Error(err))
+		log.Error("failed to write response", logOption.Error(err))
 	}
 }
 
@@ -152,14 +152,14 @@ func (c *AccountController) PostSendOTP(rx *nhttp.Request) (*nhttp.Response, err
 	var payload dto.SendOTPPayload
 	err := rx.ParseJSONBody(&payload)
 	if err != nil {
-		log.Error("error when parse json body", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("error when parse json body", logOption.Error(err), logOption.Context(ctx))
 		return nil, nhttp.BadRequestError.Wrap(err)
 	}
 
 	// Validate payload
 	err = validate.PostSendOTP(&payload)
 	if err != nil {
-		log.Error("Bad request validate payload", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("Bad request validate payload", logOption.Error(err), logOption.Context(ctx))
 		return nil, err
 	}
 
@@ -170,7 +170,7 @@ func (c *AccountController) PostSendOTP(rx *nhttp.Request) (*nhttp.Response, err
 	// Call service
 	resp, err := svc.RegisterStepOne(payload)
 	if err != nil {
-		log.Error("error when processing service", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("error when processing service", logOption.Error(err), logOption.Context(ctx))
 		return nil, err
 	}
 
@@ -185,14 +185,14 @@ func (c *AccountController) PostResendOTP(rx *nhttp.Request) (*nhttp.Response, e
 	var payload dto.RegisterResendOTPPayload
 	err := rx.ParseJSONBody(&payload)
 	if err != nil {
-		log.Error("error when parse json body", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("error when parse json body", logOption.Error(err), logOption.Context(ctx))
 		return nil, nhttp.BadRequestError.Wrap(err)
 	}
 
 	// Validate payload
 	err = validate.PostResendOTP(&payload)
 	if err != nil {
-		log.Error("Bad request validate payload", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("Bad request validate payload", logOption.Error(err), logOption.Context(ctx))
 		return nil, err
 	}
 
@@ -203,7 +203,7 @@ func (c *AccountController) PostResendOTP(rx *nhttp.Request) (*nhttp.Response, e
 	// Call service
 	resp, err := svc.RegisterResendOTP(payload)
 	if err != nil {
-		log.Error("error found when call register resend otp service", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("error found when call register resend otp service", logOption.Error(err), logOption.Context(ctx))
 		return nil, err
 	}
 
@@ -218,14 +218,14 @@ func (c *AccountController) PostVerifyOTP(rx *nhttp.Request) (*nhttp.Response, e
 	var payload dto.RegisterVerifyOTPPayload
 	err := rx.ParseJSONBody(&payload)
 	if err != nil {
-		log.Error("error when parse json body", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("error when parse json body", logOption.Error(err), logOption.Context(ctx))
 		return nil, nhttp.BadRequestError.Wrap(err)
 	}
 
 	// Validate payload
 	err = validate.PostVerifyOTP(&payload)
 	if err != nil {
-		log.Error("Bad request validate payload", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("Bad request validate payload", logOption.Error(err), logOption.Context(ctx))
 		return nil, nhttp.BadRequestError.Trace(errx.Source(err))
 	}
 
@@ -236,7 +236,7 @@ func (c *AccountController) PostVerifyOTP(rx *nhttp.Request) (*nhttp.Response, e
 	// Call service
 	resp, err := svc.RegisterStepTwo(payload)
 	if err != nil {
-		log.Error("error when processing service", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("error when processing service", logOption.Error(err), logOption.Context(ctx))
 		return nil, err
 	}
 
@@ -251,14 +251,14 @@ func (c *AccountController) PostRegister(rx *nhttp.Request) (*nhttp.Response, er
 	var payload dto.RegisterPayload
 	err := rx.ParseJSONBody(&payload)
 	if err != nil {
-		log.Error("error when parse json body", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("error when parse json body", logOption.Error(err), logOption.Context(ctx))
 		return nil, nhttp.BadRequestError.Wrap(err)
 	}
 
 	// Validate payload
 	err = validate.PostRegister(&payload)
 	if err != nil {
-		log.Error("Bad request validate payload", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("Bad request validate payload", logOption.Error(err), logOption.Context(ctx))
 		return nil, nhttp.BadRequestError.Trace(errx.Source(err))
 	}
 
@@ -276,7 +276,7 @@ func (c *AccountController) PostRegister(rx *nhttp.Request) (*nhttp.Response, er
 	// Call service
 	resp, err := svc.Register(payload)
 	if err != nil {
-		log.Error("error found when call service", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("error found when call service", logOption.Error(err), logOption.Context(ctx))
 		return nil, err
 	}
 
@@ -294,14 +294,14 @@ func (c *AccountController) PostUpdatePasswordCheck(rx *nhttp.Request) (*nhttp.R
 	var payload dto.UpdatePasswordCheckPayload
 	err := rx.ParseJSONBody(&payload)
 	if err != nil {
-		log.Error("error when parse json body", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("error when parse json body", logOption.Error(err), logOption.Context(ctx))
 		return nil, nhttp.BadRequestError.Wrap(err)
 	}
 
 	// Validate payload
 	err = validate.PostUpdatePasswordCheck(&payload)
 	if err != nil {
-		log.Error("Bad request validate payload", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("Bad request validate payload", logOption.Error(err), logOption.Context(ctx))
 		return nil, err
 	}
 
@@ -312,7 +312,7 @@ func (c *AccountController) PostUpdatePasswordCheck(rx *nhttp.Request) (*nhttp.R
 	// Call service
 	valid, err := svc.IsValidPassword(userRefID, payload.CurrentPassword)
 	if err != nil {
-		log.Error("error when processing service", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("error when processing service", logOption.Error(err), logOption.Context(ctx))
 		return nil, err
 	}
 
@@ -334,14 +334,14 @@ func (c *AccountController) PutUpdatePassword(rx *nhttp.Request) (*nhttp.Respons
 	var payload dto.UpdatePasswordPayload
 	err := rx.ParseJSONBody(&payload)
 	if err != nil {
-		log.Error("error when parse json body", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("error when parse json body", logOption.Error(err), logOption.Context(ctx))
 		return nil, nhttp.BadRequestError.Wrap(err)
 	}
 
 	// Validate payload
 	err = validate.PutUpdatePassword(&payload)
 	if err != nil {
-		log.Error("Bad request validate payload", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("Bad request validate payload", logOption.Error(err), logOption.Context(ctx))
 		return nil, nhttp.BadRequestError.Trace(errx.Source(err))
 	}
 
@@ -352,7 +352,7 @@ func (c *AccountController) PutUpdatePassword(rx *nhttp.Request) (*nhttp.Respons
 	// Call service
 	err = svc.UpdatePassword(userRefID, payload)
 	if err != nil {
-		log.Error("error when call update service", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("error when call update service", logOption.Error(err), logOption.Context(ctx))
 		return nil, err
 	}
 
@@ -367,14 +367,14 @@ func (c *AccountController) PostValidatePin(rx *nhttp.Request) (*nhttp.Response,
 	var payload dto.ValidatePinPayload
 	err := rx.ParseJSONBody(&payload)
 	if err != nil {
-		log.Error("error when parse json body", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("error when parse json body", logOption.Error(err), logOption.Context(ctx))
 		return nil, nhttp.BadRequestError.Wrap(err)
 	}
 
 	// Validate payload
 	err = validate.PostValidatePin(&payload)
 	if err != nil {
-		log.Error("Bad request validate payload", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("Bad request validate payload", logOption.Error(err), logOption.Context(ctx))
 		return nil, nhttp.BadRequestError.Trace(errx.Source(err))
 	}
 
@@ -385,7 +385,7 @@ func (c *AccountController) PostValidatePin(rx *nhttp.Request) (*nhttp.Response,
 	// Call service
 	err = svc.ValidatePin(&payload)
 	if err != nil {
-		log.Error("error when call update service", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("error when call update service", logOption.Error(err), logOption.Context(ctx))
 		return nil, err
 	}
 
@@ -405,14 +405,14 @@ func (c *AccountController) PostCheckPin(rx *nhttp.Request) (*nhttp.Response, er
 	payload.CheckPIN = true
 	err := rx.ParseJSONBody(&payload)
 	if err != nil {
-		log.Error("error when parse json body", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("error when parse json body", logOption.Error(err), logOption.Context(ctx))
 		return nil, nhttp.BadRequestError.Wrap(err)
 	}
 
 	// Validate payload
 	err = validate.PostCheckPin(&payload)
 	if err != nil {
-		log.Error("Bad request validate payload", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("Bad request validate payload", logOption.Error(err), logOption.Context(ctx))
 		return nil, nhttp.BadRequestError.Trace(errx.Source(err))
 	}
 
@@ -423,7 +423,7 @@ func (c *AccountController) PostCheckPin(rx *nhttp.Request) (*nhttp.Response, er
 	// Call service
 	err = svc.CheckPinUser(&payload)
 	if err != nil {
-		log.Error("error when call update service", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("error when call update service", logOption.Error(err), logOption.Context(ctx))
 		return nil, err
 	}
 
@@ -443,14 +443,14 @@ func (c *AccountController) PostUpdatePin(rx *nhttp.Request) (*nhttp.Response, e
 	payload.CheckPIN = true
 	err := rx.ParseJSONBody(&payload)
 	if err != nil {
-		log.Error("error when parse json body", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("error when parse json body", logOption.Error(err), logOption.Context(ctx))
 		return nil, nhttp.BadRequestError.Wrap(err)
 	}
 
 	// Validate payload
 	err = validate.PostUpdatePin(&payload)
 	if err != nil {
-		log.Error("Bad request validate payload", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("Bad request validate payload", logOption.Error(err), logOption.Context(ctx))
 		return nil, err
 	}
 
@@ -461,7 +461,7 @@ func (c *AccountController) PostUpdatePin(rx *nhttp.Request) (*nhttp.Response, e
 	// Call service
 	resp, err := svc.UpdatePin(&payload)
 	if err != nil {
-		log.Errorf("error found when call service", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("error found when call service", logOption.Error(err), logOption.Context(ctx))
 		return nil, err
 	}
 
@@ -480,14 +480,14 @@ func (c *AccountController) PostCheckOTPPinCreate(rx *nhttp.Request) (*nhttp.Res
 	payload.UserRefID = userRefID
 	err := rx.ParseJSONBody(&payload)
 	if err != nil {
-		log.Error("error when parse json body", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("error when parse json body", logOption.Error(err), logOption.Context(ctx))
 		return nil, nhttp.BadRequestError.Wrap(err)
 	}
 
 	// Validate payload
 	err = validate.CheckPostOTP(&payload)
 	if err != nil {
-		log.Error("Bad request validate payload", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("Bad request validate payload", logOption.Error(err), logOption.Context(ctx))
 		return nil, err
 	}
 
@@ -498,7 +498,7 @@ func (c *AccountController) PostCheckOTPPinCreate(rx *nhttp.Request) (*nhttp.Res
 	// Call service
 	err = svc.CheckOTPPinCreate(&payload)
 	if err != nil {
-		log.Errorf("error found when call service", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("error found when call service", logOption.Error(err), logOption.Context(ctx))
 		return nil, err
 	}
 
@@ -517,14 +517,14 @@ func (c *AccountController) PostCreatePin(rx *nhttp.Request) (*nhttp.Response, e
 	payload.UserRefID = userRefID
 	err := rx.ParseJSONBody(&payload)
 	if err != nil {
-		log.Error("error when parse json body", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("error when parse json body", logOption.Error(err), logOption.Context(ctx))
 		return nil, nhttp.BadRequestError.Wrap(err)
 	}
 
 	// Validate payload
 	err = validate.PostCreatePin(&payload)
 	if err != nil {
-		log.Error("Bad request validate payload", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("Bad request validate payload", logOption.Error(err), logOption.Context(ctx))
 		return nil, err
 	}
 
@@ -535,7 +535,7 @@ func (c *AccountController) PostCreatePin(rx *nhttp.Request) (*nhttp.Response, e
 	// Call service
 	err = svc.CreatePinUser(&payload)
 	if err != nil {
-		log.Errorf("error found when call service", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("error found when call service", logOption.Error(err), logOption.Context(ctx))
 		return nil, err
 	}
 
@@ -554,14 +554,14 @@ func (c *AccountController) PostOTPForgetPin(rx *nhttp.Request) (*nhttp.Response
 	payload.UserRefID = userRefID
 	err := rx.ParseJSONBody(&payload)
 	if err != nil {
-		log.Error("error when parse json body", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("error when parse json body", logOption.Error(err), logOption.Context(ctx))
 		return nil, nhttp.BadRequestError.Wrap(err)
 	}
 
 	// Validate payload
 	err = validate.CheckPostOTP(&payload)
 	if err != nil {
-		log.Error("Bad request validate payload", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("Bad request validate payload", logOption.Error(err), logOption.Context(ctx))
 		return nil, err
 	}
 
@@ -572,7 +572,7 @@ func (c *AccountController) PostOTPForgetPin(rx *nhttp.Request) (*nhttp.Response
 	// Call service
 	err = svc.CheckOTPForgetPin(&payload)
 	if err != nil {
-		log.Errorf("error found when call service", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("error found when call service", logOption.Error(err), logOption.Context(ctx))
 		return nil, err
 	}
 
@@ -591,14 +591,14 @@ func (c *AccountController) PostForgetPin(rx *nhttp.Request) (*nhttp.Response, e
 	payload.UserRefID = userRefID
 	err := rx.ParseJSONBody(&payload)
 	if err != nil {
-		log.Error("error when parse json body", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("error when parse json body", logOption.Error(err), logOption.Context(ctx))
 		return nil, nhttp.BadRequestError.Wrap(err)
 	}
 
 	// Validate payload
 	err = validate.PostForgetPin(&payload)
 	if err != nil {
-		log.Error("Bad request validate payload", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("Bad request validate payload", logOption.Error(err), logOption.Context(ctx))
 		return nil, err
 	}
 
@@ -609,7 +609,7 @@ func (c *AccountController) PostForgetPin(rx *nhttp.Request) (*nhttp.Response, e
 	// Call service
 	err = svc.ForgetPin(&payload)
 	if err != nil {
-		log.Errorf("error found when call service", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("error found when call service", logOption.Error(err), logOption.Context(ctx))
 		return nil, err
 	}
 
@@ -624,14 +624,14 @@ func (c *AccountController) PostSendOTPResetPassword(rx *nhttp.Request) (*nhttp.
 	var payload dto.OTPResetPasswordPayload
 	err := rx.ParseJSONBody(&payload)
 	if err != nil {
-		log.Error("error when parse json body", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("error when parse json body", logOption.Error(err), logOption.Context(ctx))
 		return nil, nhttp.BadRequestError.Wrap(err)
 	}
 
 	// Validate payload
 	err = validate.PostSendOTPPassword(&payload)
 	if err != nil {
-		log.Error("Bad request validate payload", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("Bad request validate payload", logOption.Error(err), logOption.Context(ctx))
 		return nil, err
 	}
 
@@ -642,7 +642,7 @@ func (c *AccountController) PostSendOTPResetPassword(rx *nhttp.Request) (*nhttp.
 	// Call service
 	err = svc.SendOTPResetPassword(payload)
 	if err != nil {
-		log.Error("error found when call service", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("error found when call service", logOption.Error(err), logOption.Context(ctx))
 		return nil, err
 	}
 
@@ -657,14 +657,14 @@ func (c *AccountController) PostVerifyOTPResetPassword(rx *nhttp.Request) (*nhtt
 	var payload dto.VerifyOTPResetPasswordPayload
 	err := rx.ParseJSONBody(&payload)
 	if err != nil {
-		log.Error("error when parse json body", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("error when parse json body", logOption.Error(err), logOption.Context(ctx))
 		return nil, nhttp.BadRequestError.Wrap(err)
 	}
 
 	// Validate payload
 	err = validate.PostVerifyOTPResetPassword(&payload)
 	if err != nil {
-		log.Error("Bad request validate payload", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("Bad request validate payload", logOption.Error(err), logOption.Context(ctx))
 		return nil, err
 	}
 
@@ -675,7 +675,7 @@ func (c *AccountController) PostVerifyOTPResetPassword(rx *nhttp.Request) (*nhtt
 	// Call service
 	err = svc.VerifyOTPResetPassword(payload)
 	if err != nil {
-		log.Error("error found when call service", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("error found when call service", logOption.Error(err), logOption.Context(ctx))
 		return nil, err
 	}
 
@@ -690,14 +690,14 @@ func (c *AccountController) PostResetPasswordByOTP(rx *nhttp.Request) (*nhttp.Re
 	var payload dto.ResetPasswordByOTPPayload
 	err := rx.ParseJSONBody(&payload)
 	if err != nil {
-		log.Error("error when parse json body", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("error when parse json body", logOption.Error(err), logOption.Context(ctx))
 		return nil, nhttp.BadRequestError.Wrap(err)
 	}
 
 	// Validate payload
 	err = validate.PostResetPasswordByOTP(&payload)
 	if err != nil {
-		log.Error("Bad request validate payload", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("Bad request validate payload", logOption.Error(err), logOption.Context(ctx))
 		return nil, err
 	}
 
@@ -708,7 +708,7 @@ func (c *AccountController) PostResetPasswordByOTP(rx *nhttp.Request) (*nhttp.Re
 	// Call service
 	err = svc.ResetPasswordByOTP(payload)
 	if err != nil {
-		log.Error("error found when call service", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("error found when call service", logOption.Error(err), logOption.Context(ctx))
 		return nil, err
 	}
 
@@ -723,14 +723,14 @@ func (c *AccountController) PostChangeEmail(rx *nhttp.Request) (*nhttp.Response,
 	var payload dto.EmailChangePayload
 	err := rx.ParseJSONBody(&payload)
 	if err != nil {
-		log.Error("error when parse json body", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("error when parse json body", logOption.Error(err), logOption.Context(ctx))
 		return nil, nhttp.BadRequestError.Wrap(err)
 	}
 
 	// Validate payload
 	err = validate.PostChangeEmail(&payload)
 	if err != nil {
-		log.Error("Bad request validate payload", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("Bad request validate payload", logOption.Error(err), logOption.Context(ctx))
 		return nil, nhttp.BadRequestError.Trace(errx.Source(err))
 	}
 
@@ -741,7 +741,7 @@ func (c *AccountController) PostChangeEmail(rx *nhttp.Request) (*nhttp.Response,
 	// Call service
 	err = svc.ChangeEmail(payload)
 	if err != nil {
-		log.Error("error when call update service", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("error when call update service", logOption.Error(err), logOption.Context(ctx))
 		return nil, err
 	}
 
@@ -756,7 +756,7 @@ func (c *AccountController) PostChangePhoneNumber(rx *nhttp.Request) (*nhttp.Res
 	var payload dto.ChangePhoneNumberPayload
 	err := rx.ParseJSONBody(&payload)
 	if err != nil {
-		log.Error("error when parse json body", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("error when parse json body", logOption.Error(err), logOption.Context(ctx))
 		return nil, nhttp.BadRequestError.Wrap(err)
 	}
 
@@ -774,7 +774,7 @@ func (c *AccountController) PostChangePhoneNumber(rx *nhttp.Request) (*nhttp.Res
 	// Call service
 	resp, err := svc.UpdatePhoneNumber(payload)
 	if err != nil {
-		log.Error("error when call update phone number service", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("error when call update phone number service", logOption.Error(err), logOption.Context(ctx))
 		return nil, errx.Trace(err)
 	}
 
@@ -793,14 +793,14 @@ func (c *AccountController) PostUpdateSmartAccess(rx *nhttp.Request) (*nhttp.Res
 	payload.UserRefID = userRefID
 	err := rx.ParseJSONBody(&payload)
 	if err != nil {
-		log.Error("error when parse json body", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("error when parse json body", logOption.Error(err), logOption.Context(ctx))
 		return nil, nhttp.BadRequestError.Wrap(err)
 	}
 
 	// Validate payload
 	err = validate.PostUpdateSmartAccess(&payload)
 	if err != nil {
-		log.Error("Bad request validate payload", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("Bad request validate payload", logOption.Error(err), logOption.Context(ctx))
 		return nil, nhttp.BadRequestError.Trace(errx.Source(err))
 	}
 
@@ -811,7 +811,7 @@ func (c *AccountController) PostUpdateSmartAccess(rx *nhttp.Request) (*nhttp.Res
 	// Call service
 	err = svc.PostUpdateSmartAccess(payload)
 	if err != nil {
-		log.Error("error when call update service", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("error when call update service", logOption.Error(err), logOption.Context(ctx))
 		return nil, err
 	}
 
@@ -830,14 +830,14 @@ func (c *AccountController) GetSmartAccessStatus(rx *nhttp.Request) (*nhttp.Resp
 	payload.UserRefID = userRefID
 	err := rx.ParseJSONBody(&payload)
 	if err != nil {
-		log.Error("error when parse json body", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("error when parse json body", logOption.Error(err), logOption.Context(ctx))
 		return nil, nhttp.BadRequestError.Wrap(err)
 	}
 
 	// Validate payload
 	err = validate.GetSmartAccessStatus(&payload)
 	if err != nil {
-		log.Error("Bad request validate payload", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("Bad request validate payload", logOption.Error(err), logOption.Context(ctx))
 		return nil, err
 	}
 
@@ -848,7 +848,7 @@ func (c *AccountController) GetSmartAccessStatus(rx *nhttp.Request) (*nhttp.Resp
 	// Call service
 	resp, err := svc.GetSmartAccessStatus(payload)
 	if err != nil {
-		log.Error("error when call update service", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("error when call update service", logOption.Error(err), logOption.Context(ctx))
 		return nil, err
 	}
 

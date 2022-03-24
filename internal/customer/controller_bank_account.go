@@ -4,7 +4,7 @@ import (
 	"errors"
 	"github.com/gorilla/mux"
 	"github.com/nbs-go/errx"
-	"github.com/nbs-go/nlogger/v2"
+	logOption "github.com/nbs-go/nlogger/v2/option"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/validate"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/dto"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nhttp"
@@ -40,7 +40,7 @@ func (c *BankAccountController) GetListBankAccount(rx *nhttp.Request) (*nhttp.Re
 	// Call service
 	resp, err := svc.ListBankAccount(userRefID, payload)
 	if err != nil {
-		log.Error("error when call list bank account service", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("error when call list bank account service", logOption.Error(err), logOption.Context(ctx))
 		return nil, err
 	}
 
@@ -55,19 +55,19 @@ func (c *BankAccountController) PostCreateBankAccount(rx *nhttp.Request) (*nhttp
 	var payload dto.CreateBankAccountPayload
 	err := rx.ParseJSONBody(&payload)
 	if err != nil {
-		log.Error("Error when parse json body from request", nlogger.Error(err))
+		log.Error("Error when parse json body from request", logOption.Error(err))
 		return nil, nhttp.BadRequestError.Wrap(err)
 	}
 
 	// Validate
 	err = validate.PostCreateBankAccount(&payload)
 	if err != nil {
-		log.Error("Bad request validate payload", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("Bad request validate payload", logOption.Error(err), logOption.Context(ctx))
 		return nil, nhttp.BadRequestError.Trace(errx.Source(err))
 	}
 
 	// Set subject and requestID
-	payload.RequestID = GetRequestID(rx)
+	payload.RequestID = rx.GetRequestId()
 	payload.Subject = GetSubject(rx)
 	payload.UserRefID = GetUserRefID(rx)
 
@@ -78,7 +78,7 @@ func (c *BankAccountController) PostCreateBankAccount(rx *nhttp.Request) (*nhttp
 	// Call service
 	resp, err := svc.CreateBankAccount(&payload)
 	if err != nil {
-		log.Error("error when call list bank account service", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("error when call list bank account service", logOption.Error(err), logOption.Context(ctx))
 		return nil, err
 	}
 
@@ -93,14 +93,14 @@ func (c *BankAccountController) GetDetailBankAccount(rx *nhttp.Request) (*nhttp.
 	xid := mux.Vars(rx.Request)["xid"]
 	if xid == "" {
 		err := errors.New("xid is not found on params")
-		log.Errorf("xid is not found on params. err: %v", err)
+		log.Error("xid is not found on params", logOption.Error(err))
 		return nil, nhttp.BadRequestError.Wrap(err)
 	}
 
 	// Set payload
 	var payload dto.GetDetailBankAccountPayload
 	payload.UserRefID = GetUserRefID(rx)
-	payload.RequestID = GetRequestID(rx)
+	payload.RequestID = rx.GetRequestId()
 	payload.XID = xid
 
 	// Init service
@@ -110,7 +110,7 @@ func (c *BankAccountController) GetDetailBankAccount(rx *nhttp.Request) (*nhttp.
 	// Call service
 	resp, err := svc.GetDetailBankAccount(&payload)
 	if err != nil {
-		log.Error("error when call detail bank account service", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("error when call detail bank account service", logOption.Error(err), logOption.Context(ctx))
 		return nil, err
 	}
 
@@ -125,19 +125,19 @@ func (c *BankAccountController) PutUpdateBankAccount(rx *nhttp.Request) (*nhttp.
 	var payload dto.UpdateBankAccountPayload
 	err := rx.ParseJSONBody(&payload)
 	if err != nil {
-		log.Errorf("Error when parse json body from request.", nlogger.Error(err))
+		log.Error("Error when parse json body from request", logOption.Error(err))
 		return nil, nhttp.BadRequestError.Wrap(err)
 	}
 
 	// Set modifier and id
-	payload.RequestID = GetRequestID(rx)
+	payload.RequestID = rx.GetRequestId()
 	payload.XID = mux.Vars(rx.Request)["xid"]
 	payload.Subject = GetSubject(rx)
 	payload.UserRefID = GetUserRefID(rx)
 
 	err = validate.PutUpdateBankAccount(&payload)
 	if err != nil {
-		log.Error("Bad request validate payload", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("Bad request validate payload", logOption.Error(err), logOption.Context(ctx))
 		return nil, nhttp.BadRequestError.Trace(errx.Source(err))
 	}
 
@@ -148,7 +148,7 @@ func (c *BankAccountController) PutUpdateBankAccount(rx *nhttp.Request) (*nhttp.
 	// Call service
 	resp, err := svc.UpdateBankAccount(&payload)
 	if err != nil {
-		log.Error("error when call list bank account service", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("error when call list bank account service", logOption.Error(err), logOption.Context(ctx))
 		return nil, err
 	}
 
@@ -169,7 +169,7 @@ func (c *BankAccountController) DeleteBankAccount(rx *nhttp.Request) (*nhttp.Res
 
 	// Set payload
 	var payload dto.GetDetailBankAccountPayload
-	payload.RequestID = GetRequestID(rx)
+	payload.RequestID = rx.GetRequestId()
 	payload.UserRefID = GetUserRefID(rx)
 	payload.XID = xid
 
