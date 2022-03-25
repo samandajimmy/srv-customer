@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
+	logContext "github.com/nbs-go/nlogger/v2/context"
 	"html"
 	"net/http"
 	"time"
@@ -29,7 +30,7 @@ func NewCaptureRequestMetadataHandler(trustProxy bool) mux.MiddlewareFunc {
 
 			// Set request id value
 			reqID, _ := uuid.NewUUID()
-			ctx = context.WithValue(ctx, RequestIDContextKey, reqID.String())
+			ctx = logContext.SetRequestId(ctx, reqID.String())
 
 			// Continue
 			next.ServeHTTP(w, r.WithContext(ctx))

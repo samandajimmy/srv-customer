@@ -13,7 +13,7 @@ func (s *Service) portfolioGoldSaving(cif string) (*ResponseSwitchingSuccess, er
 	}
 
 	sp := PostDataPayload{
-		Url:  "/portofolio/pds/tabemas",
+		Path: "/portofolio/pds/tabemas",
 		Data: reqBody,
 	}
 

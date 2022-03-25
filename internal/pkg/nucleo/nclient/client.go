@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/nbs-go/errx"
-	"io/ioutil"
 	"mime/multipart"
 	"net/http"
 	"net/url"
@@ -62,21 +61,7 @@ func (c *Nclient) PostData(endpoint string, body map[string]interface{}, header 
 		return nil, errx.Trace(err)
 	}
 
-	if resp.StatusCode != http.StatusOK {
-		fmt.Println(GetResponseString(resp))
-	}
-
 	return resp, nil
-}
-
-func GetResponseString(response *http.Response) string {
-	body, err := ioutil.ReadAll(response.Body)
-	if err != nil {
-		log.Errorf("Error while reading the response bytes:", err)
-		return ""
-	}
-	log.Debugf(string(body))
-	return string(body)
 }
 
 func getBodyRequest(header map[string]string, body map[string]interface{}) (*bytes.Buffer, map[string]string) {

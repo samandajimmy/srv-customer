@@ -16,7 +16,7 @@ func (s *Service) customerActivation(payload *dto.RestSwitchingOTPPinCreate) (*R
 	}
 
 	sp := PostDataPayload{
-		Url:  "/customer/activation",
+		Path: "/customer/activation",
 		Data: reqBody,
 	}
 
@@ -42,7 +42,7 @@ func (s *Service) otpValidate(payload *dto.RestSwitchingOTPForgetPin) (*Response
 	}
 
 	sp := PostDataPayload{
-		Url:  "/otp/validate",
+		Path: "/otp/validate",
 		Data: reqBody,
 	}
 
@@ -69,7 +69,7 @@ func (s *Service) ChangePhoneNumber(payload dto.ChangePhoneNumberRequestCore) (*
 	}
 
 	sp := PostDataPayload{
-		Url:  "/customer/phonenumber",
+		Path: "/customer/phonenumber",
 		Data: reqBody,
 	}
 
@@ -94,7 +94,7 @@ func (s *Service) CheckCIF(cif string) (*ResponseSwitchingSuccess, error) {
 	}
 
 	sp := PostDataPayload{
-		Url:  "/customer/inquiry",
+		Path: "/customer/inquiry",
 		Data: reqBody,
 	}
 

@@ -23,9 +23,9 @@ func (s *Service) SynchronizeCustomer(payload dto.RegisterPayload) (*ResponsePds
 
 	// Set payload
 	postDataPayload := PostDataPayload{
-		Url:    "/synchronize/customer",
+		Path:   "/synchronize/customer",
 		Data:   reqBody,
-		Header: &reqHeader,
+		Header: reqHeader,
 	}
 
 	resp, err := s.PdsPostData(postDataPayload)
@@ -55,9 +55,9 @@ func (s *Service) SynchronizePassword(payload dto.RegisterPayload) (*ResponsePds
 
 	// Set payload
 	postDataPayload := PostDataPayload{
-		Url:    "/synchronize/customer",
+		Path:   "/synchronize/customer",
 		Data:   reqBody,
-		Header: &reqHeader,
+		Header: reqHeader,
 	}
 
 	resp, err := s.PdsPostData(postDataPayload)

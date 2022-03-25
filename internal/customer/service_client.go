@@ -7,6 +7,7 @@ import (
 	"github.com/imdario/mergo"
 	"github.com/nbs-go/errx"
 	logOption "github.com/nbs-go/nlogger/v2/option"
+	"io"
 	"net/http"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/constant"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/dto"
@@ -29,9 +30,9 @@ type ResponseSwitchingSuccess struct {
 }
 
 type PostDataPayload struct {
-	Url     string
+	Path    string
 	Data    map[string]interface{}
-	Header  *map[string]string
+	Header  map[string]string
 	Counter int64
 }
 
@@ -81,7 +82,7 @@ func (s *Service) RestSwitchingPostData(payload PostDataPayload) (*ResponseSwitc
 	}
 
 	// Sent Request Rest Switching
-	restResponse, err := s.clientRestSwitching().PostData(payload.Url, reqBody, reqHeader)
+	restResponse, err := s.clientRestSwitching().PostData(payload.Path, reqBody, reqHeader)
 	if err != nil {
 		return nil, errx.Trace(err)
 	}
@@ -219,51 +220,39 @@ func (s *Service) clientPDS() *nclient.Nclient {
 }
 
 func (s *Service) PdsPostData(payload PostDataPayload) (*ResponsePdsAPI, error) {
-	// Set request body
-	reqBody := map[string]interface{}{}
-
-	// Merge Request Body
-	err := mergo.Merge(&reqBody, payload.Data)
-	if err != nil {
-		s.log.Error("error when merge request body", logOption.Error(err))
-		return nil, errx.Trace(err)
-	}
-
-	// Set request header
-	reqHeader := map[string]string{}
-
-	if payload.Header != nil {
-		// Merge Request Header
-		err = mergo.Merge(&reqHeader, payload.Header)
-		if err != nil {
-			return nil, errx.Trace(err)
-		}
-	}
-
 	// Sent Request Rest Switching
-	restResponse, err := s.clientPDS().PostData(payload.Url, reqBody, reqHeader)
+	resp, err := s.clientPDS().PostData(payload.Path, payload.Data, payload.Header)
 	if err != nil {
 		return nil, errx.Trace(err)
 	}
-	defer handleClose(restResponse.Body)
+	defer handleClose(resp.Body)
 
-	response, err := s.pdsAPISuccessResponse(restResponse)
-	if err != nil {
-		return nil, err
+	s.log.Debugf("Response from pds-api. Status = %s", resp.Status)
+
+	if resp.StatusCode != http.StatusOK {
+		body := s.readStringBody(resp.Body)
+		s.log.Errorf("unexpected status code received from pds-api. Status = %d, Body = %s", resp.StatusCode, body)
+		return nil, errx.InternalError()
 	}
 
-	return response, nil
-}
-
-func (s *Service) pdsAPISuccessResponse(restResponse *http.Response) (*ResponsePdsAPI, error) {
-	var responseSwitching *ResponsePdsAPI
-	err := json.NewDecoder(restResponse.Body).Decode(&responseSwitching)
+	var responseSwitching ResponsePdsAPI
+	err = json.NewDecoder(resp.Body).Decode(&responseSwitching)
 	if err != nil {
 		s.log.Error("error when get response rest switching.", logOption.Error(err))
 		return nil, errx.Trace(err)
 	}
 
-	return responseSwitching, nil
+	return &responseSwitching, nil
+}
+
+func (s *Service) readStringBody(body io.ReadCloser) string {
+	bytes, err := io.ReadAll(body)
+	if err != nil {
+		s.log.Error("failed to read response body", logOption.Error(err))
+		return ""
+	}
+
+	return string(bytes)
 }
 
 // PDS API Section End
