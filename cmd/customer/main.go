@@ -39,7 +39,7 @@ func main() {
 	// Init handler
 	h, err := customer.NewHandler(c, &config)
 	if err != nil {
-		log.Debugf("error while init handler", err)
+		log.Debug("error while init handler", logOption.Error(err))
 		panic(err)
 	}
 
