@@ -19,7 +19,7 @@ type VerificationOTP struct {
 
 func NewVerificationOTP(db *nsql.DatabaseContext) *VerificationOTP {
 	// Init query Schema Builder
-	sb := query.Schema(VerificationSchema)
+	sb := query.Schema(VerificationOTPSchema)
 
 	insert := fmt.Sprintf(`%s ON CONFLICT DO NOTHING RETURNING "id"`, sb.Insert())
 
