@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"github.com/lestrrat-go/jwx/jwt"
 	"github.com/nbs-go/errx"
-	"github.com/nbs-go/nlogger/v2"
+	logOption "github.com/nbs-go/nlogger/v2/option"
 	"regexp"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/constant"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/model"
@@ -21,18 +21,18 @@ func (s *Service) ValidateJWT(token string) (jwt.Token, error) {
 	// Parsing Token
 	t, err := jwt.ParseString(token, jwt.WithVerify(constant.JWTSignature, []byte(s.config.JWTKey)))
 	if err != nil {
-		s.log.Error("parsing jwt token", nlogger.Error(err), nlogger.Context(s.ctx))
+		s.log.Error("parsing jwt token", logOption.Error(err))
 		return nil, constant.InvalidJWTFormatError.Trace()
 	}
 
 	if err = jwt.Validate(t); err != nil {
-		s.log.Error("error when validate", nlogger.Error(err), nlogger.Context(s.ctx))
+		s.log.Error("error when validate", logOption.Error(err))
 		return nil, constant.ExpiredJWTError.Trace()
 	}
 
 	err = jwt.Validate(t, jwt.WithIssuer(constant.JWTIssuer))
 	if err != nil {
-		s.log.Error("error found when validate with issuer", nlogger.Error(err), nlogger.Context(s.ctx))
+		s.log.Error("error found when validate with issuer", logOption.Error(err))
 		return nil, constant.InvalidJWTIssuerError.Trace()
 	}
 
@@ -40,13 +40,10 @@ func (s *Service) ValidateJWT(token string) (jwt.Token, error) {
 }
 
 func (s *Service) ValidateTokenAndRetrieveUserRefID(tokenString string) (string, error) {
-	// Get Context
-	ctx := s.ctx
-
 	// validate JWT
 	token, err := s.ValidateJWT(tokenString)
 	if err != nil {
-		s.log.Error("error when validate JWT", nlogger.Error(err), nlogger.Context(ctx))
+		s.log.Error("error when validate JWT", logOption.Error(err))
 		return "", errx.Trace(err)
 	}
 
@@ -59,7 +56,7 @@ func (s *Service) ValidateTokenAndRetrieveUserRefID(tokenString string) (string,
 
 	tokenFromCache, err := s.CacheGet(key)
 	if err != nil {
-		s.log.Error("error get token from cache", nlogger.Error(err), nlogger.Context(ctx))
+		s.log.Error("error get token from cache", logOption.Error(err))
 		return "", errx.Trace(err)
 	}
 
@@ -77,7 +74,7 @@ func (s *Service) UpdatePhoneNumber(payload dto.ChangePhoneNumberPayload) (*dto.
 	// Check if phone number exist // TODO: Check token if admin
 	isExists, err := s.repo.PhoneNumberIsExists(payload.NewPhoneNumber)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		s.log.Error("error when check email is exists", nlogger.Error(err))
+		s.log.Error("error when check email is exists", logOption.Error(err))
 		return nil, errx.Trace(err)
 	}
 
@@ -89,7 +86,8 @@ func (s *Service) UpdatePhoneNumber(payload dto.ChangePhoneNumberPayload) (*dto.
 	// Find customer
 	customer, err := s.repo.FindCustomerByUserRefID(payload.UserRefID)
 	if err != nil {
-		s.log.Error("error when find current customer", nlogger.Error(err))
+		s.log.Error("error when find current customer", logOption.Error(err))
+		err = handleErrorRepository(err, constant.CustomerNotFoundError)
 		return nil, errx.Trace(err)
 	}
 
@@ -119,7 +117,7 @@ func (s *Service) UpdatePhoneNumber(payload dto.ChangePhoneNumberPayload) (*dto.
 	// Persist
 	err = s.repo.UpdateCustomerByUserRefID(customer, payload.UserRefID)
 	if err != nil {
-		s.log.Error("error when update phone number", nlogger.Error(err))
+		s.log.Error("error when update phone number", logOption.Error(err))
 		return nil, errx.Trace(err)
 	}
 
@@ -192,7 +190,7 @@ func (s *Service) handleChangePhoneNumberCore(payload dto.ChangePhoneNumberReque
 	// Persist update phone number
 	err = s.repo.UpdateCustomerByUserRefID(customer, customer.UserRefID.String)
 	if err != nil {
-		s.log.Error("error when update phone number", nlogger.Error(err))
+		s.log.Error("error when update phone number", logOption.Error(err))
 		return nil, errx.Trace(err)
 	}
 
@@ -202,19 +200,16 @@ func (s *Service) handleChangePhoneNumberCore(payload dto.ChangePhoneNumberReque
 }
 
 func (s *Service) ValidatePin(payload *dto.ValidatePinPayload) error {
-	// Get Context
-	ctx := s.ctx
-
 	// Validate Increasing Pin
 	err := validateIncreasingPin(payload)
 	if err != nil {
-		s.log.Error(`new pin isn't passed validation increasing pin'`, nlogger.Error(err), nlogger.Context(ctx))
+		s.log.Error(`new pin isn't passed validation increasing pin`, logOption.Error(err))
 		return errx.Trace(err)
 	}
 
 	err = validateRepetitionPin(payload)
 	if err != nil {
-		s.log.Error(`new pin isn't passed validation increasing pin'`, nlogger.Error(err), nlogger.Context(ctx))
+		s.log.Error(`new pin isn't passed validation increasing pin`, logOption.Error(err))
 		return errx.Trace(err)
 	}
 
@@ -241,9 +236,6 @@ func validateRepetitionPin(payload *dto.ValidatePinPayload) error {
 }
 
 func (s *Service) CheckPinUser(payload *dto.CheckPinPayload) error {
-	// Get Context
-	ctx := s.ctx
-
 	// If not check pin
 	if !payload.CheckPIN {
 		return nil
@@ -252,7 +244,7 @@ func (s *Service) CheckPinUser(payload *dto.CheckPinPayload) error {
 	// Get customer id
 	customer, err := s.repo.FindCustomerByUserRefID(payload.UserRefID)
 	if err != nil {
-		s.log.Error("error found when get customer repo", nlogger.Error(err), nlogger.Context(ctx))
+		s.log.Error("error found when get customer repo", logOption.Error(err))
 		err = handleErrorRepository(err, constant.ResourceNotFoundError)
 		return errx.Trace(err)
 	}
@@ -260,7 +252,7 @@ func (s *Service) CheckPinUser(payload *dto.CheckPinPayload) error {
 	// Get customer pin
 	credential, err := s.repo.FindCredentialByCustomerID(customer.ID)
 	if err != nil {
-		s.log.Error("error found when get credential repo", nlogger.Context(ctx))
+		s.log.Error("error found when get credential repo")
 		err = handleErrorRepository(err, constant.AccountPINIsNotActive)
 		return errx.Trace(err)
 	}
@@ -271,14 +263,14 @@ func (s *Service) CheckPinUser(payload *dto.CheckPinPayload) error {
 
 	// Check if pin is blocked
 	if credential.PinBlockedStatus != constant.Unblocked {
-		s.log.Error("pin is blocked", nlogger.Context(ctx))
+		s.log.Error("pin is blocked")
 		return constant.AccountPINIsBlocked
 	}
 
 	// Find pin with md5
 	valid, err := s.repo.IsValidPin(customer.ID, nval.MD5(payload.Pin))
 	if err != nil {
-		s.log.Error("error found when querying valid pin", nlogger.Error(err), nlogger.Context(ctx))
+		s.log.Error("error found when querying valid pin", logOption.Error(err))
 		err = handleErrorRepository(err, constant.ResourceNotFoundError)
 		return errx.Trace(err)
 	}
@@ -326,7 +318,7 @@ func (s *Service) handlePinNotValid(credential *model.Credential) error {
 
 	err := s.repo.UpdateCredential(credential)
 	if err != nil {
-		s.log.Error("error when update credential.", nlogger.Error(err))
+		s.log.Error("error when update credential.", logOption.Error(err))
 		return errx.Trace(err)
 	}
 
@@ -337,7 +329,7 @@ func (s *Service) unblockPINUser(customer *model.Customer) error {
 	// Get credential
 	credential, err := s.repo.FindCredentialByCustomerID(customer.ID)
 	if err != nil {
-		s.log.Error("error found when get credential", nlogger.Error(err), nlogger.Context(s.ctx))
+		s.log.Error("error found when get credential", logOption.Error(err))
 		err = handleErrorRepository(err, constant.ResourceNotFoundError)
 		return errx.Trace(err)
 	}
@@ -348,7 +340,7 @@ func (s *Service) unblockPINUser(customer *model.Customer) error {
 
 	err = s.repo.UpdateCredential(credential)
 	if err != nil {
-		s.log.Error("error found when update credential", nlogger.Error(err), nlogger.Context(s.ctx))
+		s.log.Error("error found when update credential", logOption.Error(err))
 		return errx.Trace(err)
 	}
 
@@ -376,7 +368,7 @@ func (s *Service) UpdatePin(payload *dto.UpdatePinPayload) (*dto.UpdatePinResult
 
 	err = s.handleUpdatePin(payload.UserRefID, payload.NewPIN)
 	if err != nil {
-		s.log.Error("error found when handle update pin", nlogger.Context(s.ctx))
+		s.log.Error("error found when handle update pin", logOption.Error(err))
 		return nil, errx.Trace(err)
 	}
 
@@ -392,7 +384,7 @@ func (s *Service) handleUpdatePin(userRefID string, newPin string) error {
 	// Get customer id
 	customer, err := s.repo.FindCustomerByUserRefID(userRefID)
 	if err != nil {
-		s.log.Error("error found when get customer repo", nlogger.Error(err), nlogger.Context(s.ctx))
+		s.log.Error("error found when get customer repo", logOption.Error(err))
 		err = handleErrorRepository(err, constant.ResourceNotFoundError)
 		return errx.Trace(err)
 	}
@@ -400,7 +392,7 @@ func (s *Service) handleUpdatePin(userRefID string, newPin string) error {
 	// Get customer pin
 	credential, err := s.repo.FindCredentialByCustomerID(customer.ID)
 	if err != nil {
-		s.log.Error("error found when get credential repo", nlogger.Context(s.ctx))
+		s.log.Error("error found when get credential repo", logOption.Error(err))
 		err = handleErrorRepository(err, constant.AccountPINIsNotActive)
 		return errx.Trace(err)
 	}
@@ -416,7 +408,7 @@ func (s *Service) handleUpdatePin(userRefID string, newPin string) error {
 
 	err = s.repo.UpdateCredential(credential)
 	if err != nil {
-		s.log.Error("error when update credential.", nlogger.Error(err))
+		s.log.Error("error when update credential.", logOption.Error(err))
 		return errx.Trace(err)
 	}
 
@@ -427,7 +419,7 @@ func (s *Service) CheckOTPPinCreate(payload *dto.CheckOTPPinPayload) error {
 	// Get customer id
 	customer, err := s.repo.FindCustomerByUserRefID(payload.UserRefID)
 	if err != nil {
-		s.log.Error("error found when get customer repo", nlogger.Error(err), nlogger.Context(s.ctx))
+		s.log.Error("error found when get customer repo", logOption.Error(err))
 		err = handleErrorRepository(err, constant.ResourceNotFoundError)
 		return errx.Trace(err)
 	}
@@ -442,7 +434,7 @@ func (s *Service) CheckOTPPinCreate(payload *dto.CheckOTPPinPayload) error {
 	// Rest switching customer
 	switchingResponse, err := s.customerActivation(payloadSwitching)
 	if err != nil {
-		s.log.Error("error found when get otp pin create", nlogger.Error(err), nlogger.Context(s.ctx))
+		s.log.Error("error found when get otp pin create", logOption.Error(err))
 		return errx.Trace(err)
 	}
 
@@ -458,7 +450,7 @@ func (s *Service) CreatePinUser(payload *dto.PostCreatePinPayload) error {
 	// Get user by ref id
 	customer, err := s.repo.FindCustomerByUserRefID(payload.UserRefID)
 	if err != nil {
-		s.log.Error("error found when get customer repo", nlogger.Error(err), nlogger.Context(s.ctx))
+		s.log.Error("error found when get customer repo", logOption.Error(err))
 		err = handleErrorRepository(err, constant.ResourceNotFoundError)
 		return errx.Trace(err)
 	}
@@ -485,7 +477,7 @@ func (s *Service) CreatePinUser(payload *dto.PostCreatePinPayload) error {
 		CheckPIN:  false,
 	})
 	if err != nil {
-		s.log.Error("error found when update customer pin", nlogger.Error(err), nlogger.Context(s.ctx))
+		s.log.Error("error found when update customer pin", logOption.Error(err))
 		return errx.Trace(err)
 	}
 
@@ -504,7 +496,7 @@ func (s *Service) activateFinancialStatus(customer *model.Customer) error {
 	// Get verification
 	verification, err := s.repo.FindVerificationByCustomerID(customer.ID)
 	if err != nil {
-		s.log.Error("error found when get verification from repo", nlogger.Error(err), nlogger.Context(s.ctx))
+		s.log.Error("error found when get verification from repo", logOption.Error(err))
 		err = handleErrorRepository(err, constant.ResourceNotFoundError)
 		return errx.Trace(err)
 	}
@@ -520,7 +512,7 @@ func (s *Service) activateFinancialStatus(customer *model.Customer) error {
 
 	err = s.repo.UpdateVerification(verification)
 	if err != nil {
-		s.log.Error("error found when update verification", nlogger.Error(err), nlogger.Context(s.ctx))
+		s.log.Error("error found when update verification", logOption.Error(err))
 		return errx.Trace(err)
 	}
 	return nil
@@ -530,7 +522,7 @@ func (s *Service) CheckOTPForgetPin(payload *dto.CheckOTPPinPayload) error {
 	// Get customer id
 	customer, err := s.repo.FindCustomerByUserRefID(payload.UserRefID)
 	if err != nil {
-		s.log.Error("error found when get customer repo", nlogger.Error(err), nlogger.Context(s.ctx))
+		s.log.Error("error found when get customer repo", logOption.Error(err))
 		err = handleErrorRepository(err, constant.ResourceNotFoundError)
 		return errx.Trace(err)
 	}
@@ -548,13 +540,13 @@ func (s *Service) CheckOTPForgetPin(payload *dto.CheckOTPPinPayload) error {
 	// Rest switching customer
 	switchingResponse, err := s.otpValidate(payloadSwitching)
 	if err != nil {
-		s.log.Error("error found when get reset pin otp validate", nlogger.Error(err), nlogger.Context(s.ctx))
+		s.log.Error("error found when get reset pin otp validate", logOption.Error(err))
 		return errx.Trace(err)
 	}
 
 	// Get from cache when switching response is not success
 	if switchingResponse.ResponseCode != "00" {
-		s.log.Error("error rest switching otp reset pin", nlogger.Context(s.ctx))
+		s.log.Error("error rest switching otp reset pin")
 		return constant.IncorrectOTPError
 	}
 
@@ -565,7 +557,7 @@ func (s *Service) ForgetPin(payload *dto.ForgetPinPayload) error {
 	// Get user by ref id
 	customer, err := s.repo.FindCustomerByUserRefID(payload.UserRefID)
 	if err != nil {
-		s.log.Error("error found when get customer repo", nlogger.Error(err), nlogger.Context(s.ctx))
+		s.log.Error("error found when get customer repo", logOption.Error(err))
 		err = handleErrorRepository(err, constant.ResourceNotFoundError)
 		return errx.Trace(err)
 	}
@@ -578,7 +570,7 @@ func (s *Service) ForgetPin(payload *dto.ForgetPinPayload) error {
 
 	err = s.CheckOTPForgetPin(payloadOTP)
 	if err != nil {
-		s.log.Error("error found when check otp forget pin", nlogger.Error(err), nlogger.Context(s.ctx))
+		s.log.Error("error found when check otp forget pin", logOption.Error(err))
 		return errx.Trace(err)
 	}
 
@@ -603,7 +595,7 @@ func (s *Service) ForgetPin(payload *dto.ForgetPinPayload) error {
 	// Update pin
 	_, err = s.UpdatePin(payloadUpdatePIN)
 	if err != nil {
-		s.log.Error("error found when update customer pin", nlogger.Error(err), nlogger.Context(s.ctx))
+		s.log.Error("error found when update customer pin", logOption.Error(err))
 		return errx.Trace(err)
 	}
 
@@ -613,11 +605,11 @@ func (s *Service) ForgetPin(payload *dto.ForgetPinPayload) error {
 func (s *Service) findOrFailCustomerByUserRefID(userRefID string) (*model.Customer, error) {
 	customer, err := s.repo.FindCustomerByUserRefID(userRefID)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		s.log.Error("error found when find customer by userRefID", nlogger.Error(err))
+		s.log.Error("error found when find customer by userRefID", logOption.Error(err))
 		return nil, errx.Trace(err)
 	}
 	if err != nil && errors.Is(err, sql.ErrNoRows) {
-		return nil, constant.CustomerNotFoundError
+		return nil, constant.CustomerNotFoundError.Trace(nhttp.OverrideMessage("Customer not found"))
 	}
 	return customer, nil
 }
@@ -636,14 +628,12 @@ func (s *Service) SendOTPResetPassword(payload dto.OTPResetPasswordPayload) erro
 		RequestType: constant.RequestResetPassword,
 	})
 	if err != nil {
-		s.log.Error("error found when call send OTP service", nlogger.Error(err), nlogger.Context(s.ctx))
+		s.log.Error("error found when call send OTP service", logOption.Error(err))
 		return errx.Trace(err)
 	}
 
-	s.log.Debugf("Debug: reset password message %s", resp.Message)
-
 	if resp.ResponseCode != "00" {
-		s.log.Error("error rest switching otp reset pin", nlogger.Context(s.ctx))
+		s.log.Error("error rest switching otp reset pin")
 		return constant.FailedResendOTP.Trace()
 	}
 
@@ -658,7 +648,7 @@ func (s *Service) VerifyOTPResetPassword(payload dto.VerifyOTPResetPasswordPaylo
 		Token:       payload.OTP,
 	})
 	if err != nil {
-		s.log.Error("error found when call send OTP service", nlogger.Error(err), nlogger.Context(s.ctx))
+		s.log.Error("error found when call send OTP service", logOption.Error(err))
 		return errx.Trace(err)
 	}
 
@@ -676,7 +666,7 @@ func (s *Service) ResetPasswordByOTP(payload dto.ResetPasswordByOTPPayload) erro
 	// Get customer
 	customer, err := s.repo.FindCustomerByEmailOrPhone(payload.Email)
 	if err != nil {
-		s.log.Error("error found when get customer repo", nlogger.Error(err), nlogger.Context(s.ctx))
+		s.log.Error("error found when get customer repo", logOption.Error(err))
 		err = handleErrorRepository(err, constant.ResourceNotFoundError)
 		return errx.Trace(err)
 	}
@@ -698,7 +688,7 @@ func (s *Service) ResetPasswordByOTP(payload dto.ResetPasswordByOTPPayload) erro
 	// Get credential customer
 	credential, err := s.repo.FindCredentialByCustomerID(customer.ID)
 	if err != nil {
-		s.log.Error("error found when get credential repo", nlogger.Error(err), nlogger.Context(s.ctx))
+		s.log.Error("error found when get credential repo", logOption.Error(err))
 		err = handleErrorRepository(err, constant.ResourceNotFoundError)
 		return errx.Trace(err)
 	}
@@ -712,7 +702,7 @@ func (s *Service) ResetPasswordByOTP(payload dto.ResetPasswordByOTPPayload) erro
 
 	err = s.repo.UpdateCredential(credential)
 	if err != nil {
-		s.log.Error("error when update credential.", nlogger.Error(err), nlogger.Context(s.ctx))
+		s.log.Error("error when update credential", logOption.Error(err))
 		return errx.Trace(err)
 	}
 
@@ -729,10 +719,23 @@ func (s *Service) ChangeEmail(payload dto.EmailChangePayload) error {
 
 	// TODO: Validation check if token is admin
 
+	// Find customer
+	customer, err := s.repo.FindCustomerByUserRefID(payload.UserRefID)
+	if err != nil {
+		s.log.Error("error when find current customer", logOption.Error(err))
+		err = handleErrorRepository(err, constant.ResourceNotFoundError)
+		return errx.Trace(err)
+	}
+
+	// Handle if email doesn't change
+	if customer.Email == payload.Email {
+		return nil
+	}
+
 	// Check if email is available
 	isExist, err := s.repo.EmailIsExists(payload.Email)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		s.log.Error("error when check email is exists", nlogger.Error(err))
+		s.log.Error("error when check email is exists", logOption.Error(err))
 		return errx.Trace(err)
 	}
 
@@ -741,18 +744,10 @@ func (s *Service) ChangeEmail(payload dto.EmailChangePayload) error {
 		return constant.EmailHasBeenRegisteredError.Trace()
 	}
 
-	// Find customer
-	customer, err := s.repo.FindCustomerByUserRefID(payload.UserRefID)
-	if err != nil {
-		s.log.Error("error when find current customer", nlogger.Error(err))
-		err = handleErrorRepository(err, constant.ResourceNotFoundError)
-		return errx.Trace(err)
-	}
-
 	// Find verification
 	verification, err := s.repo.FindVerificationByCustomerID(customer.ID)
 	if err != nil {
-		s.log.Error("error when find current customer", nlogger.Error(err))
+		s.log.Error("error when find current customer", logOption.Error(err))
 		err = handleErrorRepository(err, constant.ResourceNotFoundError)
 		return errx.Trace(err)
 	}
@@ -772,7 +767,7 @@ func (s *Service) ChangeEmail(payload dto.EmailChangePayload) error {
 	// Persist update email
 	err = s.repo.UpdateCustomerByUserRefID(customer, payload.UserRefID)
 	if err != nil {
-		s.log.Error("error when update email", nlogger.Error(err))
+		s.log.Error("error when update email", logOption.Error(err))
 		return errx.Trace(err)
 	}
 
@@ -785,7 +780,7 @@ func (s *Service) ChangeEmail(payload dto.EmailChangePayload) error {
 
 	err = s.repo.UpdateVerificationByCustomerID(verification)
 	if err != nil {
-		s.log.Error("error when update verification email", nlogger.Error(err))
+		s.log.Error("error when update verification email", logOption.Error(err))
 		return errx.Trace(err)
 	}
 
@@ -798,7 +793,7 @@ func (s *Service) PostUpdateSmartAccess(payload dto.UpdateSmartAccessPayload) er
 	// Get customer
 	customer, err := s.repo.FindCustomerByUserRefID(payload.UserRefID)
 	if err != nil {
-		s.log.Error("error when find current customer", nlogger.Error(err))
+		s.log.Error("error when find current customer", logOption.Error(err))
 		err = handleErrorRepository(err, constant.ResourceNotFoundError)
 		return errx.Trace(err)
 	}
@@ -806,7 +801,7 @@ func (s *Service) PostUpdateSmartAccess(payload dto.UpdateSmartAccessPayload) er
 	// Get credential
 	credential, err := s.repo.FindCredentialByCustomerID(customer.ID)
 	if err != nil {
-		s.log.Error("error when find current credential", nlogger.Error(err))
+		s.log.Error("error when find current credential", logOption.Error(err))
 		err = handleErrorRepository(err, constant.ResourceNotFoundError)
 		return errx.Trace(err)
 	}
@@ -822,7 +817,7 @@ func (s *Service) PostUpdateSmartAccess(payload dto.UpdateSmartAccessPayload) er
 	credential.BiometricDeviceID = payload.DeviceID
 	err = s.repo.UpdateCredential(credential)
 	if err != nil {
-		s.log.Error("error when activate biometric", nlogger.Error(err))
+		s.log.Error("error when activate biometric", logOption.Error(err))
 		return errx.Trace(err)
 	}
 
@@ -835,7 +830,7 @@ func (s *Service) unsetBiometric(credential *model.Credential) error {
 	credential.BiometricLogin = constant.Disabled
 	err := s.repo.UpdateCredential(credential)
 	if err != nil {
-		s.log.Error("error when unset biometric", nlogger.Error(err))
+		s.log.Error("error when unset biometric", logOption.Error(err))
 		return errx.Trace(err)
 	}
 
@@ -846,7 +841,7 @@ func (s *Service) GetSmartAccessStatus(payload dto.GetSmartAccessStatusPayload) 
 	// Get customer
 	customer, err := s.repo.FindCustomerByUserRefID(payload.UserRefID)
 	if err != nil {
-		s.log.Error("error when find current customer", nlogger.Error(err))
+		s.log.Error("error when find current customer", logOption.Error(err))
 		err = handleErrorRepository(err, constant.ResourceNotFoundError)
 		return nil, errx.Trace(err)
 	}
@@ -854,7 +849,7 @@ func (s *Service) GetSmartAccessStatus(payload dto.GetSmartAccessStatusPayload) 
 	// Get credential
 	credential, err := s.repo.FindCredentialByCustomerID(customer.ID)
 	if err != nil {
-		s.log.Error("error when find current credential", nlogger.Error(err))
+		s.log.Error("error when find current credential", logOption.Error(err))
 		err = handleErrorRepository(err, constant.ResourceNotFoundError)
 		return nil, errx.Trace(err)
 	}
@@ -879,13 +874,13 @@ func (s *Service) HandleSynchronizePassword(customer *model.Customer, password s
 		Password:    password,
 	})
 	if err != nil {
-		s.log.Error("error found when sync data customer via API PDS", nlogger.Error(err), nlogger.Context(s.ctx))
+		s.log.Error("error found when sync data customer via API PDS", logOption.Error(err))
 		return errx.Trace(err)
 	}
 
 	// handle status error
 	if resp.Status != "success" {
-		s.log.Error("Get Error from SynchronizePassword.", nlogger.Error(err))
+		s.log.Error("Get Error from SynchronizePassword.", logOption.Error(err))
 		return nhttp.InternalError.Trace(errx.Errorf(resp.Message))
 	}
 

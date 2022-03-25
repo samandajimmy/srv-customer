@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"github.com/nbs-go/errx"
-	"github.com/nbs-go/nlogger/v2"
+	logOption "github.com/nbs-go/nlogger/v2/option"
 	"github.com/rs/xid"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/constant"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/model"
@@ -19,7 +19,7 @@ func (rc *RepositoryContext) CreateCustomer(row *model.Customer) (int64, error) 
 	var lastInsertID int64
 	err := rc.stmt.Customer.Insert.QueryRowContext(rc.ctx, &row).Scan(&lastInsertID)
 	if err != nil {
-		rc.log.Error("error when insert customer", nlogger.Error(err), nlogger.Context(rc.ctx))
+		rc.log.Error("error when insert customer", logOption.Error(err), logOption.Context(rc.ctx))
 		return 0, err
 	}
 
@@ -118,7 +118,7 @@ func (rc *RepositoryContext) UpdateCustomerProfile(customer *model.Customer, pay
 	// Get current address data
 	address, errAddress := rc.FindAddressByCustomerId(customer.ID)
 	if errAddress != nil && !errors.Is(errAddress, sql.ErrNoRows) {
-		rc.log.Error("error when get customer data", nlogger.Error(err))
+		rc.log.Error("error when get customer data", logOption.Error(err))
 		return errx.Trace(err)
 	}
 
@@ -181,7 +181,7 @@ func (rc *RepositoryContext) UpdateCustomerByUserRefID(customer *model.Customer,
 		UserRefID: userRefID,
 	})
 	if err != nil {
-		rc.log.Error("error found when update customer by UserRefID", nlogger.Error(err))
+		rc.log.Error("error found when update customer by UserRefID", logOption.Error(err))
 		return errx.Trace(err)
 	}
 	if !nsql.IsUpdated(result) {
@@ -195,19 +195,19 @@ func (rc *RepositoryContext) FindCombineCustomerDataByUserRefID(userRefID string
 	// Find Customer
 	customer, err := rc.FindCustomerByUserRefID(userRefID)
 	if err != nil {
-		rc.log.Error("error when find current customer", nlogger.Error(err))
+		rc.log.Error("error when find current customer", logOption.Error(err))
 		return nil, nil, nil, errx.Trace(err)
 	}
 	// Find Verification
 	verification, err := rc.FindVerificationByCustomerID(customer.ID)
 	if err != nil {
-		rc.log.Error("error when get verification", nlogger.Error(err))
+		rc.log.Error("error when get verification", logOption.Error(err))
 		return nil, nil, nil, errx.Trace(err)
 	}
 	// Find Credential
 	credential, err := rc.FindCredentialByCustomerID(customer.ID)
 	if err != nil {
-		rc.log.Error("error when get credential", nlogger.Error(err))
+		rc.log.Error("error when get credential", logOption.Error(err))
 		return nil, nil, nil, errx.Trace(err)
 	}
 

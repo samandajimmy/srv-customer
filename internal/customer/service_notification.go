@@ -3,7 +3,7 @@ package customer
 import (
 	"fmt"
 	"github.com/nbs-go/errx"
-	"github.com/nbs-go/nlogger/v2"
+	logOption "github.com/nbs-go/nlogger/v2/option"
 	"math/rand"
 	"net/http"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/constant"
@@ -150,7 +150,7 @@ func (s *Service) SendNotificationRegister(data dto.NotificationRegister) error 
 
 	respSend, err := s.SendNotification(welcomeMessage)
 	if err != nil {
-		s.log.Debugf("error found when send notification message.", nlogger.Error(err))
+		s.log.Debug("error found when send notification message", logOption.Error(err))
 	}
 	defer handleClose(respSend.Body)
 
@@ -188,7 +188,7 @@ func (s *Service) SendNotificationBlock(data dto.NotificationBlock) error {
 	}
 	sendEmail, err := s.SendEmail(emailPayload)
 	if err != nil {
-		s.log.Debugf("Error when send email block account. Payload %v", emailPayload)
+		s.log.Debug("Error when send email block account. Payload %v", logOption.Format(emailPayload), logOption.Error(err))
 	}
 	defer handleClose(sendEmail.Body)
 

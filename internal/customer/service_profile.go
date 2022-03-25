@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/nbs-go/errx"
-	"github.com/nbs-go/nlogger/v2"
+	logOption "github.com/nbs-go/nlogger/v2/option"
 	"github.com/rs/xid"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/constant"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/model"
@@ -18,35 +18,35 @@ func (s *Service) CustomerProfile(id string) (*dto.ProfileResponse, error) {
 	// Get customer data
 	customer, err := s.repo.FindCustomerByUserRefID(id)
 	if err != nil {
-		s.log.Error("error found when get customer repo", nlogger.Error(err))
+		s.log.Error("error found when get customer repo", logOption.Error(err))
 		return nil, errx.Trace(err)
 	}
 
 	// Get verification data
 	verification, err := s.repo.FindVerificationByCustomerID(customer.ID)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		s.log.Error("error found when get verification repo", nlogger.Error(err))
+		s.log.Error("error found when get verification repo", logOption.Error(err))
 		return nil, errx.Trace(err)
 	}
 
 	// Get financial data
 	financial, err := s.repo.FindFinancialDataByCustomerID(customer.ID)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		s.log.Error("error found when get financial repo", nlogger.Error(err))
+		s.log.Error("error found when get financial repo", logOption.Error(err))
 		return nil, errx.Trace(err)
 	}
 
 	// Get address
 	address, err := s.repo.FindAddressByCustomerId(customer.ID)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		s.log.Error("error found when get address repo", nlogger.Error(err))
+		s.log.Error("error found when get address repo", logOption.Error(err))
 		return nil, errx.Trace(err)
 	}
 
 	// Get Gold saving account
 	goldSaving, err := s.getListAccountNumber(customer.Cif, customer.UserRefID.String)
 	if err != nil {
-		s.log.Error("error found when get list gold saving service", nlogger.Error(err))
+		s.log.Error("error found when get list gold saving service", logOption.Error(err))
 		return nil, errx.Trace(err)
 	}
 
@@ -73,14 +73,14 @@ func (s *Service) UpdateCustomerProfile(id string, payload dto.UpdateProfilePayl
 	// Get current customer data
 	customer, err := s.repo.FindCustomerByUserRefID(id)
 	if err != nil {
-		s.log.Error("error when get customer data", nlogger.Error(err))
+		s.log.Error("error when get customer data", logOption.Error(err))
 		return errx.Trace(err)
 	}
 
 	// Update customer profile repo
 	err = s.repo.UpdateCustomerProfile(customer, payload)
 	if err != nil {
-		s.log.Error("error found when get customer repo", nlogger.Error(err))
+		s.log.Error("error found when get customer repo", logOption.Error(err))
 		return errx.Trace(err)
 	}
 
@@ -99,7 +99,7 @@ func (s *Service) IsValidPassword(userRefID string, password string) (bool, erro
 	// Check is valid
 	_, err = s.repo.IsValidPassword(c.ID, pw)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		s.log.Error("error when check password match", nlogger.Error(err))
+		s.log.Error("error when check password match", logOption.Error(err))
 		return false, errx.Trace(err)
 	}
 
@@ -123,7 +123,7 @@ func (s *Service) UpdatePassword(userRefID string, payload dto.UpdatePasswordPay
 	// Validate current password
 	_, err = s.repo.IsValidPassword(customer.ID, currentPassword)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		s.log.Error("error found when check password match", nlogger.Error(err))
+		s.log.Error("error found when check password match", logOption.Error(err))
 		return errx.Trace(err)
 	}
 
@@ -138,7 +138,7 @@ func (s *Service) UpdatePassword(userRefID string, payload dto.UpdatePasswordPay
 	// Update password
 	err = s.repo.UpdatePassword(customer.ID, password)
 	if err != nil {
-		s.log.Error("error found when check password match", nlogger.Error(err))
+		s.log.Error("error found when check password match", logOption.Error(err))
 		return errx.Trace(err)
 	}
 
@@ -155,7 +155,7 @@ func (s *Service) UpdateAvatar(payload dto.UpdateAvatarPayload) error {
 	// Find customer
 	customer, err := s.repo.FindCustomerByUserRefID(payload.UserRefID)
 	if err != nil {
-		s.log.Error("error when find current customer", nlogger.Error(err))
+		s.log.Error("error when find current customer", logOption.Error(err))
 		return errx.Trace(err)
 	}
 
@@ -177,7 +177,7 @@ func (s *Service) UpdateAvatar(payload dto.UpdateAvatarPayload) error {
 	// Persist
 	err = s.repo.UpdateCustomerByUserRefID(customer, payload.UserRefID)
 	if err != nil {
-		s.log.Error("error when update photo profile", nlogger.Error(err))
+		s.log.Error("error when update photo profile", logOption.Error(err))
 		return errx.Trace(err)
 	}
 
@@ -188,7 +188,7 @@ func (s *Service) UpdateIdentity(payload dto.UpdateUserFile) error {
 	// Find customer
 	customer, err := s.repo.FindCustomerByUserRefID(payload.UserRefID)
 	if err != nil {
-		s.log.Error("error when find current customer", nlogger.Error(err))
+		s.log.Error("error when find current customer", logOption.Error(err))
 		return errx.Trace(err)
 	}
 
@@ -203,7 +203,7 @@ func (s *Service) UpdateIdentity(payload dto.UpdateUserFile) error {
 	// Persist
 	err = s.repo.UpdateCustomerByUserRefID(customer, payload.UserRefID)
 	if err != nil {
-		s.log.Error("error when update identity photo", nlogger.Error(err))
+		s.log.Error("error when update identity photo", logOption.Error(err))
 		return errx.Trace(err)
 	}
 
@@ -214,7 +214,7 @@ func (s *Service) UpdateNPWP(payload dto.UpdateNPWPPayload) error {
 	// Find customer
 	customer, err := s.repo.FindCustomerByUserRefID(payload.UserRefID)
 	if err != nil {
-		s.log.Error("error when find current customer", nlogger.Error(err))
+		s.log.Error("error when find current customer", logOption.Error(err))
 		return errx.Trace(err)
 	}
 
@@ -231,7 +231,7 @@ func (s *Service) UpdateNPWP(payload dto.UpdateNPWPPayload) error {
 	// Persist
 	err = s.repo.UpdateCustomerByUserRefID(customer, payload.UserRefID)
 	if err != nil {
-		s.log.Error("error found when update NPWP", nlogger.Error(err))
+		s.log.Error("error found when update NPWP", logOption.Error(err))
 		return errx.Trace(err)
 	}
 
@@ -242,7 +242,7 @@ func (s *Service) UpdateSID(payload dto.UpdateSIDPayload) error {
 	// Find customer
 	customer, err := s.repo.FindCustomerByUserRefID(payload.UserRefID)
 	if err != nil {
-		s.log.Error("error when find current customer", nlogger.Error(err))
+		s.log.Error("error when find current customer", logOption.Error(err))
 		return errx.Trace(err)
 	}
 
@@ -259,7 +259,7 @@ func (s *Service) UpdateSID(payload dto.UpdateSIDPayload) error {
 	// Persist
 	err = s.repo.UpdateCustomerByUserRefID(customer, payload.UserRefID)
 	if err != nil {
-		s.log.Error("error found when update SID", nlogger.Error(err))
+		s.log.Error("error found when update SID", logOption.Error(err))
 		return errx.Trace(err)
 	}
 
@@ -270,7 +270,7 @@ func (s *Service) CheckStatus(userRefID string) (*dto.CheckStatusResponse, error
 	// Find customer
 	customer, verification, credential, err := s.repo.FindCombineCustomerDataByUserRefID(userRefID)
 	if err != nil {
-		s.log.Error("error when find current customer", nlogger.Error(err))
+		s.log.Error("error when find current customer", logOption.Error(err))
 		return nil, errx.Trace(err)
 	}
 
@@ -295,31 +295,31 @@ func (s *Service) CheckStatus(userRefID string) (*dto.CheckStatusResponse, error
 	// Check CIF
 	checkCifResponse, err := s.CheckCIF(customer.Cif)
 	if err != nil {
-		s.log.Error("error found when check CIF", nlogger.Error(err))
+		s.log.Error("error found when check CIF", logOption.Error(err))
 		return nil, errx.Trace(err)
 	}
 
 	if checkCifResponse.ResponseCode != "00" {
-		s.log.Error("error response code from check CIF", nlogger.Error(err))
+		s.log.Error("error response code from check CIF", logOption.Error(err))
 		return status, nil
 	}
 
 	if checkCifResponse.Message == "" {
-		s.log.Error("error response message from check CIF", nlogger.Error(err))
+		s.log.Error("error response message from check CIF", logOption.Error(err))
 		return status, nil
 	}
 
 	customerInquiry := &dto.CustomerInquiryVO{}
 	err = json.Unmarshal([]byte(checkCifResponse.Message), customerInquiry)
 	if err != nil {
-		s.log.Error("error marshall customer inquiry", nlogger.Error(err))
+		s.log.Error("error marshall customer inquiry", logOption.Error(err))
 		return nil, constant.UnknownError.Trace()
 	}
 
 	// Update KYC
 	status, err = s.profileUpdateKyc(customerInquiry, verification, status)
 	if err != nil {
-		s.log.Error("error when update kyc", nlogger.Error(err))
+		s.log.Error("error when update kyc", logOption.Error(err))
 		return nil, err
 	}
 
@@ -337,7 +337,7 @@ func (s *Service) profileUpdateKyc(customerInquiry *dto.CustomerInquiryVO, verif
 	verification.KycVerifiedStatus = nval.ParseInt64Fallback(customerInquiry.StatusKyc, 0)
 	err := s.repo.UpdateVerification(verification)
 	if err != nil {
-		s.log.Error("error found when update verification repo", nlogger.Error(err))
+		s.log.Error("error found when update verification repo", logOption.Error(err))
 		return nil, errx.Trace(err)
 	}
 
@@ -356,7 +356,7 @@ func (s *Service) UploadUserFile(payload dto.UploadUserFilePayload) (*dto.Upload
 	// Upload a file
 	uploaded, err := s.AssetUploadFile(filePayload)
 	if err != nil {
-		s.log.Error("error found when call service", nlogger.Error(err))
+		s.log.Error("error found when call service", logOption.Error(err))
 		return nil, errx.Trace(err)
 	}
 
@@ -375,7 +375,7 @@ func (s *Service) UpdateLinkCif(payload dto.UpdateLinkCifPayload) error {
 	customer.Cif = payload.Cif
 	err = s.repo.UpdateCustomerByPhone(customer)
 	if err != nil {
-		s.log.Error("error when update customer cif", nlogger.Error(err))
+		s.log.Error("error when update customer cif", logOption.Error(err))
 		return errx.Trace(err)
 	}
 
@@ -383,12 +383,10 @@ func (s *Service) UpdateLinkCif(payload dto.UpdateLinkCifPayload) error {
 }
 
 func (s *Service) UnlinkCif(payload dto.UnlinkCifPayload) error {
-	ctx := s.ctx
-
 	// Get customer by phone
 	customer, err := s.repo.FindCustomerByPhoneOrCIF(payload.Cif)
 	if err != nil {
-		s.log.Error("error when find current customer", nlogger.Error(err))
+		s.log.Error("error when find current customer", logOption.Error(err))
 		err = handleErrorRepository(err, constant.ResourceNotFoundError)
 		return errx.Trace(err)
 	}
@@ -396,7 +394,7 @@ func (s *Service) UnlinkCif(payload dto.UnlinkCifPayload) error {
 	// Get verification
 	verification, err := s.repo.FindVerificationByCustomerID(customer.ID)
 	if err != nil {
-		s.log.Error("error when find current verification", nlogger.Error(err))
+		s.log.Error("error when find current verification", logOption.Error(err))
 		err = handleErrorRepository(err, constant.ResourceNotFoundError)
 		return errx.Trace(err)
 	}
@@ -404,12 +402,12 @@ func (s *Service) UnlinkCif(payload dto.UnlinkCifPayload) error {
 	// Get verification
 	credential, err := s.repo.FindCredentialByCustomerID(customer.ID)
 	if err != nil {
-		s.log.Error("error when find credential customer", nlogger.Error(err))
+		s.log.Error("error when find credential customer", logOption.Error(err))
 		err = handleErrorRepository(err, constant.ResourceNotFoundError)
 		return errx.Trace(err)
 	}
 
-	tx, err := s.repo.conn.BeginTxx(ctx, nil)
+	tx, err := s.repo.conn.BeginTxx(s.ctx, nil)
 	if err != nil {
 		return errx.Trace(err)
 	}
@@ -420,7 +418,7 @@ func (s *Service) UnlinkCif(payload dto.UnlinkCifPayload) error {
 	customer.Cif = ""
 	err = s.repo.UpdateCustomerByUserRefID(customer, customer.UserRefID.String)
 	if err != nil {
-		s.log.Error("error when update customer cif", nlogger.Error(err))
+		s.log.Error("error when update customer cif", logOption.Error(err))
 		return errx.Trace(err)
 	}
 
@@ -432,7 +430,7 @@ func (s *Service) UnlinkCif(payload dto.UnlinkCifPayload) error {
 	}
 	err = s.repo.UpdateCredential(credential)
 	if err != nil {
-		s.log.Error("error when update customer credential pin", nlogger.Error(err))
+		s.log.Error("error when update customer credential pin", logOption.Error(err))
 		return errx.Trace(err)
 	}
 
@@ -441,7 +439,7 @@ func (s *Service) UnlinkCif(payload dto.UnlinkCifPayload) error {
 	verification.FinancialTransactionActivatedAt = sql.NullTime{}
 	err = s.repo.UpdateVerification(verification)
 	if err != nil {
-		s.log.Error("error when update customer verification financial", nlogger.Error(err))
+		s.log.Error("error when update customer verification financial", logOption.Error(err))
 		return errx.Trace(err)
 	}
 
@@ -468,7 +466,7 @@ func (s *Service) composeProfileResponse(customer *model.Customer, address *mode
 			JenisKelamin:              customer.Profile.Gender,
 			TempatLahir:               customer.Profile.PlaceOfBirth,
 			TglLahir:                  customer.Profile.DateOfBirth,
-			ReferralCode:              customer.ReferralCode,
+			ReferralCode:              customer.ReferralCode.String,
 			NoHP:                      customer.Phone,
 			Kewarganegaraan:           customer.Profile.Nationality,
 			NoIdentitas:               customer.IdentityNumber,

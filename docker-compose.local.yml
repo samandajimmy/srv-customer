@@ -50,19 +50,19 @@ services:
   # Services section
   # ----------------
   customer-svc:
-    container_name: "l-${PROJECT_SLUG}-${CUSTOMER_SVC_SLUG}-svc"
+    container_name: "l-${PROJECT_SLUG}-${SLUG}-svc"
     env_file: .env
     environment:
-      MAIN_DIR: "./cmd/${CUSTOMER_SVC_SLUG}"
+      MAIN_DIR: "./cmd/${SLUG}"
     build:
       context: .
       dockerfile: ./build/local-svc/Dockerfile
       args:
-        ARG_SERVICE_SLUG: "${CUSTOMER_SVC_SLUG}"
-        ARG_PORT: "${CUSTOMER_SVC_PORT}"
+        ARG_SERVICE_SLUG: "${SLUG}"
+        ARG_PORT: "${PORT}"
     ports:
-      - "127.0.0.1:${CUSTOMER_SVC_PUBLISH_PORT}:${CUSTOMER_SVC_PORT}"
-      - "127.0.0.1:${CUSTOMER_SVC_DEBUG_PORT}:2345"
+      - "127.0.0.1:${PUBLISH_PORT}:${PORT}"
+      - "127.0.0.1:${DEBUG_PORT}:2345"
     volumes:
       - ./internal/pkg:/usr/src/app/internal/pkg
       - ./internal/dto:/usr/src/app/internal/dto
@@ -70,8 +70,8 @@ services:
       - ./go.sum:/usr/src/app/go.sum
       - ./vendor:/usr/src/app/vendor
       # Service specific
-      - ./cmd/${CUSTOMER_SVC_SLUG}:/usr/src/app/cmd/${CUSTOMER_SVC_SLUG}
-      - ./internal/${CUSTOMER_SVC_SLUG}:/usr/src/app/internal/${CUSTOMER_SVC_SLUG}
+      - ./cmd/${SLUG}:/usr/src/app/cmd/${SLUG}
+      - ./internal/${SLUG}:/usr/src/app/internal/${SLUG}
     working_dir: /usr/src/app
     networks:
       local:

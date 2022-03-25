@@ -1,8 +1,6 @@
 package customer
 
 import (
-	"fmt"
-	"github.com/google/uuid"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/constant"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/dto"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/ncore"
@@ -104,18 +102,4 @@ func GetSubject(rx *nhttp.Request) *dto.Subject {
 		}
 	}
 	return subject
-}
-
-func GetRequestID(rx *nhttp.Request) string {
-	reqID, ok := rx.GetContextValue(constant.RequestIDContextKey).(string)
-	if !ok {
-		// Generate new request id
-		id, err := uuid.NewUUID()
-		if err != nil {
-			panic(fmt.Errorf("unable to generate new request id. %w", err))
-		}
-		return id.String()
-	}
-
-	return reqID
 }

@@ -4,7 +4,7 @@ import (
 	"errors"
 	"github.com/gorilla/mux"
 	"github.com/nbs-go/errx"
-	"github.com/nbs-go/nlogger/v2"
+	logOption "github.com/nbs-go/nlogger/v2/option"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/validate"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/dto"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nhttp"
@@ -28,19 +28,19 @@ func (c *FavoriteController) PostCreate(rx *nhttp.Request) (*nhttp.Response, err
 	var payload dto.CreateFavoritePayload
 	err := rx.ParseJSONBody(&payload)
 	if err != nil {
-		log.Error("Error when parse json body from request", nlogger.Error(err))
+		log.Error("Error when parse json body from request", logOption.Error(err))
 		return nil, nhttp.BadRequestError.Wrap(err)
 	}
 
 	// Validate
 	err = validate.PostCreateFavorite(&payload)
 	if err != nil {
-		log.Error("Bad request validate payload", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("Bad request validate payload", logOption.Error(err), logOption.Context(ctx))
 		return nil, nhttp.BadRequestError.Trace(errx.Source(err))
 	}
 
 	// Set subject and requestID
-	payload.RequestID = GetRequestID(rx)
+	payload.RequestID = rx.GetRequestId()
 	payload.Subject = GetSubject(rx)
 	payload.UserRefID = GetUserRefID(rx)
 
@@ -51,7 +51,7 @@ func (c *FavoriteController) PostCreate(rx *nhttp.Request) (*nhttp.Response, err
 	// Call service
 	resp, err := svc.CreateFavorite(&payload)
 	if err != nil {
-		log.Error("error when call list favorite service", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("error when call list favorite service", logOption.Error(err), logOption.Context(ctx))
 		return nil, err
 	}
 
@@ -78,7 +78,7 @@ func (c *FavoriteController) GetList(rx *nhttp.Request) (*nhttp.Response, error)
 	// Call service
 	resp, err := svc.ListFavorite(userRefID, payload)
 	if err != nil {
-		log.Error("error when call list transaction favorite service", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("error when call list transaction favorite service", logOption.Error(err), logOption.Context(ctx))
 		return nil, err
 	}
 
@@ -99,7 +99,7 @@ func (c *FavoriteController) Delete(rx *nhttp.Request) (*nhttp.Response, error) 
 
 	// Set payload
 	var payload dto.GetDetailFavoritePayload
-	payload.RequestID = GetRequestID(rx)
+	payload.RequestID = rx.GetRequestId()
 	payload.UserRefID = GetUserRefID(rx)
 	payload.XID = xid
 

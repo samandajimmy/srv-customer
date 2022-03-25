@@ -3,7 +3,7 @@ package customer
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/nbs-go/nlogger/v2"
+	logOption "github.com/nbs-go/nlogger/v2/option"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/constant"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/dto"
 )
@@ -11,7 +11,7 @@ import (
 func (s *Service) CacheGet(key string) (string, error) {
 	result, err := s.redis.Get(key)
 	if err != nil {
-		s.log.Error("Error when get Cache: %v.", nlogger.Format(key), nlogger.Error(err), nlogger.Context(s.ctx))
+		s.log.Error("Error when get Cache: %v.", logOption.Format(key), logOption.Error(err))
 		return "", err
 	}
 
@@ -21,7 +21,7 @@ func (s *Service) CacheGet(key string) (string, error) {
 func (s *Service) CacheSetThenGet(key string, value string, expire int64) (string, error) {
 	result, err := s.redis.SetThenGet(key, value, expire)
 	if err != nil {
-		s.log.Error("error when set cache %v", nlogger.Format(key), nlogger.Error(err), nlogger.Context(s.ctx))
+		s.log.Error("error when set cache %v", logOption.Format(key), logOption.Error(err))
 		return "", err
 	}
 
@@ -33,7 +33,7 @@ func (s *Service) CacheGetJwt(key string) string {
 
 	token, err := s.CacheGet(fullKey)
 	if err != nil {
-		s.log.Error("error when get cache JWT: %v.", nlogger.Format(fullKey), nlogger.Error(err), nlogger.Context(s.ctx))
+		s.log.Error("error when get cache JWT: %v", logOption.Format(fullKey), logOption.Error(err))
 		return ""
 	}
 
@@ -46,7 +46,7 @@ func (s *Service) CacheGetGoldSavings(cif string) (*dto.GoldSavingVO, error) {
 	// Get cache gold saving
 	data, err := s.CacheGet(key)
 	if err != nil {
-		s.log.Error("error found when get cache", nlogger.Error(err), nlogger.Context(s.ctx))
+		s.log.Error("error found when get cache", logOption.Error(err))
 		return nil, err
 	}
 
@@ -54,7 +54,7 @@ func (s *Service) CacheGetGoldSavings(cif string) (*dto.GoldSavingVO, error) {
 
 	err = json.Unmarshal([]byte(data), &goldSaving)
 	if err != nil {
-		s.log.Error("error found when unmarshal data", nlogger.Error(err), nlogger.Context(s.ctx))
+		s.log.Error("error found when unmarshal data", logOption.Error(err))
 		return nil, err
 	}
 

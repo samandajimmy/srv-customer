@@ -2,7 +2,7 @@ package customer
 
 import (
 	"github.com/nbs-go/errx"
-	"github.com/nbs-go/nlogger/v2"
+	logOption "github.com/nbs-go/nlogger/v2/option"
 	"github.com/rs/xid"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/constant"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/dto"
@@ -28,7 +28,7 @@ func (s *Service) AssetUploadFile(req dto.UploadRequest) (*dto.UploadResponse, e
 	// Upload file
 	err = s.minio.Upload(req.File.File, req.File.MimeType, dest)
 	if err != nil {
-		s.log.Error("unable to upload file", nlogger.Error(err))
+		s.log.Error("unable to upload file", logOption.Error(err))
 		return nil, err
 	}
 
@@ -56,7 +56,7 @@ func (s *Service) AssetRemoveFile(fileName string, assetType constant.AssetType)
 	// Remove object
 	err = s.minio.Remove(directory + fileName)
 	if err != nil {
-		s.log.Error("error found when removing object", nlogger.Error(err), nlogger.Context(s.ctx))
+		s.log.Error("error found when removing object", logOption.Error(err), logOption.Context(s.ctx))
 		return errx.Trace(err)
 	}
 
@@ -99,7 +99,7 @@ func (s *Service) AssetGetPublicURL(assetType constant.AssetType, fileName strin
 }
 
 func (s *Service) buildURL(filePath string) string {
-	return s.config.AssetURL + "/" + filePath
+	return s.config.MinioURL + "/" + filePath
 }
 
 func (s *Service) AssetDirectory(assetType int) (string, error) {

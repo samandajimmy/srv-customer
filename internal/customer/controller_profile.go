@@ -3,7 +3,7 @@ package customer
 import (
 	"errors"
 	"github.com/nbs-go/errx"
-	"github.com/nbs-go/nlogger/v2"
+	logOption "github.com/nbs-go/nlogger/v2/option"
 	"net/http"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/constant"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/validate"
@@ -35,7 +35,7 @@ func (c *ProfileController) GetDetail(rx *nhttp.Request) (*nhttp.Response, error
 	// Call service
 	resp, err := svc.CustomerProfile(userRefID)
 	if err != nil {
-		log.Error("error when call customer profile service", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("error when call customer profile service", logOption.Error(err), logOption.Context(ctx))
 		return nil, err
 	}
 
@@ -53,7 +53,7 @@ func (c *ProfileController) PutUpdate(rx *nhttp.Request) (*nhttp.Response, error
 	var payload dto.UpdateProfilePayload
 	err := rx.ParseJSONBody(&payload)
 	if err != nil {
-		log.Error("error when parse json body", nlogger.Context(ctx))
+		log.Error("error when parse json body", logOption.Context(ctx))
 		return nil, nhttp.BadRequestError.Wrap(err)
 	}
 
@@ -71,7 +71,7 @@ func (c *ProfileController) PutUpdate(rx *nhttp.Request) (*nhttp.Response, error
 	// Call service
 	err = svc.UpdateCustomerProfile(userRefID, payload)
 	if err != nil {
-		log.Error("error when processing service", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("error when processing service", logOption.Error(err), logOption.Context(ctx))
 		return nil, err
 	}
 
@@ -107,7 +107,7 @@ func (c *ProfileController) PostUpdateAvatar(rx *nhttp.Request) (*nhttp.Response
 	// Upload Userfile
 	userFile, err := svc.UploadUserFile(payloadUserFile)
 	if err != nil {
-		log.Error("error found when upload user file", nlogger.Error(err))
+		log.Error("error found when upload user file", logOption.Error(err))
 		return nil, err
 	}
 
@@ -125,7 +125,7 @@ func (c *ProfileController) PostUpdateAvatar(rx *nhttp.Request) (*nhttp.Response
 	// Call service
 	err = svc.UpdateAvatar(updateAvatar)
 	if err != nil {
-		log.Error("error when call update avatar service", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("error when call update avatar service", logOption.Error(err), logOption.Context(ctx))
 		return nil, errx.Trace(err)
 	}
 
@@ -161,7 +161,7 @@ func (c *ProfileController) PostUpdateKTP(rx *nhttp.Request) (*nhttp.Response, e
 	// Upload Userfile
 	userFile, err := svc.UploadUserFile(payloadUserFile)
 	if err != nil {
-		log.Error("error found when upload user file", nlogger.Error(err))
+		log.Error("error found when upload user file", logOption.Error(err))
 		return nil, err
 	}
 
@@ -172,7 +172,7 @@ func (c *ProfileController) PostUpdateKTP(rx *nhttp.Request) (*nhttp.Response, e
 		AssetType: constant.AssetKTP,
 	})
 	if err != nil {
-		log.Error("error when call update avatar service", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("error when call update avatar service", logOption.Error(err), logOption.Context(ctx))
 		return nil, errx.Trace(err)
 	}
 
@@ -208,7 +208,7 @@ func (c *ProfileController) PostUpdateNPWP(rx *nhttp.Request) (*nhttp.Response, 
 	// Upload userfile
 	userFile, err := svc.UploadUserFile(payloadUserFile)
 	if err != nil {
-		log.Error("error found when upload user file", nlogger.Error(err))
+		log.Error("error found when upload user file", logOption.Error(err))
 		return nil, err
 	}
 
@@ -229,7 +229,7 @@ func (c *ProfileController) PostUpdateNPWP(rx *nhttp.Request) (*nhttp.Response, 
 	// Call service
 	err = svc.UpdateNPWP(payload)
 	if err != nil {
-		log.Error("error when call update npwp service", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("error when call update npwp service", logOption.Error(err), logOption.Context(ctx))
 		return nil, errx.Trace(err)
 	}
 
@@ -264,7 +264,7 @@ func (c *ProfileController) PostUpdateSID(rx *nhttp.Request) (*nhttp.Response, e
 	// Upload Userfile
 	userFile, err := svc.UploadUserFile(payloadUserFile)
 	if err != nil {
-		log.Error("error found when upload user file", nlogger.Error(err))
+		log.Error("error found when upload user file", logOption.Error(err))
 		return nil, err
 	}
 
@@ -285,7 +285,7 @@ func (c *ProfileController) PostUpdateSID(rx *nhttp.Request) (*nhttp.Response, e
 	// Call service
 	err = svc.UpdateSID(payload)
 	if err != nil {
-		log.Error("error when call update SID service", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("error when call update SID service", logOption.Error(err), logOption.Context(ctx))
 		return nil, errx.Trace(err)
 	}
 
@@ -306,7 +306,7 @@ func (c *ProfileController) GetStatus(rx *nhttp.Request) (*nhttp.Response, error
 	// Call service
 	resp, err := svc.CheckStatus(userRefID)
 	if err != nil {
-		log.Error("error found when call check status service", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("error found when call check status service", logOption.Error(err), logOption.Context(ctx))
 		return nil, err
 	}
 
@@ -321,7 +321,7 @@ func (c *ProfileController) PostUpdateLinkCif(rx *nhttp.Request) (*nhttp.Respons
 	var payload dto.UpdateLinkCifPayload
 	err := rx.ParseJSONBody(&payload)
 	if err != nil {
-		log.Error("error when parse json body", nlogger.Context(ctx))
+		log.Error("error when parse json body", logOption.Context(ctx))
 		return nil, nhttp.BadRequestError.Wrap(err)
 	}
 
@@ -339,7 +339,7 @@ func (c *ProfileController) PostUpdateLinkCif(rx *nhttp.Request) (*nhttp.Respons
 	// Call service
 	err = svc.UpdateLinkCif(payload)
 	if err != nil {
-		log.Error("error found when call check status service", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("error found when call check status service", logOption.Error(err), logOption.Context(ctx))
 		return nil, err
 	}
 
@@ -354,7 +354,7 @@ func (c *ProfileController) PostUnlinkCif(rx *nhttp.Request) (*nhttp.Response, e
 	var payload dto.UnlinkCifPayload
 	err := rx.ParseJSONBody(&payload)
 	if err != nil {
-		log.Error("error when parse json body", nlogger.Context(ctx))
+		log.Error("error when parse json body", logOption.Context(ctx))
 		return nil, nhttp.BadRequestError.Wrap(err)
 	}
 
@@ -372,7 +372,7 @@ func (c *ProfileController) PostUnlinkCif(rx *nhttp.Request) (*nhttp.Response, e
 	// Call service
 	err = svc.UnlinkCif(payload)
 	if err != nil {
-		log.Error("error found when call check status service", nlogger.Error(err), nlogger.Context(ctx))
+		log.Error("error found when call check status service", logOption.Error(err), logOption.Context(ctx))
 		return nil, err
 	}
 

@@ -61,10 +61,12 @@ github.com/minio/minio-go v6.0.14+incompatible h1:fnV+GD28LeqdN6vT2XdGKW8Qe/IfjJ
 github.com/minio/minio-go v6.0.14+incompatible/go.mod h1:7guKYtitv8dktvNUGrhzmNlA5wrAABTQXCoesZdFQO8=
 github.com/mitchellh/go-homedir v1.1.0 h1:lukF9ziXFxDFPkA1vsr5zpc1XuPDn/wFntq5mG+4E0Y=
 github.com/mitchellh/go-homedir v1.1.0/go.mod h1:SfyaCUpYCn1Vlf4IUYiD9fPX4A5wJrkLzIz1N1q0pr0=
-github.com/nbs-go/errx v0.5.1 h1:lgoC1lB9f+d42rm1oH30p8m8Ed43x8hDh2QxVFj1tSc=
-github.com/nbs-go/errx v0.5.1/go.mod h1:XZsCrIXn5Ox+ArE3GjEMEZnsAXhBDy+s/IFTstY7PAw=
-github.com/nbs-go/nlogger/v2 v2.1.0 h1:We9x3Z6i4quinCI5FyAJDKPBZ7DQS6hi3nC/yA+SJ4k=
-github.com/nbs-go/nlogger/v2 v2.1.0/go.mod h1:XOZewZpRKff0DQXmEZBI2o7APSg1SEwCv8nxAkCZ1cc=
+github.com/nbs-go/errx v0.6.0 h1:C4dh3zM5nKNJjdE1LtrHx+TzlUx7X403BsPn8h/68Dk=
+github.com/nbs-go/errx v0.6.0/go.mod h1:XZsCrIXn5Ox+ArE3GjEMEZnsAXhBDy+s/IFTstY7PAw=
+github.com/nbs-go/nlogger-json v0.1.0 h1:CXZhvinFFCJjX8NXEcRcGxYEZHeR6I5QtHgv8MgLBAo=
+github.com/nbs-go/nlogger-json v0.1.0/go.mod h1:dfdMzKrJd+zxFeW+3aHNWhiJQ1prXWjzUiFBckSY6dk=
+github.com/nbs-go/nlogger/v2 v2.2.2 h1:TYDTjlAmsKVQzUGTdgR/HiAfFIA224wwEyQrciFgcsw=
+github.com/nbs-go/nlogger/v2 v2.2.2/go.mod h1:XOZewZpRKff0DQXmEZBI2o7APSg1SEwCv8nxAkCZ1cc=
 github.com/nbs-go/nsql v0.6.0 h1:HYpQIyZaRZhUtesLEEGtlrlo2nYbmSvtTGGoo/W75pA=
 github.com/nbs-go/nsql v0.6.0/go.mod h1:LIXTjLkKeArePk13tpoqK3w1iVOrlITRnTqeHmNMwOw=
 github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=

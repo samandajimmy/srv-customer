@@ -3,6 +3,7 @@ package nhttp
 import (
 	"errors"
 	"github.com/nbs-go/nlogger/v2"
+	logOption "github.com/nbs-go/nlogger/v2/option"
 	"io"
 	"net/http"
 )
@@ -139,6 +140,6 @@ func GetImages(r *http.Request, config ...UploadRule) (map[string]MultipartFile,
 
 func closeFile(c io.Closer) {
 	if err := c.Close(); err != nil {
-		log.Error("cannot close the file", nlogger.Error(err))
+		log.Error("cannot close the file", logOption.Error(err))
 	}
 }
