@@ -99,6 +99,11 @@ func (s *Service) UpdatePhoneNumber(payload dto.ChangePhoneNumberPayload) (*dto.
 
 	// Check if customer has cif
 	if customer.Cif != "" {
+
+		// Format date of birth  to YYYY-MM-DD
+		dob := strings.Split(payload.DateOfBirth, "-")
+		payload.DateOfBirth = fmt.Sprintf("%s-%s-%s", dob[2], dob[1], dob[0])
+
 		return s.handleChangePhoneNumberCore(dto.ChangePhoneNumberRequestCore{
 			CurrentPhoneNumber: payload.CurrentPhoneNumber,
 			NewPhoneNumber:     payload.NewPhoneNumber,
