@@ -302,7 +302,7 @@ func (s *Service) RegisterStepOne(payload dto.SendOTPPayload) (*dto.SendOTPResul
 		}
 	}
 	if phoneExist != nil {
-		s.log.Debug("phone number already registered", logOption.Error(err))
+		s.log.Debug("phone number already registered")
 		return nil, constant.InvalidPasswordError.Trace()
 	}
 
@@ -349,7 +349,7 @@ func (s *Service) RegisterResendOTP(payload dto.RegisterResendOTPPayload) (*dto.
 		}
 	}
 	if phoneExist != nil {
-		s.log.Debug("Phone already registered", logOption.Error(err))
+		s.log.Debug("Phone already registered")
 		return nil, constant.InvalidPasswordError.Trace()
 	}
 
@@ -391,7 +391,7 @@ func (s *Service) RegisterStepTwo(payload dto.RegisterVerifyOTPPayload) (*dto.Re
 		}
 	}
 	if phoneExist != nil {
-		s.log.Debug("phone already registered", logOption.Error(err))
+		s.log.Debug("phone already registered")
 		return nil, constant.InvalidPasswordError.Trace()
 	}
 
