@@ -403,17 +403,17 @@ func (s *Service) RegisterStepTwo(payload dto.RegisterVerifyOTPPayload) (*dto.Re
 
 	// handle Expired OTP
 	if resp.ResponseCode == "12" {
-		s.log.Errorf("Expired OTP. Phone Number : %s", payload.PhoneNumber, logOption.Error(err))
+		s.log.Errorf("Expired OTP. Phone Number : %s", payload.PhoneNumber)
 		return nil, constant.ExpiredOTPError.Trace()
 	}
 	// handle Wrong OTP
 	if resp.ResponseCode == "14" {
-		s.log.Errorf("Wrong OTP. Phone Number : %s", payload.PhoneNumber, logOption.Error(err))
+		s.log.Errorf("Wrong OTP. Phone Number : %s", payload.PhoneNumber)
 		return nil, constant.IncorrectOTPError.Trace()
 	}
 
 	if resp.ResponseCode != "00" {
-		s.log.Errorf("Wrong OTP. Phone Number : %s", payload.PhoneNumber, logOption.Error(err))
+		s.log.Errorf("Wrong OTP. Phone Number : %s", payload.PhoneNumber)
 		return nil, constant.IncorrectOTPError.Trace()
 	}
 
