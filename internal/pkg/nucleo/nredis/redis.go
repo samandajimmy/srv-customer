@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/nbs-go/errx"
+	logOption "github.com/nbs-go/nlogger/v2/option"
 
 	"github.com/gomodule/redigo/redis"
 	"github.com/nbs-go/nlogger/v2"
@@ -20,7 +21,7 @@ func NewNucleoRedis(network string, host string, port string, password string) *
 	// Init new pool redis
 	pool, err := DialClient(network, host, port, password)
 	if err != nil {
-		log.Errorf("Connecting to redis client is failed err: %s", err)
+		log.Error("Connecting to redis client is failed", logOption.Error(err))
 		return nil
 	}
 
@@ -61,11 +62,11 @@ func (c *Redis) Ping() (string, error) {
 
 func (c *Redis) Get(key string) (string, error) {
 	result, err := redis.String(c.redis.Do("GET", key))
-	if err == redis.ErrNil {
+	if errors.Is(err, redis.ErrNil) {
 		log.Errorf("Key is empty. key: %s", key)
 		return "", nil
 	} else if err != nil {
-		log.Errorf("Cannot get value from key. err: %s", err)
+		log.Error("Cannot get value from key", logOption.Error(err))
 		return "", nil
 	}
 
@@ -77,7 +78,7 @@ func (c *Redis) SetThenGet(key string, value string, expire int64) (string, erro
 	// Set value
 	_, err := c.redis.Do("SET", key, value)
 	if err != nil {
-		log.Errorf("Failed to set value. err: %s", err)
+		log.Error("Failed to set value", logOption.Error(err))
 		return "", errx.Trace(err)
 	}
 
@@ -85,7 +86,7 @@ func (c *Redis) SetThenGet(key string, value string, expire int64) (string, erro
 	_, err = c.redis.Do("EXPIRE", key, expire)
 
 	if err != nil {
-		log.Errorf("Failed to set expire. err: %s", err)
+		log.Error("Failed to set expire", logOption.Error(err))
 		return "", errx.Trace(err)
 	}
 
@@ -96,7 +97,7 @@ func (c *Redis) SetThenGet(key string, value string, expire int64) (string, erro
 		log.Errorf("Key is empty. key: %s", key)
 		return "", nil
 	} else if err != nil {
-		log.Errorf("Cannot get value from key. err: %s", err)
+		log.Error("Cannot get value from key", logOption.Error(err))
 		return "", errx.Trace(err)
 	}
 

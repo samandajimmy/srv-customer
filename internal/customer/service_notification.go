@@ -89,7 +89,7 @@ func (s *Service) SendEmail(payload dto.EmailPayload) (*http.Response, error) {
 	// Send email
 	resp, err := s.CreateNotificationPostData(sp)
 	if err != nil {
-		s.log.Errorf("Error when send email. %v", err)
+		s.log.Error("Error when send email", logOption.Error(err))
 		return resp, err
 	}
 
