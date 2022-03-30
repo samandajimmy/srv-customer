@@ -278,32 +278,30 @@ func (s *Service) Register(payload dto.RegisterPayload) (*dto.RegisterResult, er
 func (s *Service) RegisterStepOne(payload dto.SendOTPPayload) (*dto.SendOTPResult, error) {
 	// validate email
 	emailExist, err := s.repo.FindCustomerByEmail(payload.Email)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			emailExist = nil
-		} else {
-			s.log.Error("error when find customer by email", logOption.Error(err))
-			return nil, errx.Trace(err)
-		}
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		s.log.Error("error when find customer by email", logOption.Error(err))
+		return nil, errx.Trace(err)
+	}
+	if err != nil && errors.Is(err, sql.ErrNoRows) {
+		emailExist = nil
 	}
 	if emailExist != nil {
-		s.log.Debugf("email already registered. %s", payload.Email)
-		return nil, constant.EmailHasBeenRegisteredError.Trace()
+		s.log.Debugf("email already registered")
+		return nil, constant.EmailHasBeenRegisteredError
 	}
 
 	// validate phone
 	phoneExist, err := s.repo.FindCustomerByPhone(payload.PhoneNumber)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			phoneExist = nil
-		} else {
-			s.log.Error("failed when find customer by phone", logOption.Error(err))
-			return nil, errx.Trace(err)
-		}
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		s.log.Error("failed when find customer by phone", logOption.Error(err))
+		return nil, errx.Trace(err)
+	}
+	if err != nil && errors.Is(err, sql.ErrNoRows) {
+		phoneExist = nil
 	}
 	if phoneExist != nil {
-		s.log.Debug("phone number already registered", logOption.Error(err))
-		return nil, constant.InvalidPasswordError.Trace()
+		s.log.Debug("phone number already registered")
+		return nil, constant.PhoneHasBeenRegisteredError
 	}
 
 	sendOtpRequest := dto.SendOTPRequest{
@@ -322,35 +320,30 @@ func (s *Service) RegisterStepOne(payload dto.SendOTPPayload) (*dto.SendOTPResul
 		return nil, constant.OTPReachResendLimitError.Trace()
 	}
 
-	if resp.Message != "" {
-		s.log.Debugf("Debug: RegisterStepOne OTP CODE %s", resp.Message)
-	}
-
 	return &dto.SendOTPResult{
 		Action: resp.ResponseDesc,
 	}, nil
 }
 
 func (s *Service) RegisterResendOTP(payload dto.RegisterResendOTPPayload) (*dto.RegisterResendOTPResult, error) {
+	// validate phone
+	phoneExist, err := s.repo.FindCustomerByPhone(payload.PhoneNumber)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		s.log.Error("failed when find customer by phone", logOption.Error(err))
+		return nil, errx.Trace(err)
+	}
+	if err != nil && errors.Is(err, sql.ErrNoRows) {
+		phoneExist = nil
+	}
+	if phoneExist != nil {
+		s.log.Debug("phone number already registered")
+		return nil, constant.PhoneHasBeenRegisteredError
+	}
+
 	// Set request
 	request := dto.SendOTPRequest{
 		PhoneNumber: payload.PhoneNumber,
 		RequestType: constant.RequestTypeRegister,
-	}
-
-	// validate phone
-	phoneExist, err := s.repo.FindCustomerByPhone(payload.PhoneNumber)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			phoneExist = nil
-		} else {
-			s.log.Error("failed when query check phone.", logOption.Error(err))
-			return nil, err
-		}
-	}
-	if phoneExist != nil {
-		s.log.Debug("Phone already registered", logOption.Error(err))
-		return nil, constant.InvalidPasswordError.Trace()
 	}
 
 	// Send OTP To Phone Number
@@ -374,12 +367,6 @@ func (s *Service) RegisterResendOTP(payload dto.RegisterResendOTPPayload) (*dto.
 }
 
 func (s *Service) RegisterStepTwo(payload dto.RegisterVerifyOTPPayload) (*dto.RegisterVerifyOTPResult, error) {
-	// Set request
-	request := dto.VerifyOTPRequest{
-		PhoneNumber: payload.PhoneNumber,
-		Token:       payload.OTP,
-		RequestType: constant.RequestTypeRegister,
-	}
 	// validate phone
 	phoneExist, err := s.repo.FindCustomerByPhone(payload.PhoneNumber)
 	if err != nil {
@@ -391,8 +378,15 @@ func (s *Service) RegisterStepTwo(payload dto.RegisterVerifyOTPPayload) (*dto.Re
 		}
 	}
 	if phoneExist != nil {
-		s.log.Debug("phone already registered", logOption.Error(err))
+		s.log.Debug("phone already registered")
 		return nil, constant.InvalidPasswordError.Trace()
+	}
+
+	// Set request
+	request := dto.VerifyOTPRequest{
+		PhoneNumber: payload.PhoneNumber,
+		Token:       payload.OTP,
+		RequestType: constant.RequestTypeRegister,
 	}
 
 	// Verify OTP To Phone Number
@@ -403,17 +397,17 @@ func (s *Service) RegisterStepTwo(payload dto.RegisterVerifyOTPPayload) (*dto.Re
 
 	// handle Expired OTP
 	if resp.ResponseCode == "12" {
-		s.log.Errorf("Expired OTP. Phone Number : %s", payload.PhoneNumber, logOption.Error(err))
+		s.log.Errorf("Expired OTP. Phone Number : %s", payload.PhoneNumber)
 		return nil, constant.ExpiredOTPError.Trace()
 	}
 	// handle Wrong OTP
 	if resp.ResponseCode == "14" {
-		s.log.Errorf("Wrong OTP. Phone Number : %s", payload.PhoneNumber, logOption.Error(err))
+		s.log.Errorf("Wrong OTP. Phone Number : %s", payload.PhoneNumber)
 		return nil, constant.IncorrectOTPError.Trace()
 	}
 
 	if resp.ResponseCode != "00" {
-		s.log.Errorf("Wrong OTP. Phone Number : %s", payload.PhoneNumber, logOption.Error(err))
+		s.log.Errorf("Wrong OTP. Phone Number : %s", payload.PhoneNumber)
 		return nil, constant.IncorrectOTPError.Trace()
 	}
 

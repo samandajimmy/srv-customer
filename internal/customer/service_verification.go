@@ -64,7 +64,7 @@ func (s *Service) VerifyEmailCustomer(payload dto.VerificationPayload) (string, 
 	// Update verification
 	err = s.repo.UpdateVerificationByCustomerID(ver)
 	if err != nil {
-		s.log.Errorf("Error when update verification. %v", err)
+		s.log.Error("Error when update verification", logOption.Error(err))
 		return alreadyVerifiedView, errx.Trace(err)
 	}
 

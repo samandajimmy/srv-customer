@@ -75,6 +75,8 @@ var RegistrationFailedError = b.NewError("E_REG_1", "Registration failed",
 	nhttp.WithStatus(http.StatusBadRequest))
 var EmailHasBeenRegisteredError = b.NewError("E_REG_2", "Email sudah terdaftar",
 	nhttp.WithStatus(http.StatusConflict))
+var PhoneHasBeenRegisteredError = b.NewError("E_REG_3", "No HP sudah terdaftar",
+	nhttp.WithStatus(http.StatusConflict))
 
 // OTP Errors
 

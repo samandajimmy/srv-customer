@@ -885,7 +885,7 @@ func (s *Service) HandleSynchronizePassword(customer *model.Customer, password s
 
 	// handle status error
 	if resp.Status != "success" {
-		s.log.Error("Get Error from SynchronizePassword.", logOption.Error(err))
+		s.log.Error("Get Error from SynchronizePassword")
 		return nhttp.InternalError.Trace(errx.Errorf(resp.Message))
 	}
 
