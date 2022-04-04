@@ -206,7 +206,7 @@ func (s *Service) Login(payload dto.LoginPayload) (*dto.LoginResult, error) {
 		// Get gold saving account
 		goldSaving, errGs := s.getListAccountNumber(customer.Cif, customer.UserRefID.String)
 		if errGs != nil {
-			return nil, errx.Trace(err)
+			return nil, errx.Trace(errGs)
 		}
 
 		gs = &dto.GoldSavingVO{
