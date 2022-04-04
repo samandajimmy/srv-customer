@@ -51,6 +51,10 @@ func (s *Service) CacheGetGoldSavings(cif string) (*dto.GoldSavingVO, error) {
 	}
 
 	goldSaving := dto.GoldSavingVO{}
+	// Handle if data is empty
+	if data == "" {
+		return &goldSaving, nil
+	}
 
 	err = json.Unmarshal([]byte(data), &goldSaving)
 	if err != nil {
