@@ -59,7 +59,7 @@ func (rc *RepositoryContext) InsertOrUpdateFinancialData(row *model.FinancialDat
 
 	err = rc.CreateFinancialData(row)
 	if err != nil {
-		rc.log.Error("cannot create financial data", logOption.Error(err), logOption.Context(rc.ctx))
+		rc.log.Error("cannot create financial data", logOption.Error(err))
 		return errx.Trace(err)
 	}
 

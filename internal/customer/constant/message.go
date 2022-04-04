@@ -1,5 +1,9 @@
 package constant
 
+// Common
+
+var ResponseSuccess = "success"
+
 // OTP Message
 
 var OTPValidMessage = "OTP yang dimasukan valid!"
@@ -12,6 +16,7 @@ var IsUpdatedPINMessage = "PIN berhasil diubah"
 var ResendOTPPasswordMessage = "Resend OTP Successfully"
 var ValidOTPPasswordMessage = "Kode OTP yang dimasukan valid"
 var SuccessfullyResetPassword = "Password diperbaharui"
+
 // Profile
 
 const UpdateLinkCifMessage = "CIF Sukses di update"

@@ -62,7 +62,7 @@ type RegisterVerifyOTPResult struct {
 	RegisterID string `json:"register_id"`
 }
 
-type CustomerSynchronizeRequest struct {
+type CustomerSynchronizePayload struct {
 	Name        string `json:"nama"`
 	Email       string `json:"email"`
 	PhoneNumber string `json:"no_hp"`

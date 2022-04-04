@@ -16,7 +16,7 @@ import (
 func (s *Service) validateCIF(cif string, id string) (bool, error) {
 	c, err := s.repo.FindCustomerByUserRefID(id)
 	if err != nil {
-		return false, err
+		return false, errx.Trace(err)
 	}
 
 	if cif != c.Cif {
@@ -90,7 +90,7 @@ func (s *Service) getListAccountNumber(cif string, userRefId string) (*dto.GoldS
 		return nil, errx.Trace(err)
 	}
 
-	if errors.Is(err, sql.ErrNoRows) {
+	if err != nil && errors.Is(err, sql.ErrNoRows) {
 		// init model
 		financialData = model.EmptyFinancialData
 		financialData.CustomerID = customer.ID
@@ -158,7 +158,7 @@ func (s *Service) updateReferralCode(customer *model.Customer) error {
 			return errx.Trace(err)
 		}
 
-		if errors.Is(err, sql.ErrNoRows) {
+		if err != nil && errors.Is(err, sql.ErrNoRows) {
 			break
 		}
 	}
