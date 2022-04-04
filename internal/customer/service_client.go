@@ -90,9 +90,9 @@ func (s *Service) RestSwitchingPostData(payload PostDataPayload) (*ResponseSwitc
 
 	var invalidResponse string
 	if restResponse.StatusCode == 401 {
-		responseSwitching, err := s.restSwitchingErrorResponse(restResponse)
-		if err != nil {
-			return nil, err
+		responseSwitching, errS := s.restSwitchingErrorResponse(restResponse)
+		if errS != nil {
+			return nil, errS
 		}
 		invalidResponse = responseSwitching.Error
 	}
