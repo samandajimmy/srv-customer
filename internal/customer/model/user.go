@@ -224,7 +224,7 @@ func UserToFinancialData(user *User) (*FinancialData, error) {
 		AccountNumber:             user.Norek,
 		GoldSavingStatus:          user.IsOpenTe.Int64,
 		GoldCardApplicationNumber: user.GoldcardApplicationNumber.String,
-		GoldCardAccountNumber:     user.GoldcardApplicationNumber.String,
+		GoldCardAccountNumber:     user.GoldcardAccountNumber.String,
 		Balance:                   user.Saldo,
 		BaseField:                 EmptyBaseField,
 	}
