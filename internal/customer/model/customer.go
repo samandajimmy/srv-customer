@@ -79,7 +79,7 @@ type CustomerProfile struct {
 	DateOfBirth        string `json:"dateOfBirth"`
 	PlaceOfBirth       string `json:"placeOfBirth"`
 	IdentityPhotoFile  string `json:"identityPhotoFile"`
-	IdentityExpiredAt  string `json:"IdentityExpiredAt"`
+	IdentityExpiredAt  string `json:"identityExpiredAt"`
 	Religion           string `json:"religion"`
 	MarriageStatus     string `json:"marriageStatus"`
 	NPWPNumber         string `json:"npwpNumber"`
