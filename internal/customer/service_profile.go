@@ -498,7 +498,7 @@ func (s *Service) composeProfileResponse(customer *model.Customer, address *mode
 			IsEmailVerified:           nval.ParseStringFallback(verification.EmailVerifiedStatus, "0"),
 			IsDukcapilVerified:        nval.ParseStringFallback(verification.DukcapilVerifiedStatus, "0"),
 			AktifasiTransFinansial:    nval.ParseStringFallback(verification.FinancialTransactionStatus, "0"),
-			KodeCabang:                "", // TODO Branch Code
+			KodeCabang:                customer.BranchCode.String,
 			TabunganEmas:              gs,
 		},
 	}

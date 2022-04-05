@@ -25,6 +25,7 @@ type Customer struct {
 	Sid            string                 `db:"sid"`
 	ReferralCode   sql.NullString         `db:"referralCode"`
 	Status         constant.ControlStatus `db:"status"`
+	BranchCode     sql.NullString         `db:"branchCode"`
 }
 
 type CustomerPhoto struct {

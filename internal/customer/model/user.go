@@ -42,7 +42,7 @@ type User struct {
 	FotoURL                   sql.NullString         `db:"foto_url"`
 	FotoKtpURL                string                 `db:"foto_ktp_url"`
 	Status                    sql.NullInt64          `db:"status"`
-	IsLocked                  sql.NullInt64          `db:"is_locked"`
+	IsLocked                  string                 `db:"is_locked"`
 	LoginFailCount            int64                  `db:"login_fail_count"`
 	EmailVerified             int64                  `db:"email_verified"`
 	KycVerified               int64                  `db:"kyc_verified"`
@@ -146,6 +146,7 @@ func UserToCustomer(user *User) (*Customer, error) {
 		Profile:        ToCustomerProfile(profile),
 		ReferralCode:   user.ReferralCode,
 		Status:         constant.ControlStatus(user.Status.Int64),
+		BranchCode:     sql.NullString{String: user.KodeCabang, Valid: true},
 		BaseField:      baseField,
 	}
 
@@ -163,7 +164,7 @@ func UserToCredential(user *User, userPin *UserPin) (*Credential, error) {
 		PinLastAccessAt:     sql.NullTime{},
 		PinCounter:          0,
 		PinBlockedStatus:    0,
-		IsLocked:            user.IsLocked.Int64,
+		IsLocked:            nval.ParseInt64Fallback(user.IsLocked, 0),
 		LoginFailCount:      user.LoginFailCount,
 		WrongPasswordCount:  user.WrongPasswordCount,
 		BlockedAt:           ModifierNullTime(user.BlockedDate),

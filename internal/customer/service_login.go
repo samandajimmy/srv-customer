@@ -421,7 +421,7 @@ func (s *Service) composeLoginResponse(data dto.LoginVO) (*dto.LoginResult, erro
 				ReferralCode:              customer.ReferralCode.String,
 				GoldCardApplicationNumber: financial.GoldCardApplicationNumber,
 				GoldCardAccountNumber:     financial.GoldCardAccountNumber,
-				KodeCabang:                "", // TODO: Branch Code
+				KodeCabang:                customer.BranchCode.String,
 				TabunganEmas:              gs,
 			},
 			IsFirstLogin:          data.IsFirstLogin,
