@@ -2,11 +2,13 @@ package customer
 
 import (
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/lestrrat-go/jwx/jwt"
 	"github.com/nbs-go/errx"
 	logOption "github.com/nbs-go/nlogger/v2/option"
+	"github.com/rs/xid"
 	"regexp"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/constant"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/model"
@@ -907,4 +909,379 @@ func (s *Service) HandleSynchronizePassword(customer *model.Customer, password s
 	}
 
 	return nil
+}
+
+func (s *Service) PutSynchronizeCustomer(payload dto.PutSynchronizeCustomerPayload) (*dto.PutSynchronizeCustomerResult, error) {
+
+	// Get customer
+	customer, err := s.repo.FindCustomerByPhone(payload.Customer.Phone)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		s.log.Error("error when find current customer", logOption.Error(err))
+		return nil, errx.Trace(err)
+	}
+
+	// Check on external database
+	if err != nil && errors.Is(err, sql.ErrNoRows) {
+		customer, err = s.handleCheckDataOnExternal(payload.Customer.Phone)
+	}
+	// Handle error external database
+	if err != nil {
+		s.log.Error("error when find customer", logOption.Error(err))
+		return nil, errx.Trace(err)
+	}
+
+	// Get credential
+	credential, err := s.repo.FindCredentialByCustomerID(customer.ID)
+	if err != nil {
+		s.log.Error("error when find credential", logOption.Error(err))
+		err = handleErrorRepository(err, constant.CredentialNotFoundError)
+		return nil, errx.Trace(err)
+	}
+
+	// Get financial data
+	financial, err := s.repo.FindFinancialDataByCustomerID(customer.ID)
+	if err != nil {
+		s.log.Error("error when find financial data", logOption.Error(err))
+		err = handleErrorRepository(err, constant.FinancialNotFoundError)
+		return nil, errx.Trace(err)
+	}
+
+	// Get verification data
+	verification, err := s.repo.FindVerificationByCustomerID(customer.ID)
+	if err != nil {
+		s.log.Error("error when find verification", logOption.Error(err))
+		err = handleErrorRepository(err, constant.VerificationNotFoundError)
+		return nil, errx.Trace(err)
+	}
+
+	// Get address data
+	address, err := s.repo.FindAddressByCustomerId(customer.ID)
+	if err != nil {
+		s.log.Error("error when find address", logOption.Error(err))
+		err = handleErrorRepository(err, constant.AddressNotFoundError)
+		return nil, errx.Trace(err)
+	}
+
+	// Prepare model customer
+	customer = prepareModelCustomerSync(customer, payload.Customer)
+
+	// Persist customer
+	err = s.repo.InsertOrUpdateCustomer(customer)
+	if err != nil {
+		s.log.Error("failed persist to customer", logOption.Error(err))
+		return nil, errx.Trace(err)
+	}
+
+	if payload.Credential != nil {
+		credential, err = s.handleCredentialUpdate(credential, payload.Credential)
+	}
+	// Handle error persist credential
+	if err != nil {
+		s.log.Error("failed persist credential", logOption.Error(err))
+		return nil, errx.Trace(err)
+	}
+
+	if payload.Financial != nil {
+		financial, err = s.handleFinancialUpdate(financial, payload.Financial)
+	}
+	// Handle error persist financial
+	if err != nil {
+		s.log.Error("failed persist financial", logOption.Error(err))
+		return nil, errx.Trace(err)
+	}
+
+	if payload.Verification != nil {
+		verification, err = s.handleVerificationUpdate(verification, payload.Verification)
+	}
+	// Handle error persist verification
+	if err != nil {
+		s.log.Error("failed persist verification", logOption.Error(err))
+		return nil, errx.Trace(err)
+	}
+
+	if payload.Address != nil {
+		address, err = s.handleAddressUpdate(address, payload.Address)
+	}
+	// Handle error persist address
+	if err != nil {
+		s.log.Error("failed persist address", logOption.Error(err))
+		return nil, errx.Trace(err)
+	}
+
+	return s.composeCustomerSynchronizeResult(&model.PostSynchronizeCustomerModel{
+		Customer:     customer,
+		Credential:   credential,
+		Financial:    financial,
+		Verification: verification,
+		Address:      address,
+	})
+}
+
+func prepareModelCustomerSync(customer *model.Customer, customerUpdate *dto.CustomerSyncVO) *model.Customer {
+	// Update customer model
+	customer.FullName = customerUpdate.FullName
+	customer.Phone = customerUpdate.Phone
+	customer.Email = customerUpdate.Email
+	customer.IdentityType = customerUpdate.IdentityType
+	customer.IdentityNumber = customerUpdate.IdentityNumber
+	customer.Cif = customerUpdate.Cif
+	customer.Sid = customerUpdate.Sid
+	customer.ReferralCode = sql.NullString{
+		String: customerUpdate.ReferralCode,
+		Valid:  true,
+	}
+	customer.Photos = &model.CustomerPhoto{
+		Xid:      xid.New().String(),
+		FileName: customerUpdate.Photos.FileName,
+		FileSize: customerUpdate.Photos.FileSize,
+		Mimetype: customerUpdate.Photos.MimeType,
+	}
+	customer.Status = customerUpdate.Status
+	customer.UpdatedAt = time.Now()
+	customer.Version++
+	// customer.Photos = customerUpdate.Photos TODO: update customer photo
+
+	// Customer profile
+	profilePayload := customerUpdate.Profile
+	profileUpdate := &model.CustomerProfile{
+		MaidenName:         profilePayload.MaidenName,
+		Gender:             profilePayload.Gender,
+		Nationality:        profilePayload.Nationality,
+		DateOfBirth:        profilePayload.DateOfBirth,
+		PlaceOfBirth:       profilePayload.PlaceOfBirth,
+		IdentityPhotoFile:  profilePayload.IdentityPhotoFile,
+		MarriageStatus:     profilePayload.MarriageStatus,
+		NPWPNumber:         profilePayload.NPWPNumber,
+		NPWPPhotoFile:      profilePayload.NPWPPhotoFile,
+		NPWPUpdatedAt:      profilePayload.NPWPUpdatedAt,
+		ProfileUpdatedAt:   profilePayload.ProfileUpdatedAt,
+		CifLinkUpdatedAt:   profilePayload.CifLinkUpdatedAt,
+		CifUnlinkUpdatedAt: profilePayload.CifUnlinkUpdatedAt,
+		SidPhotoFile:       profilePayload.SidPhotoFile,
+		Religion:           profilePayload.Religion,
+	}
+	customer.Profile = profileUpdate
+
+	return customer
+}
+
+func (s *Service) prepareModelCredentialSync(credential *model.Credential, credentialUpdate *dto.CredentialSyncVO) (*model.Credential, error) {
+
+	credential.Pin = credentialUpdate.Pin
+	credential.Password = credentialUpdate.Password
+	credential.NextPasswordResetAt = sql.NullTime{
+		Time:  time.Unix(credentialUpdate.NextPasswordResetAt, 0),
+		Valid: true,
+	}
+	credential.Pin = credentialUpdate.Pin
+	credential.PinUpdatedAt = sql.NullTime{
+		Time:  time.Unix(credentialUpdate.PinUpdatedAt, 0),
+		Valid: true,
+	}
+	credential.PinLastAccessAt = sql.NullTime{
+		Time:  time.Unix(credentialUpdate.PinLastAccessAt, 0),
+		Valid: true,
+	}
+	credential.PinCounter = credentialUpdate.PinCounter
+	credential.PinBlockedStatus = credentialUpdate.PinBlockedStatus
+	credential.IsLocked = credentialUpdate.IsLocked
+	credential.LoginFailCount = credentialUpdate.LoginFailCount
+	credential.WrongPasswordCount = credentialUpdate.WrongPasswordCount
+	credential.BlockedAt = sql.NullTime{
+		Time:  time.Unix(credentialUpdate.BlockedAt, 0),
+		Valid: true,
+	}
+	credential.BlockedUntilAt = sql.NullTime{
+		Time:  time.Unix(credentialUpdate.BlockedUntilAt, 0),
+		Valid: true,
+	}
+	credential.BiometricLogin = constant.ControlStatus(credentialUpdate.BiometricLogin)
+	credential.BiometricDeviceID = credentialUpdate.BiometricDeviceID
+
+	// Credential metadata
+	payloadCredentialMetadata := credentialUpdate.Metadata
+	credentialMetadata, err := json.Marshal(dto.MetadataCredentialVO{
+		TryLoginAt:   payloadCredentialMetadata.TryLoginAt,
+		PinCreatedAt: payloadCredentialMetadata.PinCreatedAt,
+		PinBlockedAt: payloadCredentialMetadata.PinBlockedAt,
+	})
+	if err != nil {
+		s.log.Error("error when find current customer", logOption.Error(err))
+		return nil, errx.Trace(err)
+	}
+	credential.Metadata = credentialMetadata
+	credential.UpdatedAt = time.Now()
+	credential.Version++
+
+	return credential, err
+}
+
+func prepareModelFinancialSync(financial *model.FinancialData, financialUpdate *dto.FinancialSyncVO) *model.FinancialData {
+	financial.MainAccountNumber = financialUpdate.MainAccountNumber
+	financial.AccountNumber = financialUpdate.AccountNumber
+	financial.GoldSavingStatus = financialUpdate.GoldSavingStatus
+	financial.GoldCardApplicationNumber = financialUpdate.GoldCardApplicationNumber
+	financial.GoldCardAccountNumber = financialUpdate.GoldCardAccountNumber
+	financial.Balance = financialUpdate.Balance
+	financial.UpdatedAt = time.Now()
+	financial.Version++
+	return financial
+}
+
+func prepareModelVerificationSync(verification *model.Verification, verificationUpdate *dto.VerificationSyncVO) *model.Verification {
+	verification.KycVerifiedStatus = verificationUpdate.KycVerifiedStatus
+	verification.EmailVerificationToken = verificationUpdate.EmailVerificationToken
+	verification.EmailVerifiedStatus = verificationUpdate.EmailVerifiedStatus
+	verification.DukcapilVerifiedStatus = verificationUpdate.DukcapilVerifiedStatus
+	verification.FinancialTransactionStatus = constant.ControlStatus(verificationUpdate.FinancialTransactionStatus)
+	verification.FinancialTransactionActivatedAt = sql.NullTime{
+		Time:  time.Unix(verificationUpdate.FinancialTransactionActivatedAt, 0),
+		Valid: true,
+	}
+	verification.UpdatedAt = time.Now()
+	verification.Version++
+	return verification
+}
+
+func prepareAddressModelSync(address *model.Address, addressUpdate *dto.AddressSyncVO) *model.Address {
+	address.Purpose = addressUpdate.Purpose
+	address.ProvinceID = sql.NullInt64{
+		Int64: addressUpdate.ProvinceID,
+		Valid: true,
+	}
+	address.ProvinceName = sql.NullString{
+		String: addressUpdate.ProvinceName,
+		Valid:  true,
+	}
+	address.CityID = sql.NullInt64{
+		Int64: addressUpdate.CityID,
+		Valid: true,
+	}
+	address.CityName = sql.NullString{
+		String: addressUpdate.CityName,
+		Valid:  true,
+	}
+	address.DistrictID = sql.NullInt64{
+		Int64: addressUpdate.DistrictID,
+		Valid: true,
+	}
+	address.DistrictName = sql.NullString{
+		String: addressUpdate.DistrictName,
+		Valid:  true,
+	}
+	address.SubDistrictID = sql.NullInt64{
+		Int64: addressUpdate.SubDistrictID,
+		Valid: true,
+	}
+	address.SubDistrictName = sql.NullString{
+		String: addressUpdate.SubDistrictName,
+		Valid:  true,
+	}
+	address.Line = sql.NullString{
+		String: addressUpdate.Line,
+		Valid:  true,
+	}
+	address.PostalCode = sql.NullString{
+		String: addressUpdate.PostalCode,
+		Valid:  true,
+	}
+	address.IsPrimary = sql.NullBool{
+		Bool:  addressUpdate.IsPrimary,
+		Valid: true,
+	}
+	return address
+}
+
+func (s *Service) composeCustomerSynchronizeResult(mSynchronize *model.PostSynchronizeCustomerModel) (*dto.PutSynchronizeCustomerResult, error) {
+
+	credential, err := model.ToCredentialSyncVO(mSynchronize.Credential)
+	if err != nil {
+		s.log.Error("error when find current customer", logOption.Error(err))
+		return nil, errx.Trace(err)
+	}
+
+	return &dto.PutSynchronizeCustomerResult{
+		Customer:     model.ToCustomerSyncVO(mSynchronize.Customer),
+		Financial:    model.ToFinancialSyncVO(mSynchronize.Financial),
+		Credential:   credential,
+		Verification: model.ToVerificationSyncVO(mSynchronize.Verification),
+		Address:      model.ToAddressSyncVO(mSynchronize.Address),
+	}, nil
+}
+
+func (s *Service) handleCredentialUpdate(credential *model.Credential, payload *dto.CredentialSyncVO) (*model.Credential, error) {
+	// Prepare model credential
+	credential, err := s.prepareModelCredentialSync(credential, payload)
+	if err != nil {
+		s.log.Error("error when prepare credential model", logOption.Error(err))
+		return nil, errx.Trace(err)
+	}
+	// Persist credential
+	err = s.repo.InsertOrUpdateCredential(credential)
+	if err != nil {
+		s.log.Error("failed persist to credential", logOption.Error(err))
+		return nil, errx.Trace(err)
+	}
+
+	return credential, nil
+}
+
+func (s *Service) handleFinancialUpdate(financial *model.FinancialData, financialUpdate *dto.FinancialSyncVO) (*model.FinancialData, error) {
+	// Prepare model financial
+	financial = prepareModelFinancialSync(financial, financialUpdate)
+	// Persist financial data
+	err := s.repo.InsertOrUpdateFinancialData(financial)
+	if err != nil {
+		s.log.Error("failed persist to financial data", logOption.Error(err))
+		return nil, errx.Trace(err)
+	}
+	return financial, nil
+}
+
+func (s *Service) handleVerificationUpdate(verification *model.Verification, verificationUpdate *dto.VerificationSyncVO) (*model.Verification, error) {
+	// Prepare model verification
+	verification = prepareModelVerificationSync(verification, verificationUpdate)
+	// persist verification
+	err := s.repo.InsertOrUpdateVerification(verification)
+	if err != nil {
+		s.log.Error("failed persist verification.", logOption.Error(err))
+		return nil, errx.Trace(err)
+	}
+	return verification, nil
+}
+
+func (s *Service) handleAddressUpdate(address *model.Address, addressUpdate *dto.AddressSyncVO) (*model.Address, error) {
+	// Prepare model address
+	address = prepareAddressModelSync(address, addressUpdate)
+	// Persist address
+	err := s.repo.InsertOrUpdateAddress(address)
+	if err != nil {
+		s.log.Error("failed persist to address", logOption.Error(err))
+		return nil, errx.Trace(err)
+	}
+
+	return address, nil
+}
+
+func (s *Service) handleCheckDataOnExternal(phone string) (*model.Customer, error) {
+	// If data not found on internal database check on external database.
+	user, err := s.repoExternal.FindUserExternalByEmailOrPhone(phone)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		s.log.Error("error found when query find by email or phone", logOption.Error(err))
+		return nil, errx.Trace(err)
+	}
+
+	if errors.Is(err, sql.ErrNoRows) {
+		s.log.Debug("Phone or email is not registered")
+		return nil, constant.NoPhoneEmailError.Trace()
+	}
+
+	// sync data external to internal
+	customer, err := s.syncExternalToInternal(user)
+	if err != nil {
+		s.log.Error("error while sync data External to Internal", logOption.Error(err))
+		return nil, errx.Trace(err)
+	}
+
+	return customer, nil
 }

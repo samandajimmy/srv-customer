@@ -136,3 +136,19 @@ var TransactionFavoriteNotFoundError = ResourceNotFoundError.AddMetadata(nhttp.O
 
 var ChangePhoneNumberError = b.NewError("E_PHN_4", "Failed change phone number on core pds API.",
 	nhttp.WithStatus(http.StatusBadRequest))
+
+// Credential Not Found Errors
+
+var CredentialNotFoundError = ResourceNotFoundError.AddMetadata(nhttp.OverrideMessageMetadata, "Credential not found")
+
+// Financial Not Found Errors
+
+var FinancialNotFoundError = ResourceNotFoundError.AddMetadata(nhttp.OverrideMessageMetadata, "Financial not found")
+
+// Verification Not Found Errors
+
+var VerificationNotFoundError = ResourceNotFoundError.AddMetadata(nhttp.OverrideMessageMetadata, "Verification not found")
+
+// Address Not Found Errors
+
+var AddressNotFoundError = ResourceNotFoundError.AddMetadata(nhttp.OverrideMessageMetadata, "Address not found")

@@ -245,6 +245,7 @@ type CustomerProfileVO struct {
 	CifLinkUpdatedAt   int64  `json:"cifLinkUpdatedAt,string,omitempty"`
 	CifUnlinkUpdatedAt int64  `json:"cifUnlinkUpdatedAt,string,omitempty"`
 	SidPhotoFile       string `json:"sidPhotoFile"`
+	Religion           string `json:"religion"`
 }
 
 type CustomerPhotoVO struct {
@@ -439,4 +440,97 @@ type UpdateLinkCifPayload struct {
 
 type UnlinkCifPayload struct {
 	Cif string `json:"cif"`
+}
+
+type PutSynchronizeCustomerPayload struct {
+	Customer     *CustomerSyncVO     `json:"customer"`
+	Financial    *FinancialSyncVO    `json:"financial"`
+	Credential   *CredentialSyncVO   `json:"credential"`
+	Verification *VerificationSyncVO `json:"verification"`
+	Address      *AddressSyncVO      `json:"address"`
+}
+
+type PutSynchronizeCustomerResult struct {
+	Customer     *CustomerSyncVO     `json:"customer"`
+	Financial    *FinancialSyncVO    `json:"financial"`
+	Credential   *CredentialSyncVO   `json:"credential"`
+	Verification *VerificationSyncVO `json:"verification"`
+	Address      *AddressSyncVO      `json:"adddress"`
+}
+
+type CustomerSyncVO struct {
+	Photos         PhotosVO               `json:"photos"`
+	Profile        CustomerProfileVO      `json:"profile"`
+	FullName       string                 `json:"fullName"`
+	Phone          string                 `json:"phone"`
+	Email          string                 `json:"email"`
+	IdentityType   int64                  `json:"identityType"`
+	IdentityNumber string                 `json:"identityNumber"`
+	Cif            string                 `json:"cif"`
+	Sid            string                 `json:"sid"`
+	ReferralCode   string                 `json:"referralCode"`
+	Status         constant.ControlStatus `json:"status"`
+}
+
+type PhotosVO struct {
+	FileName string `json:"fileName"`
+	FileSize int64  `json:"fileSize"`
+	MimeType string `json:"mimeType"`
+}
+
+type FinancialSyncVO struct {
+	MainAccountNumber         string `json:"mainAccountNumber"`
+	AccountNumber             string `json:"accountNumber"`
+	GoldSavingStatus          int64  `json:"goldSavingStatus"`
+	GoldCardApplicationNumber string `json:"goldCardApplicationNumber"`
+	GoldCardAccountNumber     string `json:"goldCardAccountNumber"`
+	Balance                   int64  `json:"balance"`
+}
+
+type CredentialSyncVO struct {
+	Password            string                 `json:"password"`
+	NextPasswordResetAt int64                  `json:"nextPasswordResetAt"`
+	Pin                 string                 `json:"pin"`
+	PinUpdatedAt        int64                  `json:"pinUpdatedAt"`
+	PinLastAccessAt     int64                  `json:"pinLastAccessAt"`
+	PinCounter          int64                  `json:"pinCounter"`
+	PinBlockedStatus    int64                  `json:"pinBlockedStatus"`
+	IsLocked            int64                  `json:"isLocked"`
+	LoginFailCount      int64                  `json:"loginFailCount"`
+	WrongPasswordCount  int64                  `json:"wrongPasswordCount"`
+	BlockedAt           int64                  `json:"blockedAt"`
+	BlockedUntilAt      int64                  `json:"blockedUntilAt"`
+	BiometricLogin      constant.ControlStatus `json:"biometricLogin"`
+	BiometricDeviceID   string                 `json:"biometricDeviceId"`
+	Metadata            MetadataCredentialVO   `json:"metadata"`
+}
+
+type MetadataCredentialVO struct {
+	TryLoginAt   string `json:"tryLoginAt"`
+	PinCreatedAt string `json:"pinCreatedAt"`
+	PinBlockedAt string `json:"pinBlockedAt"`
+}
+
+type VerificationSyncVO struct {
+	KycVerifiedStatus               int64                  `json:"kycVerifiedStatus"`
+	EmailVerificationToken          string                 `json:"emailVerificationToken"`
+	EmailVerifiedStatus             int64                  `json:"emailVerifiedStatus"`
+	DukcapilVerifiedStatus          int64                  `json:"dukcapilVerifiedStatus"`
+	FinancialTransactionStatus      constant.ControlStatus `json:"financialTransactionStatus"`
+	FinancialTransactionActivatedAt int64                  `json:"financialTransactionActivatedAt"`
+}
+
+type AddressSyncVO struct {
+	Purpose         int64  `json:"purpose"`
+	ProvinceID      int64  `json:"provinceId"`
+	ProvinceName    string `json:"provinceName"`
+	CityID          int64  `json:"cityId"`
+	CityName        string `json:"cityName"`
+	DistrictID      int64  `json:"districtId"`
+	DistrictName    string `json:"districtName"`
+	SubDistrictID   int64  `json:"subDistrictId"`
+	SubDistrictName string `json:"subDistrictName"`
+	Line            string `json:"line"`
+	PostalCode      string `json:"postalCode"`
+	IsPrimary       bool   `json:"isPrimary"`
 }

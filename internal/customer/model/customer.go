@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"database/sql/driver"
 	"encoding/json"
+	"github.com/nbs-go/errx"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/customer/constant"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/dto"
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/pkg/nucleo/nsql"
@@ -140,4 +141,140 @@ var EmptyCustomerProfile = &CustomerProfile{
 	CifLinkUpdatedAt:   0,
 	CifUnlinkUpdatedAt: 0,
 	SidPhotoFile:       "",
+}
+
+type PostSynchronizeCustomerModel struct {
+	Customer     *Customer      `json:"customer"`
+	Credential   *Credential    `json:"credential"`
+	Financial    *FinancialData `json:"financial"`
+	Verification *Verification  `json:"verification"`
+	Address      *Address       `json:"address"`
+}
+
+func ToCustomerSyncVO(customer *Customer) *dto.CustomerSyncVO {
+
+	if customer == nil {
+		return nil
+	}
+
+	profile := customer.Profile
+
+	return &dto.CustomerSyncVO{
+		Photos: dto.PhotosVO{
+			FileName: customer.Photos.FileName,
+			FileSize: customer.Photos.FileSize,
+			MimeType: customer.Photos.Mimetype,
+		},
+		Profile: dto.CustomerProfileVO{
+			MaidenName:         profile.MaidenName,
+			Gender:             profile.Gender,
+			Nationality:        profile.Nationality,
+			DateOfBirth:        profile.DateOfBirth,
+			PlaceOfBirth:       profile.PlaceOfBirth,
+			IdentityPhotoFile:  profile.IdentityPhotoFile,
+			MarriageStatus:     profile.MarriageStatus,
+			NPWPNumber:         profile.NPWPNumber,
+			NPWPPhotoFile:      profile.NPWPPhotoFile,
+			NPWPUpdatedAt:      profile.NPWPUpdatedAt,
+			ProfileUpdatedAt:   profile.ProfileUpdatedAt,
+			CifLinkUpdatedAt:   profile.CifLinkUpdatedAt,
+			CifUnlinkUpdatedAt: profile.CifUnlinkUpdatedAt,
+			SidPhotoFile:       profile.SidPhotoFile,
+			Religion:           profile.Religion,
+		},
+		FullName:       customer.FullName,
+		Phone:          customer.Phone,
+		Email:          customer.Email,
+		IdentityType:   customer.IdentityType,
+		IdentityNumber: customer.IdentityNumber,
+		Cif:            customer.Cif,
+		Sid:            customer.Sid,
+		ReferralCode:   customer.ReferralCode.String,
+		Status:         customer.Status,
+	}
+}
+
+func ToFinancialSyncVO(financial *FinancialData) *dto.FinancialSyncVO {
+
+	if financial == nil {
+		return nil
+	}
+
+	return &dto.FinancialSyncVO{
+		MainAccountNumber:         financial.MainAccountNumber,
+		AccountNumber:             financial.AccountNumber,
+		GoldSavingStatus:          financial.GoldSavingStatus,
+		GoldCardApplicationNumber: financial.GoldCardApplicationNumber,
+		GoldCardAccountNumber:     financial.GoldCardAccountNumber,
+		Balance:                   financial.Balance,
+	}
+}
+
+func ToCredentialSyncVO(credential *Credential) (*dto.CredentialSyncVO, error) {
+
+	if credential == nil {
+		return &dto.CredentialSyncVO{}, nil
+	}
+
+	var credentialMetadata dto.MetadataCredentialVO
+	err := json.Unmarshal(credential.Metadata, &credentialMetadata)
+	if err != nil {
+		return nil, errx.Trace(err)
+	}
+
+	return &dto.CredentialSyncVO{
+		Password:            "",
+		NextPasswordResetAt: credential.NextPasswordResetAt.Time.Unix(),
+		Pin:                 credential.Pin,
+		PinUpdatedAt:        credential.PinUpdatedAt.Time.Unix(),
+		PinLastAccessAt:     credential.PinLastAccessAt.Time.Unix(),
+		PinCounter:          credential.PinCounter,
+		PinBlockedStatus:    credential.PinBlockedStatus,
+		IsLocked:            credential.IsLocked,
+		LoginFailCount:      credential.LoginFailCount,
+		WrongPasswordCount:  credential.WrongPasswordCount,
+		BlockedAt:           credential.BlockedAt.Time.Unix(),
+		BlockedUntilAt:      credential.BlockedUntilAt.Time.Unix(),
+		BiometricLogin:      credential.BiometricLogin,
+		BiometricDeviceID:   credential.BiometricDeviceID,
+		Metadata:            credentialMetadata,
+	}, nil
+}
+
+func ToVerificationSyncVO(verification *Verification) *dto.VerificationSyncVO {
+
+	if verification == nil {
+		return &dto.VerificationSyncVO{}
+	}
+
+	return &dto.VerificationSyncVO{
+		KycVerifiedStatus:               verification.KycVerifiedStatus,
+		EmailVerificationToken:          verification.EmailVerificationToken,
+		EmailVerifiedStatus:             verification.EmailVerifiedStatus,
+		DukcapilVerifiedStatus:          verification.DukcapilVerifiedStatus,
+		FinancialTransactionStatus:      verification.FinancialTransactionStatus,
+		FinancialTransactionActivatedAt: verification.FinancialTransactionActivatedAt.Time.Unix(),
+	}
+}
+
+func ToAddressSyncVO(address *Address) *dto.AddressSyncVO {
+
+	if address == nil {
+		return &dto.AddressSyncVO{}
+	}
+
+	return &dto.AddressSyncVO{
+		Purpose:         address.Purpose,
+		ProvinceID:      address.ProvinceID.Int64,
+		ProvinceName:    address.ProvinceName.String,
+		CityID:          address.CityID.Int64,
+		CityName:        address.CityName.String,
+		DistrictID:      address.DistrictID.Int64,
+		DistrictName:    address.DistrictName.String,
+		SubDistrictID:   address.SubDistrictID.Int64,
+		SubDistrictName: address.SubDistrictName.String,
+		Line:            address.Line.String,
+		PostalCode:      address.PostalCode.String,
+		IsPrimary:       address.IsPrimary.Bool,
+	}
 }

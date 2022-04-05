@@ -854,3 +854,36 @@ func (c *AccountController) GetSmartAccessStatus(rx *nhttp.Request) (*nhttp.Resp
 
 	return nhttp.Success().SetData(resp), nil
 }
+
+func (c *AccountController) PutSynchronizeCustomer(rx *nhttp.Request) (*nhttp.Response, error) {
+	// Get context
+	ctx := rx.Context()
+
+	// Get payload
+	var payload dto.PutSynchronizeCustomerPayload
+	err := rx.ParseJSONBody(&payload)
+	if err != nil {
+		log.Error("error when parse json body", logOption.Error(err), logOption.Context(ctx))
+		return nil, nhttp.BadRequestError.Wrap(err)
+	}
+
+	// Validate payload
+	err = validate.PutSynchronizeCustomer(&payload)
+	if err != nil {
+		log.Error("Bad request validate payload", logOption.Error(err), logOption.Context(ctx))
+		return nil, err
+	}
+
+	// Init service
+	svc := c.NewService(rx.Context())
+	defer svc.Close()
+
+	// Call service
+	resp, err := svc.PutSynchronizeCustomer(payload)
+	if err != nil {
+		log.Error("error when call update service", logOption.Error(err), logOption.Context(ctx))
+		return nil, err
+	}
+
+	return nhttp.Success().SetData(resp), nil
+}

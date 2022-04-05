@@ -47,13 +47,13 @@ func (rc *RepositoryContext) UpdateCredential(row *model.Credential) error {
 }
 
 func (rc *RepositoryContext) InsertOrUpdateCredential(row *model.Credential) error {
-	credential, err := rc.FindCredentialByCustomerID(row.CustomerID)
+	_, err := rc.FindCredentialByCustomerID(row.CustomerID)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return errx.Trace(err)
 	}
 
 	if !errors.Is(err, sql.ErrNoRows) {
-		return rc.UpdateCredential(credential)
+		return rc.UpdateCredential(row)
 	}
 
 	err = rc.CreateCredential(row)

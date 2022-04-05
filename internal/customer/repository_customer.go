@@ -231,3 +231,22 @@ func (rc *RepositoryContext) PhoneNumberIsExists(phone string) (bool, error) {
 	}
 	return isExists, nil
 }
+
+func (rc *RepositoryContext) InsertOrUpdateCustomer(row *model.Customer) error {
+	_, err := rc.FindCustomerByID(row.ID)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return errx.Trace(err)
+	}
+
+	if !errors.Is(err, sql.ErrNoRows) {
+		return rc.UpdateCustomerByPhone(row)
+	}
+
+	_, err = rc.CreateCustomer(row)
+	if err != nil {
+		rc.log.Error("cannot create credential", logOption.Error(err), logOption.Context(rc.ctx))
+		return errx.Trace(err)
+	}
+
+	return nil
+}

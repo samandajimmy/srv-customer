@@ -316,3 +316,15 @@ func GetSmartAccessStatus(p *dto.GetSmartAccessStatusPayload) error {
 
 	return nil
 }
+
+func PutSynchronizeCustomer(p *dto.PutSynchronizeCustomerPayload) error {
+	err := validation.ValidateStruct(p,
+		validation.Field(&p.Customer, validation.Required),
+	)
+
+	if err != nil {
+		return nhttp.BadRequestError.Trace(errx.Source(err))
+	}
+
+	return nil
+}
