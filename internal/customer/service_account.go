@@ -67,7 +67,6 @@ func (s *Service) ValidateTokenAndRetrieveUserRefID(tokenString string) (string,
 	userRefID := nval.ParseStringFallback(tokenID, "")
 
 	return userRefID, nil
-
 }
 
 func (s *Service) UpdatePhoneNumber(payload dto.ChangePhoneNumberPayload) (*dto.ChangePhoneNumberResult, error) {
@@ -99,7 +98,6 @@ func (s *Service) UpdatePhoneNumber(payload dto.ChangePhoneNumberPayload) (*dto.
 
 	// Check if customer has cif
 	if customer.Cif != "" {
-
 		// Format date of birth  to YYYY-MM-DD
 		dob := strings.Split(payload.DateOfBirth, "-")
 		payload.DateOfBirth = fmt.Sprintf("%s-%s-%s", dob[2], dob[1], dob[0])
@@ -721,7 +719,6 @@ func (s *Service) ResetPasswordByOTP(payload dto.ResetPasswordByOTPPayload) erro
 }
 
 func (s *Service) ChangeEmail(payload dto.EmailChangePayload) error {
-
 	// TODO: Validation check if token is admin
 
 	// Find customer
@@ -790,6 +787,26 @@ func (s *Service) ChangeEmail(payload dto.EmailChangePayload) error {
 	}
 
 	// TODO: Send Notification Email Change
+
+	// Synchronize to PDS
+	reqBody := map[string]interface{}{
+		"email":                    payload.Email,
+		"email_verification_token": verification.EmailVerificationToken,
+		"email_verified":           verification.EmailVerifiedStatus,
+	}
+
+	// Sync customer
+	resp, err := s.SynchronizeCustomer(reqBody)
+	if err != nil {
+		s.log.Error("sync data when ChangeEmail", logOption.Error(err))
+		return errx.Trace(err)
+	}
+
+	// handle status error
+	if resp.Status != constant.ResponseSuccess {
+		s.log.Error("Get Error from SynchronizeCustomer")
+		return nhttp.InternalError.Trace(errx.Errorf(resp.Message))
+	}
 
 	return nil
 }
@@ -884,7 +901,7 @@ func (s *Service) HandleSynchronizePassword(customer *model.Customer, password s
 	}
 
 	// handle status error
-	if resp.Status != "success" {
+	if resp.Status != constant.ResponseSuccess {
 		s.log.Error("Get Error from SynchronizePassword")
 		return nhttp.InternalError.Trace(errx.Errorf(resp.Message))
 	}

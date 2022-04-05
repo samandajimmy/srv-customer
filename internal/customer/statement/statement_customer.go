@@ -13,18 +13,18 @@ import (
 var CustomerSchema = schema.New(schema.FromModelRef(model.Customer{}))
 
 type Customer struct {
-	Insert             *sqlx.NamedStmt
-	UpdateByPhone      *sqlx.NamedStmt
-	UpdateByUserRefID  *sqlx.NamedStmt
-	FindByRefID        *sqlx.Stmt
-	FindByID           *sqlx.Stmt
-	FindByPhoneOrCIF   *sqlx.Stmt
-	FindByPhone        *sqlx.Stmt
-	FindByEmail        *sqlx.Stmt
-	FindByEmailOrPhone *sqlx.Stmt
-	ReferralCodeExist  *sqlx.Stmt
-	UpdateByCIF        *sqlx.NamedStmt
-	EmailIsExists      *sqlx.Stmt
+	Insert              *sqlx.NamedStmt
+	UpdateByPhone       *sqlx.NamedStmt
+	UpdateByUserRefID   *sqlx.NamedStmt
+	FindByRefID         *sqlx.Stmt
+	FindByID            *sqlx.Stmt
+	FindByPhoneOrCIF    *sqlx.Stmt
+	FindByPhone         *sqlx.Stmt
+	FindByEmail         *sqlx.Stmt
+	FindByEmailOrPhone  *sqlx.Stmt
+	ReferralCodeExist   *sqlx.Stmt
+	UpdateByCIF         *sqlx.NamedStmt
+	EmailIsExists       *sqlx.Stmt
 	PhoneNumberIsExists *sqlx.Stmt
 }
 
@@ -110,18 +110,18 @@ func NewCustomer(db *nsql.DatabaseContext) *Customer {
 		Build()
 
 	return &Customer{
-		Insert:             db.PrepareNamedFmtRebind(insert),
-		FindByID:           db.PrepareFmtRebind(findByID),
-		FindByRefID:        db.PrepareFmtRebind(findByRefID),
-		FindByPhone:        db.PrepareFmtRebind(findByPhone),
-		FindByPhoneOrCIF:   db.PrepareFmtRebind(findByPhoneOrCIF),
-		FindByEmail:        db.PrepareFmtRebind(findByEmail),
-		ReferralCodeExist:  db.PrepareFmtRebind(referralCodeExist),
-		FindByEmailOrPhone: db.PrepareFmtRebind(findByEmailOrPhone),
-		UpdateByCIF:        db.PrepareNamedFmtRebind(updateByCif),
-		UpdateByUserRefID:  db.PrepareNamedFmtRebind(updateByUserRefID),
-		UpdateByPhone:      db.PrepareNamedFmtRebind(updateByPhone),
-		EmailIsExists:      db.PrepareFmtRebind(emailIsExists),
+		Insert:              db.PrepareNamedFmtRebind(insert),
+		FindByID:            db.PrepareFmtRebind(findByID),
+		FindByRefID:         db.PrepareFmtRebind(findByRefID),
+		FindByPhone:         db.PrepareFmtRebind(findByPhone),
+		FindByPhoneOrCIF:    db.PrepareFmtRebind(findByPhoneOrCIF),
+		FindByEmail:         db.PrepareFmtRebind(findByEmail),
+		ReferralCodeExist:   db.PrepareFmtRebind(referralCodeExist),
+		FindByEmailOrPhone:  db.PrepareFmtRebind(findByEmailOrPhone),
+		UpdateByCIF:         db.PrepareNamedFmtRebind(updateByCif),
+		UpdateByUserRefID:   db.PrepareNamedFmtRebind(updateByUserRefID),
+		UpdateByPhone:       db.PrepareNamedFmtRebind(updateByPhone),
+		EmailIsExists:       db.PrepareFmtRebind(emailIsExists),
 		PhoneNumberIsExists: db.PrepareFmtRebind(phoneNumberIsExist),
 	}
 }

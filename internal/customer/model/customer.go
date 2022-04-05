@@ -25,6 +25,7 @@ type Customer struct {
 	Sid            string                 `db:"sid"`
 	ReferralCode   sql.NullString         `db:"referralCode"`
 	Status         constant.ControlStatus `db:"status"`
+	BranchCode     sql.NullString         `db:"branchCode"`
 }
 
 type CustomerPhoto struct {
@@ -79,7 +80,7 @@ type CustomerProfile struct {
 	DateOfBirth        string `json:"dateOfBirth"`
 	PlaceOfBirth       string `json:"placeOfBirth"`
 	IdentityPhotoFile  string `json:"identityPhotoFile"`
-	IdentityExpiredAt  string `json:"IdentityExpiredAt"`
+	IdentityExpiredAt  string `json:"identityExpiredAt"`
 	Religion           string `json:"religion"`
 	MarriageStatus     string `json:"marriageStatus"`
 	NPWPNumber         string `json:"npwpNumber"`

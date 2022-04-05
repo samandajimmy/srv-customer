@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/imdario/mergo"
 	"github.com/lestrrat-go/jwx/jwt"
 	"github.com/nbs-go/errx"
 	logOption "github.com/nbs-go/nlogger/v2/option"
@@ -48,9 +49,9 @@ func (s *Service) Login(payload dto.LoginPayload) (*dto.LoginResult, error) {
 			return nil, errx.Trace(errExternal)
 		}
 
-		if errors.Is(errExternal, sql.ErrNoRows) {
+		if errExternal != nil && errors.Is(errExternal, sql.ErrNoRows) {
 			s.log.Debug("Phone or email is not registered")
-			return nil, constant.NoPhoneEmailError.Trace()
+			return nil, constant.NoPhoneEmailError.Trace(errx.Source(errExternal))
 		}
 
 		// sync data external to internal
@@ -89,12 +90,13 @@ func (s *Service) Login(payload dto.LoginPayload) (*dto.LoginResult, error) {
 	// If password verified remove counter
 	err = s.UnblockPassword(credential)
 	if err != nil {
+		s.log.Error("error found when unblock password", logOption.Error(err))
 		return nil, err
 	}
 
 	// get userRefId from external DB
 	if !customer.UserRefID.Valid {
-		registerPayload := &dto.CustomerSynchronizeRequest{
+		registerPayload := &dto.CustomerSynchronizePayload{
 			Name:        customer.FullName,
 			Email:       customer.Email,
 			PhoneNumber: customer.Phone,
@@ -110,7 +112,7 @@ func (s *Service) Login(payload dto.LoginPayload) (*dto.LoginResult, error) {
 		// set userRefId
 		customer.UserRefID = sql.NullString{
 			Valid:  true,
-			String: nval.ParseStringFallback(resultSync.UserAiid, ""),
+			String: resultSync.UserAiid,
 		}
 		// update customer
 		err = s.repo.UpdateCustomerByPhone(customer)
@@ -130,35 +132,13 @@ func (s *Service) Login(payload dto.LoginPayload) (*dto.LoginResult, error) {
 	}
 
 	// Check account is first login or not
-	countAuditLog, err := s.repo.CountAuditLogin(customer.ID)
+	isFirstLogin, err := s.isFirstLogin(customer)
 	if err != nil {
-		s.log.Error("error found when count audit login", logOption.Error(err))
 		return nil, errx.Trace(err)
 	}
 
-	// Set is first login is true or false.
-	var isFirstLogin = true
-	if countAuditLog > 0 {
-		isFirstLogin = false
-	}
-
 	// Prepare to insert audit login
-	auditLogin := model.AuditLogin{
-		CustomerID:   customer.ID,
-		ChannelID:    GetChannelByAgen(payload.Agen),
-		DeviceID:     payload.DeviceID,
-		IP:           payload.IP,
-		Latitude:     payload.Latitude,
-		Longitude:    payload.Longitude,
-		Timestamp:    t.Format(time.RFC3339),
-		Timezone:     payload.Timezone,
-		Brand:        payload.Brand,
-		OsVersion:    payload.OsVersion,
-		Browser:      payload.Browser,
-		UseBiometric: payload.UseBiometric,
-		Status:       1,
-		BaseField:    model.EmptyBaseField,
-	}
+	auditLogin := model.NewAuditLogin(customer, t, payload, GetChannelByAgen(payload.Agen))
 
 	// Persist audit login
 	err = s.repo.CreateAuditLogin(&auditLogin)
@@ -176,20 +156,16 @@ func (s *Service) Login(payload dto.LoginPayload) (*dto.LoginResult, error) {
 
 	// Get data address
 	address, err := s.repo.FindAddressByCustomerId(customer.ID)
-	if errors.Is(err, sql.ErrNoRows) {
-		address = &model.Address{}
-	} else if err != nil {
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		s.log.Error("error found when get customer address", logOption.Error(err))
-		return nil, constant.InvalidEmailPassInputError.Trace()
+		return nil, constant.InvalidEmailPassInputError.Trace(errx.Source(err))
 	}
 
 	// Get data verification
 	verification, err := s.repo.FindVerificationByCustomerID(customer.ID)
-	if errors.Is(err, sql.ErrNoRows) {
-		verification = &model.Verification{}
-	} else if err != nil {
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		s.log.Error("error found when get data verification", logOption.Error(err))
-		return nil, constant.InvalidEmailPassInputError.Trace()
+		return nil, constant.InvalidEmailPassInputError.Trace(errx.Source(err))
 	}
 
 	// Get financial data
@@ -206,7 +182,7 @@ func (s *Service) Login(payload dto.LoginPayload) (*dto.LoginResult, error) {
 		// Get gold saving account
 		goldSaving, errGs := s.getListAccountNumber(customer.Cif, customer.UserRefID.String)
 		if errGs != nil {
-			return nil, errx.Trace(err)
+			return nil, errx.Trace(errGs)
 		}
 
 		gs = &dto.GoldSavingVO{
@@ -216,6 +192,12 @@ func (s *Service) Login(payload dto.LoginPayload) (*dto.LoginResult, error) {
 			ListTabungan:      goldSaving.ListTabungan,
 			PrimaryRekening:   goldSaving.PrimaryRekening,
 		}
+	}
+
+	err = s.synchronizeWhenAuthenticated(customer, financial, verification, credential, address)
+	if err != nil {
+		s.log.Error("error found when synchronize", logOption.Error(err))
+		return nil, errx.Trace(err)
 	}
 
 	resp := dto.LoginVO{
@@ -233,24 +215,25 @@ func (s *Service) Login(payload dto.LoginPayload) (*dto.LoginResult, error) {
 	return s.composeLoginResponse(resp)
 }
 
-func (s *Service) syncInternalToExternal(payload *dto.CustomerSynchronizeRequest) (*dto.UserVO, error) {
-	// Call register pds api
-	registerCustomer := dto.RegisterPayload{
-		Name:        payload.Name,
-		Email:       payload.Email,
-		PhoneNumber: payload.PhoneNumber,
-		Password:    payload.Password,
-		FcmToken:    payload.FcmToken,
+func (s *Service) syncInternalToExternal(payload *dto.CustomerSynchronizePayload) (*dto.UserVO, error) {
+	// Set body
+	reqBody := map[string]interface{}{
+		"nama":      payload.Name,
+		"email":     payload.Email,
+		"no_hp":     payload.PhoneNumber,
+		"password":  payload.Password,
+		"fcm_token": payload.FcmToken,
 	}
+
 	// Sync customer
-	resp, err := s.SynchronizeCustomer(registerCustomer)
+	resp, err := s.SynchronizeCustomer(reqBody)
 	if err != nil {
 		s.log.Error("error found when sync data customer via API PDS", logOption.Error(err))
 		return nil, errx.Trace(err)
 	}
 
 	// handle status error
-	if resp.Status != "success" {
+	if resp.Status != constant.ResponseSuccess {
 		s.log.Error("Get Error from SynchronizeCustomer")
 		return nil, nhttp.InternalError.Trace(errx.Errorf(resp.Message))
 	}
@@ -355,7 +338,7 @@ func (s *Service) syncExternalToInternal(user *model.User) (*model.Customer, err
 	// persist verification
 	err = s.repo.InsertOrUpdateVerification(verification)
 	if err != nil {
-		s.log.Error("failed persist verification.", logOption.Error(err))
+		s.log.Error("failed persist verification", logOption.Error(err))
 		return nil, errx.Trace(err)
 	}
 
@@ -438,7 +421,7 @@ func (s *Service) composeLoginResponse(data dto.LoginVO) (*dto.LoginResult, erro
 				ReferralCode:              customer.ReferralCode.String,
 				GoldCardApplicationNumber: financial.GoldCardApplicationNumber,
 				GoldCardAccountNumber:     financial.GoldCardAccountNumber,
-				KodeCabang:                "", // TODO
+				KodeCabang:                customer.BranchCode.String,
 				TabunganEmas:              gs,
 			},
 			IsFirstLogin:          data.IsFirstLogin,
@@ -480,7 +463,7 @@ func (s *Service) setTokenAuthentication(customer *model.Customer, agen string, 
 		Build()
 	if err != nil {
 		s.log.Error("error found when generate JWT", logOption.Error(err))
-		return "", err
+		return "", errx.Trace(err)
 	}
 
 	jwtKey := s.config.ClientConfig.JWTKey
@@ -707,6 +690,169 @@ func (s *Service) UnblockPassword(credential *model.Credential) error {
 	if err != nil {
 		s.log.Error("error when update credential.", logOption.Error(err))
 		return errx.Trace(err)
+	}
+
+	return nil
+}
+
+func (s *Service) isFirstLogin(customer *model.Customer) (bool, error) {
+	// Check account is first login or not
+	countAuditLog, err := s.repo.CountAuditLogin(customer.ID)
+	if err != nil {
+		s.log.Error("error found when count audit login", logOption.Error(err))
+		return false, errx.Trace(err)
+	}
+
+	// Set is first login is true or false.
+	var isFirstLogin = true
+	if countAuditLog > 0 {
+		isFirstLogin = false
+	}
+
+	return isFirstLogin, nil
+}
+
+func prepareBodyCustomer(customer *model.Customer, dest map[string]interface{}) error {
+	profile := customer.Profile
+	parseDateOfBirth, _ := time.Parse("02-01-2006", profile.DateOfBirth)
+	data := map[string]interface{}{
+		// `user` table
+		"nama":                      customer.FullName,
+		"email":                     customer.Email,
+		"no_hp":                     customer.Phone,
+		"foto_url":                  customer.Photos.FileName,
+		"cif":                       customer.Cif,
+		"no_sid":                    customer.Sid,
+		"referral_code":             customer.ReferralCode.String,
+		"status":                    customer.Status,
+		"jenis_identitas":           customer.IdentityType,
+		"no_ktp":                    customer.IdentityNumber,
+		"last_update":               customer.UpdatedAt.Format(constant.DateTimeLayout),
+		"last_update_data_npwp":     profile.NPWPUpdatedAt,
+		"last_update_data_nasabah":  profile.ProfileUpdatedAt,
+		"last_update_link_cif":      profile.CifLinkUpdatedAt,
+		"last_update_unlink_cif":    profile.CifUnlinkUpdatedAt,
+		"nama_ibu":                  profile.MaidenName,
+		"jenis_kelamin":             profile.Gender,
+		"kewarganegaraan":           profile.Nationality,
+		"tgl_lahir":                 parseDateOfBirth.Format(constant.DateLayout),
+		"tempat_lahir":              profile.PlaceOfBirth,
+		"foto_ktp_url":              profile.IdentityPhotoFile,
+		"tanggal_expired_identitas": profile.IdentityExpiredAt,
+		"agama":                     profile.Religion,
+		"status_kawin":              profile.MarriageStatus,
+		"no_npwp":                   profile.NPWPNumber,
+		"foto_npwp":                 profile.NPWPPhotoFile,
+		"foto_sid":                  profile.SidPhotoFile,
+	}
+	err := mergo.Merge(&dest, data)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func prepareBodyFinancial(financial *model.FinancialData, dest map[string]interface{}) error {
+	data := map[string]interface{}{
+		"norek_utama":                 financial.MainAccountNumber,
+		"norek":                       financial.AccountNumber,
+		"is_open_te":                  financial.GoldSavingStatus,
+		"goldcard_application_number": financial.GoldCardApplicationNumber,
+		"goldcard_account_number":     financial.GoldCardAccountNumber,
+		"saldo":                       financial.Balance,
+	}
+	err := mergo.Merge(&dest, data)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func prepareBodyVerification(verification *model.Verification, dest map[string]interface{}) error {
+	data := map[string]interface{}{
+		"email_verification_token":   verification.EmailVerificationToken,
+		"email_verified":             verification.EmailVerifiedStatus,
+		"is_dukcapil_verified":       verification.DukcapilVerifiedStatus,
+		"aktifasiTransFinansial":     verification.DukcapilVerifiedStatus,
+		"tanggal_aktifasi_finansial": verification.FinancialTransactionActivatedAt,
+	}
+	err := mergo.Merge(&dest, data)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func prepareBodyCredential(credential *model.Credential, dest map[string]interface{}) error {
+	data := map[string]interface{}{
+		"password":             credential.Password,
+		"next_password_reset":  credential.NextPasswordResetAt,
+		"pin":                  credential.Pin,
+		"last_update_pin":      credential.PinUpdatedAt,
+		"blocked_date":         credential.BlockedAt,
+		"blocked_to_date":      credential.BlockedUntilAt,
+		"login_fail_count":     credential.LoginFailCount,
+		"wrong_password_count": credential.WrongPasswordCount,
+		"is_set_biometric":     credential.BiometricLogin,
+		"device_id_biometric":  credential.BiometricDeviceID,
+	}
+	err := mergo.Merge(&dest, data)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func prepareBodyAddress(address *model.Address, dest map[string]interface{}) error {
+	data := map[string]interface{}{
+		"id_kelurahan": address.SubDistrictID.Int64,
+		"alamat":       address.Line.String,
+		"kodepos":      address.PostalCode.String,
+	}
+	err := mergo.Merge(&dest, data)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *Service) synchronizeWhenAuthenticated(c *model.Customer, f *model.FinancialData, v *model.Verification,
+	cr *model.Credential, a *model.Address) error {
+	// Prepare Data
+	requestBodySyncCustomer := map[string]interface{}{}
+	err := prepareBodyCustomer(c, requestBodySyncCustomer)
+	if err != nil {
+		return errx.Trace(err)
+	}
+	err = prepareBodyFinancial(f, requestBodySyncCustomer)
+	if err != nil {
+		return errx.Trace(err)
+	}
+	err = prepareBodyVerification(v, requestBodySyncCustomer)
+	if err != nil {
+		return errx.Trace(err)
+	}
+	err = prepareBodyCredential(cr, requestBodySyncCustomer)
+	if err != nil {
+		return errx.Trace(err)
+	}
+	err = prepareBodyAddress(a, requestBodySyncCustomer)
+	if err != nil {
+		return errx.Trace(err)
+	}
+
+	// Execute synchronize to PDS API
+	sync, err := s.SynchronizeCustomer(requestBodySyncCustomer)
+	if err != nil {
+		s.log.Error("error found when sync customer", logOption.Error(err))
+		return errx.Trace(err)
+	}
+
+	// Handle status error
+	if sync.Status != constant.ResponseSuccess {
+		s.log.Error("Get Error from SynchronizeCustomer")
+		return nhttp.InternalError.Trace(errx.Errorf(sync.Message))
 	}
 
 	return nil

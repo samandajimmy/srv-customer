@@ -5,16 +5,7 @@ import (
 	"repo.pegadaian.co.id/ms-pds/srv-customer/internal/dto"
 )
 
-func (s *Service) SynchronizeCustomer(payload dto.RegisterPayload) (*ResponsePdsAPI, error) {
-	// Set payload
-	reqBody := map[string]interface{}{
-		"nama":      payload.Name,
-		"email":     payload.Email,
-		"no_hp":     payload.PhoneNumber,
-		"password":  payload.Password,
-		"fcm_token": payload.FcmToken,
-	}
-
+func (s *Service) SynchronizeCustomer(reqBody map[string]interface{}) (*ResponsePdsAPI, error) {
 	// Set header
 	reqHeader := map[string]string{
 		"Accept":       "*/*",
