@@ -42,13 +42,13 @@ func (rc *RepositoryContext) FindAddressPrimary(customerID int64) (*model.Addres
 }
 
 func (rc *RepositoryContext) InsertOrUpdateAddress(row *model.Address) error {
-	address, err := rc.FindAddressByCustomerId(row.CustomerID)
+	_, err := rc.FindAddressByCustomerId(row.CustomerID)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return errx.Trace(err)
 	}
 
 	if !errors.Is(err, sql.ErrNoRows) {
-		return rc.UpdateAddress(address)
+		return rc.UpdateAddress(row)
 	}
 
 	err = rc.CreateAddress(row)

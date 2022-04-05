@@ -64,13 +64,13 @@ func (rc *RepositoryContext) UpdateVerificationByCustomerID(row *model.Verificat
 }
 
 func (rc *RepositoryContext) InsertOrUpdateVerification(row *model.Verification) error {
-	verification, err := rc.FindVerificationByCustomerID(row.CustomerID)
+	_, err := rc.FindVerificationByCustomerID(row.CustomerID)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return errx.Trace(err)
 	}
 
 	if !errors.Is(err, sql.ErrNoRows) {
-		return rc.UpdateVerification(verification)
+		return rc.UpdateVerification(row)
 	}
 
 	err = rc.InsertVerification(row)

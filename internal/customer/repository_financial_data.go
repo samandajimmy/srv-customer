@@ -48,13 +48,13 @@ func (rc *RepositoryContext) UpdateFinancialData(row *model.FinancialData) error
 }
 
 func (rc *RepositoryContext) InsertOrUpdateFinancialData(row *model.FinancialData) error {
-	financialData, err := rc.FindFinancialDataByCustomerID(row.CustomerID)
+	_, err := rc.FindFinancialDataByCustomerID(row.CustomerID)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return errx.Trace(err)
 	}
 
 	if !errors.Is(err, sql.ErrNoRows) {
-		return rc.UpdateFinancialData(financialData)
+		return rc.UpdateFinancialData(row)
 	}
 
 	err = rc.CreateFinancialData(row)

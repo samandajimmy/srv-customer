@@ -129,6 +129,10 @@ func setUpRoute(router *nhttp.Router, controllers *Controllers) {
 		router.HandleFunc(controllers.Account.HandleAuthUser),
 		router.HandleFunc(controllers.Account.GetSmartAccessStatus))
 
+	// Synchronize From PDS To Customer
+	router.Handle(http.MethodPut, "/accounts/synchronize",
+		router.HandleFunc(controllers.Account.PutSynchronizeCustomer))
+
 	// Static asset
 	staticDir := "/web/assets/"
 	router.PathPrefix(staticDir).Handler(http.StripPrefix(staticDir, http.FileServer(http.Dir("."+staticDir))))
