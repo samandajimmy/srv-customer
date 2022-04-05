@@ -7,7 +7,7 @@ import (
 type Config struct {
 	Driver          string `validate:"required"`
 	Host            string `validate:"required"`
-	Port            string `validate:"required"`
+	Port            uint16 `validate:"required"`
 	Username        string `validate:"required"`
 	Password        string `validate:"required"`
 	Database        string `validate:"required"`

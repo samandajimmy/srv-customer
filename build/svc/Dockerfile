@@ -22,6 +22,7 @@ COPY Makefile go.mod ./
 COPY .git ./.git
 COPY cmd ./cmd
 COPY internal ./internal
+COPY migrations ./
 
 # Compiling...
 RUN ls -la && make release
