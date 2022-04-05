@@ -35,6 +35,7 @@ BINARY_NAME:=customer
 PROJECT_MAIN_PKG=cmd/${BINARY_NAME}
 PROJECT_ENV_FILES:=$(addprefix ${PROJECT_ROOT}/,${PROJECT_CONFIG})
 PROJECT_ENV_FILES_RELEASE:=$(addprefix ${PROJECT_ROOT}/,${PROJECT_CONFIG_RELEASE})
+SCRIPTS_DIR := ${PROJECT_ROOT}/scripts
 
 # ----------------------
 # Debug Output Variables
@@ -70,15 +71,8 @@ SCRIPTS_DIR=$(PROJECT_ROOT)/tools
 MIGRATION_TOOL_CMD:=flyway
 MIGRATION_TOOL_CONF=flyway.conf
 
-MIGRATION_DIR=$(PROJECT_ROOT)/migrations
-MIGRATION_SRC_UP?=$(MIGRATION_DIR)/sql-up
-MIGRATION_SRC_DOWN?=$(MIGRATION_DIR)/sql-down
-MIGRATION_CONFIG=$(MIGRATION_DIR)/$(MIGRATION_TOOL_CONF)
-
-MIGRATION_SCRIPTS_DIR?=$(SCRIPTS_DIR)/migrations
-MIGRATION_DOWN_CMD:=$(MIGRATION_SCRIPTS_DIR)/flyway-undo.sh
-MIGRATION_INIT_CONFIG_CMD:=$(MIGRATION_SCRIPTS_DIR)/flyway-init-config.sh
-MIGRATION_CREATE_DB:=$(MIGRATION_SCRIPTS_DIR)/pg-create-db.sh
+MIGRATION_DIR := ${PROJECT_ROOT}/migrations
+MIGRATION_SRC_DIR := ${MIGRATION_DIR}/sql
 
 # -----------
 # API Version
@@ -145,6 +139,10 @@ MIGRATION_CREATE_DB:=$(MIGRATION_SCRIPTS_DIR)/pg-create-db.sh
 # ----
 -include ${PROJECT_CONFIG}
 export
+
+# Initialize DB configuration
+MIGRATION_URL := "${MIGRATION_DB_DRIVER}://${MIGRATION_DB_USER}:${MIGRATION_DB_PASS}@${MIGRATION_DB_HOST}:${MIGRATION_DB_PORT}/${DB_NAME}?sslmode=disable"
+MIGRATION_BIN := migrate -source "file://${MIGRATION_SRC_DIR}" -database ${MIGRATION_URL}
 
 # ---------------
 # Common Commands
@@ -284,40 +282,34 @@ image-push: image
 # Database Migration
 # ------------------
 
-## db: Create Database
-.PHONY: db
-db: db-config
-	@$(MIGRATION_CREATE_DB)
-
-## db-config: Generate a configuration file for database migration tool
-.PHONY: db-config
-db-config: $(MIGRATION_CONFIG)
-$(MIGRATION_CONFIG): $(PROJECT_CONFIG) $(MIGRATION_INIT_CONFIG_SCRIPT)
-	@-echo "  > Removing $(MIGRATION_TOOL_CONF)..."
-	@-rm $(MIGRATION_CONFIG)
-	@-echo "  > Creating $(MIGRATION_TOOL_CONF)..."
-	@-$(MIGRATION_INIT_CONFIG_CMD) $(MIGRATION_CONFIG)
+## db-configure: Generate a configuration for database migration tool
+.PHONY: db-configure
+db-configure:
+	@-echo "  > Installing golang-migrate..."
+	@-go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@v4.15.1
 
 ## db-status: Prints the details and status information about all the migrations.
 .PHONY: db-status
-db-status: db-config
-	@$(MIGRATION_TOOL_CMD) info -configFiles=$(MIGRATION_CONFIG) -locations=filesystem:$(MIGRATION_SRC_UP)
-
-## db-repair: Repair checksum
-.PHONY: db-repair
-db-repair: db-config
-	@$(MIGRATION_TOOL_CMD) repair -configFiles=$(MIGRATION_CONFIG) -locations=filesystem:$(MIGRATION_SRC_UP)
+db-status:
+	@-${MIGRATION_BIN} version
 
 ## db-up: Upgrade database
 .PHONY: db-up
-db-up: db-config
+db-up:
 	@-echo "  > Running up scripts..."
-	@$(MIGRATION_TOOL_CMD) migrate -configFiles=$(MIGRATION_CONFIG) -locations=filesystem:$(MIGRATION_SRC_UP)
+	@${MIGRATION_BIN} up
 
 ## db-down: (Experimental) undo to previous migration version
 .PHONY: db-down
-db-down: db-config
-	$(MIGRATION_DOWN_CMD) $(MIGRATION_SRC_DOWN)
+db-down:
+	@${MIGRATION_BIN} down 1
+
+## db-clean: Clean database
+.PHONY: db-clean
+db-clean: --clean-prompt
+	@-echo "  > Cleaning database..."
+	@${MIGRATION_BIN} drop
+
 
 # -------------
 # Private Rules

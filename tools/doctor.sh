@@ -11,24 +11,23 @@ echo "\
 "
 
 main() {
-  check_cmd "usql"
-  check_cmd "flyway"
-  check_cmd "docker"
+  # Check Programming Runtimes
+    check_cmd "go"
 
-  check_script ${MIGRATION_INIT_CONFIG_CMD}
-  check_script ${MIGRATION_DOWN_CMD}
-  check_script ${MIGRATION_CREATE_DB}
+    # Check Database Migration tools
+    check_cmd "migrate"
 
-  check_optional_cmd "brew"
+    check_optional_cmd "brew"
+    check_optional_cmd "docker"
 
-  echo
+    echo
 
-  if [[ ${ERR_COUNT} -gt 0 ]]; then
-    echo "Error Count: ${ERR_COUNT}"
-    exit 1
-  fi
+    if [[ ${ERR_COUNT} -gt 0 ]]; then
+      echo "Error Count: ${ERR_COUNT}"
+      exit 1
+    fi
 
-  echo "OK"
+    echo "OK"
 }
 
 check_cmd() {
