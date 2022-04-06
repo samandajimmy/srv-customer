@@ -42,10 +42,10 @@ func (c *Config) normalizeValue() {
 func (c *Config) getDSN() (dsn string, err error) {
 	switch c.Driver {
 	case DriverMySQL:
-		dsn = fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true", c.Username, c.Password, c.Host, c.Port,
+		dsn = fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?parseTime=true", c.Username, c.Password, c.Host, c.Port,
 			c.Database)
 	case DriverPostgreSQL:
-		dsn = fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", c.Host, c.Port,
+		dsn = fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", c.Host, c.Port,
 			c.Username, c.Password, c.Database)
 	default:
 		err = fmt.Errorf("nsql: unsupported database driver %s", c.Driver)
