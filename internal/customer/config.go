@@ -23,13 +23,14 @@ type Config struct {
 type DatabaseConfig struct {
 	DatabaseDriver          string `envconfig:"DB_DRIVER"`
 	DatabaseHost            string `envconfig:"DB_HOST"`
-	DatabasePort            string `envconfig:"DB_PORT"`
+	DatabasePort            uint16 `envconfig:"DB_PORT"`
 	DatabaseUser            string `envconfig:"DB_USER"`
 	DatabasePass            string `envconfig:"DB_PASS"`
 	DatabaseName            string `envconfig:"DB_NAME"`
 	DatabaseMaxIdleConn     *int   `envconfig:"DB_POOL_MAX_IDLE_CONN"`
 	DatabaseMaxOpenConn     *int   `envconfig:"DB_POOL_MAX_OPEN_CONN"`
 	DatabaseMaxConnLifetime *int   `envconfig:"DB_POOL_MAX_CONN_LIFETIME"`
+	DatabaseBootMigration   bool   `envconfig:"DB_BOOT_MIGRATION"`
 }
 
 type ServerConfig struct {

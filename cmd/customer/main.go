@@ -36,6 +36,12 @@ func main() {
 	c := ncore.Boot(&config, &configExternal, bootOptions.Core)
 	config.DatabaseExternal = configExternal
 
+	// Check if migration option is set
+	err := bootMigration(c.WorkDir, &config)
+	if err != nil {
+		panic(err)
+	}
+
 	// Init handler
 	h, err := customer.NewHandler(c, &config)
 	if err != nil {
