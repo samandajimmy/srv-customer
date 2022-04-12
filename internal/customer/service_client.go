@@ -289,11 +289,11 @@ func (s *Service) CreateNotificationPostData(payload *NotificationPostDataPayloa
 		}
 	}
 
-	_, err := s.clientNotification().PostData(payload.URL, payload.Data, reqHeader)
+	resp, err := s.clientNotification().PostData(payload.URL, payload.Data, reqHeader)
 	if err != nil {
-		return nil, err
+		return nil, errx.Trace(err)
 	}
-	return nil, nil
+	return resp, nil
 }
 
 // Notification Service Section End
