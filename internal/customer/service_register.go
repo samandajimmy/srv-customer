@@ -263,8 +263,7 @@ func (s *Service) Register(payload dto.RegisterPayload) (*dto.RegisterResult, er
 		Payload:      payload,
 	})
 	if err != nil {
-		err = nil
-		s.log.Error("error when send notification register")
+		s.log.Error("error when send notification register", logOption.Error(err))
 	}
 
 	// Compose response
