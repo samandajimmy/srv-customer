@@ -57,3 +57,8 @@ type CreateNotificationRequest struct {
 	UserID  string               `json:"userId"`
 	Options NotificationOptionVO `json:"options"`
 }
+
+type EmailAndNotificationPayload struct {
+	EmailPayload
+	NotificationPayload
+}

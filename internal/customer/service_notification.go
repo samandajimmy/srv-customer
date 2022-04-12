@@ -58,7 +58,7 @@ func (s *Service) SendEmail(payload dto.EmailPayload) (*http.Response, error) {
 	var result *http.Response
 	// Set payload
 	reqBody := map[string]interface{}{
-		"userId": "N/A",
+		"userId": payload.UserID,
 		"options": map[string]interface{}{
 			"smtp": map[string]interface{}{
 				"from": map[string]string{
@@ -99,6 +99,58 @@ func (s *Service) SendEmail(payload dto.EmailPayload) (*http.Response, error) {
 	return result, nil
 }
 
+func (s *Service) SendEmailAndNotification(data dto.EmailAndNotificationPayload) (*http.Response, error) {
+	var result *http.Response
+	// Set payload
+	reqBody := map[string]interface{}{
+		"userId": data.UserID,
+		"options": map[string]interface{}{
+			"fcm": map[string]interface{}{
+				"title":    data.Title,
+				"body":     data.Body,
+				"imageUrl": data.Image,
+				"token":    data.Token,
+				"data":     data.Data,
+			},
+			"smtp": map[string]interface{}{
+				"from": map[string]string{
+					"name":  data.From.Name,
+					"email": data.From.Email,
+				},
+				"to":         data.To,
+				"subject":    data.Subject,
+				"message":    data.Message,
+				"attachment": data.Attachment,
+				"mimeType":   data.MimeType,
+			},
+		},
+	}
+
+	// Set header
+	reqHeader := map[string]string{
+		"Accept":       "application/json",
+		"Content-Type": "application/json",
+	}
+
+	sp := &NotificationPostDataPayload{
+		URL:    "/notifications",
+		Data:   reqBody,
+		Header: &reqHeader,
+	}
+
+	// Send email
+	resp, err := s.CreateNotificationPostData(sp)
+	if err != nil {
+		s.log.Error("Error when send email", logOption.Error(err))
+		return resp, err
+	}
+
+	// Set result
+	result = resp
+
+	return result, nil
+}
+
 func (s *Service) SendNotificationRegister(data dto.NotificationRegister) error {
 	customer := data.Customer.(*model.Customer)
 	verification := data.Verification.(*model.Verification)
@@ -107,15 +159,16 @@ func (s *Service) SendNotificationRegister(data dto.NotificationRegister) error 
 	dataEmailVerification := &dto.EmailVerification{
 		FullName:        customer.FullName,
 		Email:           customer.Email,
-		VerificationURL: fmt.Sprintf("%sauth/verify_email?t=%s", s.config.GetHTTPBaseURL(), verification.EmailVerificationToken),
+		VerificationURL: fmt.Sprintf("%s/accounts/verify-email?t=%s", s.config.GetHTTPBaseURL(), verification.EmailVerificationToken),
 	}
 	htmlMessage, err := nval.TemplateFile(dataEmailVerification, "email_verification.html")
 	if err != nil {
-		return err
+		return errx.Trace(err)
 	}
 
 	// set payload email service
 	emailPayload := dto.EmailPayload{
+		UserID:  customer.Phone,
 		Subject: fmt.Sprintf("Verifikasi Email %s", customer.FullName),
 		From: dto.FromEmailPayload{
 			Name:  s.config.EmailConfig.PdsEmailFromName,
@@ -126,11 +179,6 @@ func (s *Service) SendNotificationRegister(data dto.NotificationRegister) error 
 		Attachment: "",
 		MimeType:   "",
 	}
-	respEmail, err := s.SendEmail(emailPayload)
-	if err != nil {
-		log.Debugf("Error when send email verification. Payload %v", emailPayload)
-	}
-	defer handleClose(respEmail.Body)
 
 	// Send Notification Welcome
 	id, _ := nval.ParseString(rand.Intn(100)) //nolint:gosec
@@ -140,7 +188,7 @@ func (s *Service) SendNotificationRegister(data dto.NotificationRegister) error 
 		"type":  constant.TypeProfile,
 		"id":    id,
 	}
-	welcomeMessage := dto.NotificationPayload{
+	notificationPayload := dto.NotificationPayload{
 		Title: "Verifikasi Email",
 		Body:  fmt.Sprintf(`Hai %v, Selamat datang di Pegadaian Digital Service`, customer.FullName),
 		Image: "",
@@ -148,7 +196,10 @@ func (s *Service) SendNotificationRegister(data dto.NotificationRegister) error 
 		Data:  dataWelcomeMessage,
 	}
 
-	respSend, err := s.SendNotification(welcomeMessage)
+	respSend, err := s.SendEmailAndNotification(dto.EmailAndNotificationPayload{
+		EmailPayload:        emailPayload,
+		NotificationPayload: notificationPayload,
+	})
 	if err != nil {
 		s.log.Debug("error found when send notification message", logOption.Error(err))
 	}
@@ -176,6 +227,7 @@ func (s *Service) SendNotificationBlock(data dto.NotificationBlock) error {
 
 	// set payload email service
 	emailPayload := dto.EmailPayload{
+		UserID:  customer.Phone,
 		Subject: fmt.Sprintf("Notifikasi Keamanan Pegadaian Digital %s", customer.FullName),
 		From: dto.FromEmailPayload{
 			Name:  s.config.EmailConfig.PdsEmailFromName,

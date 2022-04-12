@@ -93,6 +93,7 @@ type EmailPayload struct {
 	Message    string           `json:"message"`
 	Attachment string           `json:"attachment"`
 	MimeType   string           `json:"mimeType"`
+	UserID     string           `json:"userId"`
 }
 
 type FromEmailPayload struct {
