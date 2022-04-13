@@ -37,8 +37,8 @@ ARG ARG_PORT=3000
 RUN apk add --no-cache tzdata ca-certificates
 
 COPY --from=builder /usr/src/app/bin/release /usr/src/app
-COPY migrations ./migrations
-COPY web ./web
+COPY --from=builder /usr/src/app/migrations /usr/src/app/migrations
+COPY --from=builder /usr/src/app/web /usr/src/app/web
 
 # Running...
 WORKDIR /usr/src/app
