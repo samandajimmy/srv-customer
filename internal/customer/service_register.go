@@ -134,7 +134,7 @@ func (s *Service) Register(payload dto.RegisterPayload) (*dto.RegisterResult, er
 		CustomerID:                      customerID,
 		KycVerifiedStatus:               0,
 		KycVerifiedAt:                   sql.NullTime{},
-		EmailVerificationToken:          nval.RandomString(78),
+		EmailVerificationToken:          nval.Bin2Hex(nval.RandomString(78)),
 		EmailVerifiedStatus:             0,
 		EmailVerifiedAt:                 sql.NullTime{},
 		DukcapilVerifiedStatus:          0,

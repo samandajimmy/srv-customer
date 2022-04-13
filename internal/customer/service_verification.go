@@ -16,7 +16,7 @@ func (s *Service) VerifyEmailCustomer(payload dto.VerificationPayload) (string, 
 	// Load view already verified
 	alreadyVerifiedView, err := nval.TemplateFile("", "already_verified.html")
 	if err != nil {
-		return "", err
+		return "Failed to load view", err
 	}
 
 	// Get verification
@@ -24,8 +24,12 @@ func (s *Service) VerifyEmailCustomer(payload dto.VerificationPayload) (string, 
 	if err != nil {
 		s.log.Error("failed to retrieve verification")
 		err = handleErrorRepository(err, constant.ResourceNotFoundError.Trace())
+		return alreadyVerifiedView, errx.Trace(err)
+	}
 
-		return "", errx.Trace(err)
+	// If email already verified
+	if !ver.EmailVerifiedAt.Time.IsZero() {
+		return alreadyVerifiedView, nil
 	}
 
 	// Get customer
@@ -33,17 +37,7 @@ func (s *Service) VerifyEmailCustomer(payload dto.VerificationPayload) (string, 
 	if err != nil {
 		log.Error("failed to retrieve customer not found", logOption.Error(err))
 		err = handleErrorRepository(err, constant.ResourceNotFoundError.Trace())
-
 		return alreadyVerifiedView, errx.Trace(err)
-	}
-
-	if !ver.EmailVerifiedAt.Time.IsZero() && err != nil {
-		return "", err
-	}
-
-	// If email already verified
-	if !ver.EmailVerifiedAt.Time.IsZero() {
-		return alreadyVerifiedView, nil
 	}
 
 	// Set new value verification
@@ -69,7 +63,6 @@ func (s *Service) VerifyEmailCustomer(payload dto.VerificationPayload) (string, 
 	}
 
 	// Load view email verification success
-	// TODO: Refactor to Controller
 	emailVerifiedView, err := nval.TemplateFile("", "email_verification_success.html")
 	if err != nil {
 		return alreadyVerifiedView, err
