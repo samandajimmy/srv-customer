@@ -22,8 +22,6 @@ COPY Makefile go.mod ./
 COPY .git ./.git
 COPY cmd ./cmd
 COPY internal ./internal
-COPY migrations ./
-COPY web ./web
 
 # Compiling...
 RUN ls -la && make release
@@ -39,6 +37,8 @@ ARG ARG_PORT=3000
 RUN apk add --no-cache tzdata ca-certificates
 
 COPY --from=builder /usr/src/app/bin/release /usr/src/app
+COPY migrations ./migrations
+COPY web ./web
 
 # Running...
 WORKDIR /usr/src/app
