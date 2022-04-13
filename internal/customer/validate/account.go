@@ -33,7 +33,7 @@ func GetVerifyEmail(p *dto.VerificationPayload) error {
 func PostSendOTP(p *dto.SendOTPPayload) error {
 	err := validation.ValidateStruct(p,
 		validation.Field(&p.Name, validation.Required, validation.Length(1, 50)),
-		validation.Field(&p.Email, validation.Required, is.Email),
+		validation.Field(&p.Email, validation.Required, is.EmailFormat),
 		validation.Field(&p.PhoneNumber, validation.Required, is.Digit),
 	)
 
