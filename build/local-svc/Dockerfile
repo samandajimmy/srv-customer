@@ -14,6 +14,7 @@ RUN apk add --no-cache git build-base \
 WORKDIR /usr/src/app
 COPY configs/.air.toml /.air.toml
 COPY Makefile ./
+COPY web ./web
 
 # Building
 RUN go install github.com/cosmtrek/air@v1.27.4 \

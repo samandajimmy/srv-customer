@@ -23,6 +23,7 @@ COPY .git ./.git
 COPY cmd ./cmd
 COPY internal ./internal
 COPY migrations ./
+COPY web ./web
 
 # Compiling...
 RUN ls -la && make release
