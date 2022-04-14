@@ -1,0 +1,388 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+    <meta charset="utf-8" content="text/html" http-equiv="Content-Type"/>
+    <meta content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1" name="viewport"/>
+    <meta content="telephone=no" name="format-detection"/>
+    <meta content="IE=9; IE=8; IE=7; IE=EDGE" http-equiv="X-UA-Compatible"/>
+    <title>Pegadaian Digital Service</title>
+    <!-- Bootstrap CSS -->
+    <link crossorigin="anonymous" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css"
+          integrity="sha384-PsH8R72JQ3SOdhVi3uxftmaW6Vc51MKb0q5P2rRUpPvrszuE4W1povHYgTpBfshb" rel="stylesheet">
+    <link href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet"
+          type="text/css">
+    <link href="https://fonts.gstatic.com" rel="preconnect">
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700&display=swap"
+          rel="stylesheet">
+    <style type="text/css">
+        /* ==> Importing Fonts <== */
+        @import url(https://fonts.googleapis.com/css?family=Fredoka+One);
+        @import url(https://fonts.googleapis.com/css?family=Open+Sans);
+
+        /* ==> Global CSS <== */
+        .ReadMsgBody {
+            width: 100%;
+            background-color: #ffffff;
+        }
+
+        .ExternalClass {
+            width: 100%;
+            background-color: #ffffff;
+        }
+
+        .ExternalClass,
+        .ExternalClass p,
+        .ExternalClass span,
+        .ExternalClass font,
+        .ExternalClass td,
+        .ExternalClass div {
+            line-height: 100%;
+        }
+
+        html {
+            width: 100%;
+        }
+
+        body {
+            font-family: 'Quicksand', sans-serif;
+            font-size: 12px;
+            color: #757575;
+            -webkit-text-size-adjust: none;
+            -ms-text-size-adjust: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        table {
+            border-spacing: 0;
+            border-collapse: collapse;
+        }
+
+        table td {
+            border-collapse: collapse;
+        }
+
+        img {
+            display: block !important;
+        }
+
+        a {
+            text-decoration: none;
+            color: #00A74E;
+        }
+
+        /* ==> Responsive CSS For Tablets <== */
+        @media only screen and (max-width: 640px) {
+            body {
+                width: auto !important;
+            }
+
+            table[class="tab-1"] {
+                width: 450px !important;
+            }
+
+            table[class="tab-2"] {
+                width: 47% !important;
+                text-align: left !important;
+            }
+
+            table[class="tab-3"] {
+                width: 100% !important;
+                text-align: center !important;
+            }
+
+            img[class="img-1"] {
+                width: 100% !important;
+                height: auto !important;
+            }
+        }
+
+        /* ==> Responsive CSS For Phones <== */
+        @media only screen and (max-width: 480px) {
+            body {
+                width: auto !important;
+            }
+
+            table[class="tab-1"] {
+                width: 290px !important;
+            }
+
+            table[class="tab-2"] {
+                width: 100% !important;
+                text-align: left !important;
+            }
+
+            table[class="tab-3"] {
+                width: 100% !important;
+                text-align: center !important;
+            }
+
+            img[class="img-1"] {
+                width: 100% !important;
+            }
+        }
+
+        .table td,
+        .table th {
+            background-color: #fff !important;
+        }
+
+        .table {
+            width: 100%;
+            max-width: 100%;
+            margin-bottom: 20px;
+        }
+
+        .table > thead > tr > th,
+        .table > thead > tr > td,
+        .table > tbody > tr > th,
+        .table > tbody > tr > td,
+        .table > tfoot > tr > th,
+        .table > tfoot > tr > td {
+            padding: 3px;
+            line-height: 1.42857;
+            vertical-align: top;
+            border-top: 0px solid #e7ecf1;
+            text-align: inherit;
+        }
+
+        .table > thead > tr > th {
+            vertical-align: bottom;
+            border-bottom: 0px solid #e7ecf1;
+        }
+
+        .table > caption + thead > tr:first-child > th,
+        .table > caption + thead > tr:first-child > td,
+        .table > colgroup + thead > tr:first-child > th,
+        .table > colgroup + thead > tr:first-child > td,
+        .table > thead:first-child > tr:first-child > th,
+        .table > thead:first-child > tr:first-child > td {
+            border-top: 0;
+        }
+
+        .table > tbody + tbody {
+            border-top: 2px solid #e7ecf1;
+        }
+
+        .table .table {
+            background-color: #fff;
+        }
+
+        .table-striped > tbody > tr:nth-of-type(odd) {
+            background-color: #fbfcfd;
+        }
+
+        .table-bordered th,
+        .table-bordered td {
+            border: 1px solid #ddd !important;
+        }
+
+        .btn-download-mulia {
+            -moz-box-shadow: inset 0px 1px 0px 0px #caefab;
+            -webkit-box-shadow: inset 0px 1px 0px 0px #caefab;
+            box-shadow: inset 0px 1px 0px 0px #caefab;
+            background: -webkit-gradient(linear, left top, left bottom, color-stop(0.05, #77d42a), color-stop(1, #5cb811));
+            background: -moz-linear-gradient(top, #77d42a 5%, #5cb811 100%);
+            background: -webkit-linear-gradient(top, #77d42a 5%, #5cb811 100%);
+            background: -o-linear-gradient(top, #77d42a 5%, #5cb811 100%);
+            background: -ms-linear-gradient(top, #77d42a 5%, #5cb811 100%);
+            background: linear-gradient(to bottom, #77d42a 5%, #5cb811 100%);
+            filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#77d42a', endColorstr='#5cb811', GradientType=0);
+            background-color: #77d42a;
+            -moz-border-radius: 4px;
+            -webkit-border-radius: 4px;
+            border-radius: 4px;
+            border: 1px solid #268a16;
+            display: inline-block;
+            cursor: pointer;
+            color: #306108 !important;
+            font-family: Arial;
+            font-size: 15px;
+            font-weight: bold;
+            padding: 6px 24px;
+            text-decoration: none;
+            text-shadow: 0px 1px 0px #aade7c;
+            text-decoration: none;
+        }
+
+        .btn-download-mulia:hover {
+            background: -webkit-gradient(linear, left top, left bottom, color-stop(0.05, #5cb811), color-stop(1, #77d42a));
+            background: -moz-linear-gradient(top, #5cb811 5%, #77d42a 100%);
+            background: -webkit-linear-gradient(top, #5cb811 5%, #77d42a 100%);
+            background: -o-linear-gradient(top, #5cb811 5%, #77d42a 100%);
+            background: -ms-linear-gradient(top, #5cb811 5%, #77d42a 100%);
+            background: linear-gradient(to bottom, #5cb811 5%, #77d42a 100%);
+            filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#5cb811', endColorstr='#77d42a', GradientType=0);
+            background-color: #5cb811;
+            color: white;
+            text-decoration: none;
+        }
+
+        .btn-download-mulia:active {
+            position: relative;
+            top: 1px;
+        }
+
+        .download-mulia {
+            text-align: center
+        }
+
+        .header-text {
+            padding: 2px;
+            display: inline-block;
+            margin-bottom: 10px;
+            font-size: 13px;
+        }
+
+        .table-customs {
+            border-bottom: 8px solid #f8f8f8;
+            margin-bottom: 10px;
+            width: 600px;
+        }
+
+        .td-1 {
+            width: 125px;
+        }
+
+        .td-2 {
+            width: 7px;
+        }
+
+        .td-3 {
+            margin-bottom: 15px;
+        }
+
+        .collapsible {
+            background-color: #ffffff;
+            width: 100%;
+            padding: 8px;
+            border: none;
+            text-align: left;
+            font-size: 12px;
+        }
+
+        .collapsible:after {
+            content: '\2304';
+            float: right;
+            font-size: 15px;
+            margin-right: 5px;
+        }
+
+        .content {
+            overflow: hidden;
+            transition: max-height 0.2s ease-out;
+            background-color: #ffffff;
+            border-bottom: 1px solid #eeeeef;
+        }
+
+    </style>
+    <link href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet"
+          type="text/css">
+
+
+</head>
+<body>
+<table align="center" border="0" cellpadding="0" cellspacing="0" width="100%">
+    <!-- =======> START ======== -->
+    <!--    CUSTOMAR THINKING    -->
+    <!-- ======================= -->
+    <tr>
+        <td align="center">
+            <table align="center" cellpadding="0" cellspacing="0" class="tab-1" width="600">
+                <tr>
+                    <td height="60"></td>
+                </tr>
+                <tr>
+                    <td align="">
+                        <img alt="Customer" src="{{.BaseURL}}/web/assets/logo-pegadaian-wide.png" width="200px">
+                    </td>
+                </tr>
+                <tr>
+                    <td height="25"></td>
+                </tr>
+                <tr>
+                    <td style="font-family: 'Quicksand', sans-serif; font-weight: 700; letter-spacing: 1px; font-size: 23px; border-bottom: 8px solid #f8f8f8; padding: 8px 1px;">
+                        {{.Title}}
+                    </td>
+                </tr>
+                <tr>
+                    <td height="25"></td>
+                </tr>
+                <tr>
+                    <td style="font-size:12px;color:#7c7c7c">
+
+                        <p>Hi {{.FullName}},</p>
+                        <p>Selamat! pendaftaran kamu berhasil. Untuk melengkapi pendaftaran kamu, mohon lakukan
+                            verifikasi email <a href="mailto:{{.Email}}" target="_blank">{{.Email}}</a>.
+                            Silakan cek kotak masuk dan lakukan verifikasi.</p>
+                        <p>Jika kamu membutuhkan informasi lebih lanjut silakan hubungi cabang pegadaian terdekat atau
+                            <a href="mailto:cs.digital@pegadaian.co.id" target="_blank">cs.digital@pegadaian.co.id</a>,
+                            telepon ke (021) 31925471 atau kirim whatsapp ke 082133007773</p>
+                        <p>Terima Kasih.</p>
+                        <br><br>
+                    </td>
+                </tr>
+                <tr>
+                    <td height="60"></td>
+                </tr>
+                <tr>
+                    <td style="background: #EAEAEA; font-family: 'open sans', sans-serif; font-size: 0.7em; color: #7c7c7c;">
+                        <table>
+                            <tr>
+                                <td>
+                                    <img src="{{.BaseURL}}/web/assets/sign-warning-icon.png"
+                                         style="width: 30px; padding-left: 5px; padding-right: 5px;">
+                                </td>
+                                <td style="padding: 5px;">
+                                    Segala bentuk informasi seperti nomor kontak, alamat e-mail, atau password kamu
+                                    bersifat rahasia. Jangan menginformasikan data-data tersebut kepada siapa pun,
+                                    termasuk kepada pihak yang mengatasnamakan Pegadaian Digital Service.
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="background: #F3F3F3; font-family: 'open sans', sans-serif; font-size: 0.7em; color: #7c7c7c;">
+                        <table>
+                            <tr>
+                                <td style="padding: 5px; width: 300px;">
+                                    PT Pegadaian (Persero)<br>
+                                    Jl.Kramat Raya No.162 - Jakarta Pusat - 10430<br>
+                                    Telp. 1500569, WhatsApp. 0813-2443-2443<br>
+                                    Email : <a
+                                    href="mailto:customer.care@pegadaian.co.id">customer.care@pegadaian.co.id</a><br>
+                                    Website : <a href="http://www.pegadaian.co.id">http://www.pegadaian.co.id</a>
+                                </td>
+                                <td style="text-align: right !important; padding-left: 10px;">
+                                    <img src="{{.BaseURL}}/web/assets/googleplay-download-grey.png"
+                                         style="width: 100px;">
+                                </td>
+                                <td style="text-align: right !important; padding-left: 10px;">
+                                    <img src="{{.BaseURL}}/web/assets/App-Store-Icon.png" style="width: 100px;">
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="font-family: 'open sans', sans-serif; font-size: 0.7em; color: #7c7c7c; text-align: center;padding : 5px; border-bottom: 1px solid #F3F3F3">
+                        Harap jangan membalas e-mail ini, karena e-mail ini dikirimkan secara otomatis oleh sistem.
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
+<!-- Optional JavaScript -->
+<!-- jQuery first, then Popper.js, then Bootstrap JS -->
+<script crossorigin="anonymous" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
+        src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
+<script crossorigin="anonymous" integrity="sha384-vFJXuSJphROIrBnz7yo7oB41mKfc8JzQZiCq4NCceLEaO4IHwicKwpJf9c9IpFgh"
+        src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.3/umd/popper.min.js"></script>
+<script crossorigin="anonymous" integrity="sha384-alpBpkh1PFOepccYVYDB4do5UnbKysX5WZXm3XxPqe5iKTfUKjNkCk9SaVuEZflJ"
+        src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/js/bootstrap.min.js"></script>
+</body>
+</html>
