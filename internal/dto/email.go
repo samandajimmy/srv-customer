@@ -18,3 +18,10 @@ type EmailChangePayload struct {
 	Email     string `json:"email"`
 	UserRefID string `json:"userRefID"`
 }
+
+type EmailWelcome struct {
+	Title    string
+	FullName string
+	Email    string
+	BaseURL  string
+}

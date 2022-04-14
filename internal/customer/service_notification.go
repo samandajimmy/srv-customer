@@ -196,6 +196,37 @@ func (s *Service) SendNotificationRegister(data dto.NotificationRegister) error 
 		Data:  dataWelcomeMessage,
 	}
 
+	// Send Email Welcome
+	titleWelcome := "Pegadaian Digital Service"
+	dataWelcome := dto.EmailWelcome{
+		Title:    titleWelcome,
+		Email:    customer.Email,
+		FullName: customer.FullName,
+		BaseURL:  s.config.GetHTTPBaseURL(),
+	}
+	htmlWelcomeMessage, err := nval.TemplateFile(dataWelcome, "email_welcome.html")
+	if err != nil {
+		return errx.Trace(err)
+	}
+
+	emailWelcomePayload := dto.EmailPayload{
+		UserID:  customer.Phone,
+		Subject: titleWelcome,
+		From: dto.FromEmailPayload{
+			Name:  s.config.EmailConfig.PdsEmailFromName,
+			Email: s.config.EmailConfig.PdsEmailFrom,
+		},
+		To:         customer.Email,
+		Message:    htmlWelcomeMessage,
+		Attachment: "",
+		MimeType:   "",
+	}
+	respSendWelcome, err := s.SendEmail(emailWelcomePayload)
+	if err != nil {
+		s.log.Debug("error found when send email message", logOption.Error(err))
+	}
+	defer handleClose(respSendWelcome.Body)
+
 	respSend, err := s.SendEmailAndNotification(dto.EmailAndNotificationPayload{
 		EmailPayload:        emailPayload,
 		NotificationPayload: notificationPayload,
