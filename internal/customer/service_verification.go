@@ -62,6 +62,13 @@ func (s *Service) VerifyEmailCustomer(payload dto.VerificationPayload) (string, 
 		return alreadyVerifiedView, errx.Trace(err)
 	}
 
+	// Synchronize Verification PDS
+	err = s.HandleSynchronizeVerification(customer, ver)
+	if err != nil {
+		s.log.Error("Error when synchronize data verification")
+		return alreadyVerifiedView,errx.Trace(err)
+	}
+
 	// Load view email verification success
 	emailVerifiedView, err := nval.TemplateFile("", "email_verification_success.html")
 	if err != nil {

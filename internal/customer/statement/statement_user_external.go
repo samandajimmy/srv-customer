@@ -25,7 +25,7 @@ func NewUser(db *nsql.DatabaseContext) *User {
 
 	return &User{
 		FindByEmailOrPhone: db.PrepareFmt(
-			`SELECT %s FROM %s WHERE (no_hp = ? OR email = ?)`, columnsWithID, tableName,
+			`SELECT %s FROM %s WHERE BINARY no_hp = ? OR BINARY email = ?`, columnsWithID, tableName,
 		),
 	}
 }

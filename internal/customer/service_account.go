@@ -911,6 +911,27 @@ func (s *Service) HandleSynchronizePassword(customer *model.Customer, password s
 	return nil
 }
 
+func (s *Service) HandleSynchronizeVerification(customer *model.Customer, verification *model.Verification) error {
+	requestBodySyncCustomer := map[string]interface{}{
+		"no_hp":customer.Phone,
+		"email_verified": verification.EmailVerifiedStatus,
+	}
+
+	resp, err := s.SynchronizeCustomer(requestBodySyncCustomer)
+	if err != nil {
+		s.log.Error("error found when sync data customer via API PDS", logOption.Error(err))
+		return errx.Trace(err)
+	}
+
+	// handle status error
+	if resp.Status != constant.ResponseSuccess {
+		s.log.Error("Get Error from SynchronizePassword")
+		return nhttp.InternalError.Trace(errx.Errorf(resp.Message))
+	}
+
+	return nil
+}
+
 func (s *Service) PutSynchronizeCustomer(payload dto.PutSynchronizeCustomerPayload) (*dto.PutSynchronizeCustomerResult, error) {
 
 	// Get customer
